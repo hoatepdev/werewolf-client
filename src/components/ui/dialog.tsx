@@ -9,7 +9,7 @@ const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
 
 const DialogPortal = (
-  props: DialogPrimitive.DialogPortalProps & { className?: string }
+  props: DialogPrimitive.DialogPortalProps & { className?: string },
 ) => <DialogPrimitive.Portal {...props} />;
 
 const DialogOverlay = React.forwardRef<
@@ -27,18 +27,21 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->((props, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-1/2 top-1/2 z-50 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-700 bg-zinc-900 p-6 shadow-lg duration-200 rounded-2xl"
-      )}
-      {...props}
-    />
-  </DialogPortal>
-));
+>((props, ref) => {
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        {...props}
+        className={cn(
+          "fixed z-50 top-1/2 left-1/2 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-lg duration-200",
+          props.className,
+        )}
+      />
+    </DialogPortal>
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = (props: React.HTMLAttributes<HTMLDivElement>) => (

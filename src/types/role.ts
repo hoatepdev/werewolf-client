@@ -1,6 +1,6 @@
 export interface Role {
-  id: string;
-  name: string;
-  description: string;
-  emoji: string;
+  id: string
+  name: string
+  description: string
+  emoji: string
 }

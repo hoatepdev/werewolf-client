@@ -1,11 +1,11 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { Check, CornerUpLeft, Loader2Icon, ScanQrCode, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import QRCode from "react-qr-code";
-import { useRoomStore } from "../useRoomStore";
-import { getSocket } from "@/lib/socket";
+'use client'
+import React, { useState, useEffect } from 'react'
+import { Check, CornerUpLeft, Loader2Icon, ScanQrCode, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import QRCode from 'react-qr-code'
+import { useRoomStore } from '@/hook/useRoomStore'
+import { getSocket } from '@/lib/socket'
 import {
   Dialog,
   DialogTrigger,
@@ -14,128 +14,137 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
-} from "@/components/ui/dialog";
-import { Player } from "@/types/player";
-import { RoleSelection } from "@/components/RoleSelection";
-import { Role } from "@/types/role";
+} from '@/components/ui/dialog'
+import { Player } from '@/types/player'
+import { RoleSelection } from '@/components/RoleSelection'
+import { Role } from '@/types/role'
+import { renderAvatar } from '@/helpers'
 
-const initialApproved: { id: number; name: string }[] = [];
-const initialPending: { id: number; name: string }[] = [];
+const initialApproved: { id: number; username: string; avatarKey: number }[] =
+  []
+const initialPending: { id: number; username: string; avatarKey: number }[] = []
 
 export default function ApprovePlayerPage() {
-  const socket = getSocket();
-  const router = useRouter();
+  const socket = getSocket()
+  const router = useRouter()
 
-  const [approvedPlayers, setApprovedPlayers] = useState(initialApproved);
-  const [pendingPlayers, setPendingPlayers] = useState(initialPending);
-  const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [approvedPlayers, setApprovedPlayers] = useState(initialApproved)
+  const [pendingPlayers, setPendingPlayers] = useState(initialPending)
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>([])
+  const [loading, setLoading] = useState(false)
 
-  const roomCode = useRoomStore((s) => s.roomCode);
+  const roomCode = useRoomStore((s) => s.roomCode)
+  const setIsGm = useRoomStore((s) => s.setIsGm)
 
-  console.log("⭐ approvedPlayers", approvedPlayers);
-  console.log("⭐ pendingPlayers", pendingPlayers);
-  console.log("⭐ selectedRoles", selectedRoles);
+  const handleStartGameSuccess = () => {
+    setLoading(false)
+    toast.success('Game started successfully!')
+    router.push(`/room/${roomCode}`)
+  }
+
+  const handleStartGameError = (error: { message: string }) => {
+    setLoading(false)
+    toast.error(error.message || 'Failed to start game')
+  }
 
   useEffect(() => {
-    if (!socket.connected) socket.connect();
-    // Request the current list of pending/approved players
-    socket.emit("gm:getPlayers", { roomCode });
-
-    // Listen for updates from the server
-    const handlePendingPlayers = (data: Player[]) => {
-      console.log("⭐️ data", data);
-      const approvedPlayers: Player[] = [];
-      const pendingPlayers: Player[] = [];
+    if (!socket.connected) socket.connect()
+    const handleDataPlayers = (data: Player[]) => {
+      console.log('⭐️ data', data)
+      const approvedPlayers: Player[] = []
+      const pendingPlayers: Player[] = []
 
       data.forEach((player: Player) => {
-        if (player.status === "approved") {
-          approvedPlayers.push(player);
-        } else {
-          pendingPlayers.push(player);
+        if (player.status === 'approved') {
+          approvedPlayers.push(player)
+        } else if (player.status === 'pending') {
+          pendingPlayers.push(player)
         }
-      });
-      setApprovedPlayers(approvedPlayers);
-      setPendingPlayers(pendingPlayers);
-    };
+      })
+      setApprovedPlayers(approvedPlayers)
+      setPendingPlayers(pendingPlayers)
+    }
 
-    const handleStartGameSuccess = () => {
-      setLoading(false);
-      toast.success("Game started successfully!");
-      router.push(`/room/${roomCode}`);
-    };
+    // Request the current list of pending/approved players
+    socket.emit('rq_gm:getPlayers', { roomCode })
+    socket.on('room:getPlayers', handleDataPlayers)
+    // Listen for updates from the server
 
-    const handleStartGameError = (error: { message: string }) => {
-      setLoading(false);
-      toast.error(error.message || "Failed to start game");
-    };
-
-    socket.on("room:getPlayers", handlePendingPlayers);
-    socket.on("room:updatePlayers", handlePendingPlayers);
-    socket.on("gm:startGameSuccess", handleStartGameSuccess);
-    socket.on("gm:startGameError", handleStartGameError);
+    socket.on('room:updatePlayers', handleDataPlayers)
+    socket.on('gm:startGameSuccess', handleStartGameSuccess)
+    socket.on('gm:startGameError', handleStartGameError)
 
     return () => {
-      socket.off("room:updatePlayers", handlePendingPlayers);
-      socket.off("gm:startGameSuccess", handleStartGameSuccess);
-      socket.off("gm:startGameError", handleStartGameError);
-    };
-  }, [roomCode, router]);
+      socket.off('room:getPlayers', handleDataPlayers)
+      socket.off('room:updatePlayers', handleDataPlayers)
+      socket.off('gm:startGameSuccess', handleStartGameSuccess)
+      socket.off('gm:startGameError', handleStartGameError)
+    }
+  }, [roomCode, router])
 
-  const handleApprove = (player: { id: number; name: string }) => {
-    setApprovedPlayers((prev) => [...prev, player]);
-    setPendingPlayers((prev) => prev.filter((p) => p.id !== player.id));
-    const socket = getSocket();
-    if (!socket.connected) socket.connect();
-    socket.emit("gm:approvePlayer", { roomCode, playerId: player.id });
-    toast.success("Approved");
-  };
+  const handleApprove = (player: {
+    id: number
+    username: string
+    avatarKey: number
+  }) => {
+    setApprovedPlayers((prev) => [...prev, player])
+    setPendingPlayers((prev) => prev.filter((p) => p.id !== player.id))
+    const socket = getSocket()
+    if (!socket.connected) socket.connect()
+    socket.emit('rq_gm:approvePlayer', { roomCode, playerId: player.id })
+  }
 
-  const handleReject = (player: { id: number; name: string }) => {
-    setPendingPlayers((prev) => prev.filter((p) => p.id !== player.id));
-    const socket = getSocket();
-    if (!socket.connected) socket.connect();
-    socket.emit("gm:rejectPlayer", { roomCode, playerId: player.id });
-    toast.error("Rejected");
-  };
+  const handleReject = (player: {
+    id: number
+    username: string
+    avatarKey: number
+  }) => {
+    setPendingPlayers((prev) => prev.filter((p) => p.id !== player.id))
+    const socket = getSocket()
+    if (!socket.connected) socket.connect()
+    socket.emit('rq_gm:rejectPlayer', { roomCode, playerId: player.id })
+  }
 
   const handleRoleChange = (roles: Role[]) => {
-    setSelectedRoles(roles);
-  };
+    setSelectedRoles(roles)
+  }
 
   const handleStartGame = () => {
-    setLoading(true);
-    socket.emit("gm:startGame", {
-      roomCode,
-      roles: selectedRoles,
-      playerCount: approvedPlayers.length,
-    });
-  };
+    setLoading(true)
+    console.log('⭐ selectedRoles', selectedRoles)
+    // socket.emit("rq_gm:startGame", {
+    //   roomCode,
+    //   roles: selectedRoles,
+    //   playerCount: approvedPlayers.length,
+    // });
+    setIsGm(true)
+    router.push(`/room/${roomCode}`)
+  }
 
   // const countPlayer = approvedPlayers.length - 1;
   // const canContinue =
   //   approvedPlayers.length >= 5 &&
   //   approvedPlayers.length === selectedRoles.length;
-  const countPlayer = 8;
-  const canContinue = true;
+  const countPlayer = 8
+  const canContinue = true
 
   return (
-    <main className="min-h-screen bg-zinc-900 text-white flex flex-col px-4 py-6 max-w-3xl mx-auto">
-      <div className="flex items-center mb-6 justify-between">
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 px-4 py-6 text-white">
+      <div className="mb-6 flex items-center justify-between">
         <button
-          className="text-2xl mr-2 hover:text-gray-400 active:text-gray-500"
+          className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
           aria-label="Back"
           onClick={() => router.back()}
         >
-          <CornerUpLeft className="w-6 h-6 text-gray-400" />
+          <CornerUpLeft className="h-6 w-6 text-gray-400" />
         </button>
         <Dialog>
           <DialogTrigger asChild>
             <button
-              className="text-yellow-400 text-2xl hover:text-yellow-500"
+              className="text-2xl text-yellow-400 hover:text-yellow-500"
               aria-label="Scan QR"
             >
-              <ScanQrCode className="w-6 h-6" />
+              <ScanQrCode className="h-6 w-6" />
             </button>
           </DialogTrigger>
           <DialogContent>
@@ -145,23 +154,27 @@ export default function ApprovePlayerPage() {
                 Scan this QR code to join the game
               </DialogDescription>
             </DialogHeader>
+
             <div className="flex flex-col items-center">
-              <div className="bg-white p-2 rounded-xl mb-4">
+              <div className="mb-4 rounded-xl bg-white p-2">
                 {roomCode ? (
                   <QRCode
                     value={roomCode}
                     size={180}
                     bgColor="#fff"
                     fgColor="#000"
-                    style={{ borderRadius: "0.75rem" }}
+                    style={{ borderRadius: '0.75rem' }}
                   />
                 ) : (
                   <span className="text-gray-400">No Room Code</span>
                 )}
               </div>
+              <div className="mb-4 text-center text-2xl font-bold text-yellow-400">
+                {roomCode}
+              </div>
               <DialogClose asChild>
                 <button
-                  className="mt-2 px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
+                  className="mt-2 rounded-lg bg-zinc-800 px-4 py-2 text-zinc-200 hover:bg-zinc-700"
                   aria-label="Close QR dialog"
                 >
                   Close
@@ -171,60 +184,66 @@ export default function ApprovePlayerPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <div className="flex flex-col items-center w-full max-w-sm flex-1 justify-center mx-auto">
+      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center">
         <div className="w-full">
-          <div className="text-base font-semibold mb-2 tracking-wide">
+          <div className="mb-2 text-base font-semibold tracking-wide">
             APPROVED USER
           </div>
-          <div className="space-y-2 mb-6">
+          <div className="mb-6 space-y-2">
             {approvedPlayers.length === 0 ? (
-              <div className="bg-zinc-800 rounded-xl py-3 px-4 text-center text-zinc-400">
+              <div className="rounded-xl bg-zinc-800 px-4 py-3 text-center text-zinc-400">
                 No player
               </div>
             ) : (
               approvedPlayers.map((player) => (
                 <div
                   key={player.id}
-                  className="bg-zinc-800 rounded-xl py-3 px-4 flex items-center justify-between"
+                  className="flex items-center justify-between gap-4 rounded-xl bg-zinc-800 px-4 py-3"
                 >
-                  <span className="font-medium text-base">{player.name}</span>
+                  <span className="text-2xl">{renderAvatar(player)}</span>
+                  <span className="flex-1 text-base font-medium">
+                    {player.username}
+                  </span>
                 </div>
               ))
             )}
           </div>
-          <div className="text-base font-semibold mb-2 tracking-wide">
+          <div className="mb-2 text-base font-semibold tracking-wide">
             PENDING USER
           </div>
-          <div className="space-y-2 mb-6">
+          <div className="mb-6 space-y-2">
             {pendingPlayers.length === 0 ? (
-              <div className="bg-zinc-800 rounded-xl py-3 px-4 text-center text-zinc-400">
+              <div className="rounded-xl bg-zinc-800 px-4 py-3 text-center text-zinc-400">
                 No player
               </div>
             ) : (
               pendingPlayers.map((player) => (
                 <div
                   key={player.id}
-                  className="bg-zinc-800 rounded-xl py-3 px-4 flex items-center justify-between"
+                  className="flex items-center justify-between gap-4 rounded-xl bg-zinc-800 px-4 py-3"
                 >
-                  <span className="font-medium text-base">{player.name}</span>
+                  <span className="text-2xl">{renderAvatar(player)}</span>
+                  <span className="flex-1 text-base font-medium">
+                    {player.username}
+                  </span>
                   <div className="flex gap-4">
                     <button
-                      className=" border-2 border-green-500 hover:bg-green-600 hover:text-white text-green-500 rounded-full w-8 h-8 flex items-center justify-center text-lg focus:outline-none"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-500 text-lg text-green-500 hover:bg-green-600 hover:text-white focus:outline-none"
                       onClick={() => {
-                        handleApprove(player);
+                        handleApprove(player)
                       }}
                       aria-label="Approve"
                     >
-                      <Check className="w-6 h-6" />
+                      <Check className="h-6 w-6" />
                     </button>
                     <button
-                      className=" border-2 border-red-500 hover:bg-red-600 hover:text-white text-red-500 rounded-full w-8 h-8 flex items-center justify-center text-lg focus:outline-none active:bg-red-700"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-500 text-lg text-red-500 hover:bg-red-600 hover:text-white focus:outline-none active:bg-red-700"
                       onClick={() => {
-                        handleReject(player);
+                        handleReject(player)
                       }}
                       aria-label="Reject"
                     >
-                      <X className="w-6 h-6" />
+                      <X className="h-6 w-6" />
                     </button>
                   </div>
                 </div>
@@ -235,7 +254,7 @@ export default function ApprovePlayerPage() {
 
         {countPlayer >= 0 && (
           <>
-            <hr className="my-4 border-t border-zinc-700 w-full" />
+            <hr className="my-4 w-full border-t border-zinc-700" />
 
             <RoleSelection
               onChange={handleRoleChange}
@@ -245,15 +264,15 @@ export default function ApprovePlayerPage() {
         )}
       </div>
 
-      <div className="mt-auto max-w-sm">
-        <div className="text-zinc-400 text-sm mb-2 text-center">
-          Tapping CONTINUE will decline all pending users.
+      <div className="mx-auto mt-auto mb-2 flex w-full max-w-sm flex-col">
+        <div className="mb-2 text-center text-sm text-zinc-400">
+          Tapping CONTINUE will random role for all players.
         </div>
         <button
-          className={`w-full bg-yellow-400 text-black font-bold text-lg py-3 rounded-xl transition-colors duration-200 ${
+          className={`w-full rounded-xl bg-yellow-400 py-3 text-lg font-bold text-black transition-colors duration-200 ${
             canContinue
-              ? "active:bg-yellow-500"
-              : "opacity-50 cursor-not-allowed"
+              ? 'active:bg-yellow-500'
+              : 'cursor-not-allowed opacity-50'
           }`}
           disabled={!canContinue}
           onClick={handleStartGame}
@@ -269,5 +288,5 @@ export default function ApprovePlayerPage() {
         </button>
       </div>
     </main>
-  );
+  )
 }

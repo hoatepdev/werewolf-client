@@ -1,113 +1,163 @@
-"use client";
-import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useDebounce } from "@/hook/useDebounce";
-import { useRoomStore } from "./useRoomStore";
+'use client'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { AVATAR_OPTIONS } from '@/lib/mockAvatar'
+import { useRoomStore } from '@/hook/useRoomStore'
+import { getInitialsName } from '@/helpers'
+import { motion } from 'framer-motion'
+import Image from 'next/image'
 
 export default function Home() {
-  const router = useRouter();
-  const username = useRoomStore((state) => state.username);
-  const rehydrated = useRoomStore((state) => state.rehydrated);
-  const setUsername = useRoomStore((state) => state.setUsername);
+  const router = useRouter()
+  const zustandName = useRoomStore((s) => s.username)
+  const zustandAvatarKey = useRoomStore((s) => s.avatarKey)
+  const setUsername = useRoomStore((s) => s.setUsername)
+  const setAvatarKey = useRoomStore((s) => s.setAvatarKey)
+
+  const [step, setStep] = useState<'input' | 'mode'>('input')
+  const [name, setName] = useState('')
+  const [avatar, setAvatar] = useState<number>(0)
 
   useEffect(() => {
-    if (rehydrated && username === "") {
-      const randomUsername = Math.floor(Math.random() * 1000);
-      setUsername(`Dân ngu ${randomUsername}`);
-    }
-  }, [rehydrated]);
+    if (zustandName) setName(zustandName)
+    if (typeof zustandAvatarKey === 'number') setAvatar(zustandAvatarKey)
+  }, [zustandName, zustandAvatarKey])
 
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsername(e.target.value);
-  };
+  const handleContinue = () => {
+    setUsername(name.trim())
+    setAvatarKey(avatar)
+    setStep('mode')
+  }
 
   return (
-    <main className="min-h-screen bg-zinc-900 text-white flex flex-col px-4 pt-6 pb-4 max-w-3xl mx-auto">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 pt-6">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">👤</span>
-          <div className="flex flex-col leading-tight">
-            <span className="text-sm text-zinc-300">Hello</span>
-            <span className="text-lg font-bold text-yellow-400">
-              <input
-                type="text"
-                defaultValue={username}
-                onChange={useDebounce(handleUsernameChange, 500)}
-              />
-            </span>
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-between bg-zinc-900 px-4 py-6">
+      <div className="mb-2 gap-2">
+        <div className="flex flex-col items-center gap-2 text-center text-4xl font-extrabold tracking-tight text-white">
+          <Image
+            src="/images/logo/logo.png"
+            alt="5Star Wolves"
+            width={80}
+            height={80}
+          />
+          <div>
+            <span className="text-yellow-400">5S</span>tar Wolves
           </div>
         </div>
-      </header>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mt-2 -mr-8 ml-auto w-fit rounded bg-yellow-400 px-2 py-1 text-xs font-bold text-zinc-900"
+        >
+          OFFLINE
+        </motion.div>
+      </div>
 
       {/* Center Content */}
-      <section className="flex flex-col items-center flex-1 justify-center">
-        <div className="flex flex-col items-center gap-2 mb-6">
-          <div className="flex items-center gap-2">
-            <span className="text-5xl">🐺</span>
-            <span className="text-4xl font-extrabold text-white tracking-tight">
-              Wolves Ville
-            </span>
-            <span className="ml-2 px-2 py-1 rounded bg-yellow-400 text-xs font-bold text-zinc-900 align-top">
-              OFFLINE
-            </span>
+      <section className="flex w-full flex-1 flex-col items-center justify-center">
+        {step === 'input' && (
+          <div className="flex w-full max-w-xs flex-col items-center gap-6">
+            <div className="flex w-full flex-col gap-2">
+              <label
+                htmlFor="name"
+                className="text-base font-semibold text-zinc-200"
+              >
+                Enter your user name
+              </label>
+              <Input
+                id="name"
+                placeholder=""
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={12}
+                autoFocus
+                className="h-12 text-white"
+              />
+            </div>
+            <div className="flex w-full flex-col gap-2">
+              <span className="mb-1 text-base font-semibold text-zinc-200">
+                Choose your avatar
+              </span>
+              <div className="flex flex-wrap justify-center gap-3">
+                {AVATAR_OPTIONS.map((opt, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-lg font-bold text-white transition-colors focus:outline-none ${
+                      avatar === index
+                        ? 'border-yellow-400 bg-zinc-800'
+                        : 'border-zinc-700 bg-zinc-700 hover:border-zinc-500'
+                    }`}
+                    onClick={() => setAvatar(index)}
+                    aria-label={`Select avatar ${opt}`}
+                  >
+                    {opt ? opt : getInitialsName(name)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Button
+              variant="yellow"
+              className="mt-6"
+              disabled={!name.trim()}
+              onClick={handleContinue}
+            >
+              Continue
+            </Button>
           </div>
-          <p className="text-zinc-300 text-center text-base mt-2 max-w-xs">
-            Choose your game mode
-            <br />
-            <span className="text-xs text-zinc-400">
-              (Please note: This game requires stable Internet connection to
-              operate normally.)
-            </span>
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 w-full max-w-xs">
-          <button
-            className="w-full py-3 rounded-xl bg-yellow-400 text-zinc-900 text-lg font-bold shadow hover:bg-yellow-300 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
-            onClick={() => router.push("/create-room")}
-            type="button"
-          >
-            GAME MASTER MODE
-          </button>
-          <button
-            className="w-full py-3 rounded-xl bg-zinc-700 text-white text-lg font-bold shadow hover:bg-zinc-600 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400/30"
-            onClick={() => router.push("/join-room")}
-            type="button"
-          >
-            PLAYER MODE
-          </button>
-        </div>
+        )}
+        {step === 'mode' && (
+          <div className="mb-6 flex w-full max-w-xs flex-col gap-2">
+            <p className="mt-2 max-w-xs text-left text-lg text-zinc-300">
+              Choose your game mode
+            </p>
+            <div className="mt-6 flex w-full flex-col gap-4">
+              <Button
+                variant="yellow"
+                onClick={() => router.push('/join-room')}
+                type="button"
+              >
+                PLAYER MODE
+              </Button>
+              <Button onClick={() => router.push('/create-room')} type="button">
+                GAME MASTER MODE
+              </Button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Bottom Navigation & Version */}
-      <footer className="flex flex-col items-center gap-3 pb-6">
-        <div className="flex items-center gap-8 mb-2">
+      <footer className="flex flex-col items-center gap-3">
+        <div className="mb-2 flex items-center gap-8">
           <a
             href="#"
-            className="flex flex-col items-center text-zinc-200 text-xs hover:text-yellow-400 transition-colors"
+            className="flex flex-col items-center text-xs text-zinc-200 transition-colors hover:text-yellow-400"
           >
             <span className="text-xl">📖</span>
             Guidebook
           </a>
           <a
             href="#"
-            className="flex flex-col items-center text-zinc-200 text-xs hover:text-yellow-400 transition-colors"
+            className="flex flex-col items-center text-xs text-zinc-200 transition-colors hover:text-yellow-400"
           >
             <span className="text-xl">👥</span>
             Terms of usage
           </a>
           <a
             href="#"
-            className="flex flex-col items-center text-zinc-200 text-xs hover:text-yellow-400 transition-colors"
+            className="flex flex-col items-center text-xs text-zinc-200 transition-colors hover:text-yellow-400"
           >
             <span className="text-xl">🛡️</span>
             Privacy policy
           </a>
         </div>
-        <div className="text-zinc-400 text-xs text-center">
+        <div className="text-center text-xs text-zinc-400">
           VERSION 1.0.3
           <br />
-          Powered by:{" "}
+          Powered by:{' '}
           <a
             href="https://www.p.hoatepdev.site"
             target="_blank"
@@ -118,5 +168,5 @@ export default function Home() {
         </div>
       </footer>
     </main>
-  );
+  )
 }

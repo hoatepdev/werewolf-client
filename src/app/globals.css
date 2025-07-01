@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -119,4 +119,9 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+::selection {
+  background: oklch(60% 0.25 65); /* cam đậm */
+  color: white;
 }

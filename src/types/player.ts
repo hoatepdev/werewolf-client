@@ -1,6 +1,7 @@
 export type Player = {
-  id: number;
-  name: string;
-  status: "pending" | "approved" | "rejected";
-  alive: boolean;
-};
+  id: number
+  username: string
+  avatarKey: number
+  status: 'pending' | 'approved' | 'rejected'
+  alive: boolean
+}
