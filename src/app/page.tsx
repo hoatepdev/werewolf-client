@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { AVATAR_OPTIONS } from '@/lib/mockAvatar'
 import { useRoomStore } from '@/hook/useRoomStore'
-import { getInitialsName } from '@/helpers'
+import { renderAvatar } from '@/helpers'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 
@@ -54,8 +54,6 @@ export default function Home() {
           OFFLINE
         </motion.div>
       </div>
-
-      {/* Center Content */}
       <section className="flex w-full flex-1 flex-col items-center justify-center">
         {step === 'input' && (
           <div className="flex w-full max-w-xs flex-col items-center gap-6">
@@ -93,7 +91,7 @@ export default function Home() {
                     onClick={() => setAvatar(index)}
                     aria-label={`Select avatar ${opt}`}
                   >
-                    {opt ? opt : getInitialsName(name)}
+                    {renderAvatar({ username: name, avatarKey: index })}
                   </button>
                 ))}
               </div>

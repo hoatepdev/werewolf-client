@@ -8,11 +8,10 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Plus, Minus } from 'lucide-react'
-import { Role } from '@/types/role'
 import { LIST_ROLE } from '@/constants/role'
 
 interface RoleSelectionProps {
-  onChange?: (roles: Role[]) => void
+  onChange?: (roles: string[]) => void
   totalCount: number
 }
 
@@ -30,12 +29,12 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
       const newCounts = { ...roleCounts, [roleId]: currentCount + 1 }
       setRoleCounts(newCounts)
 
-      const selectedRolesArray: Role[] = []
+      const selectedRolesArray: string[] = []
       Object.entries(newCounts).forEach(([roleId, count]) => {
         const role = LIST_ROLE.find((r) => r.id === roleId)
         if (role) {
           for (let i = 0; i < count; i++) {
-            selectedRolesArray.push(role)
+            selectedRolesArray.push(role.id)
           }
         }
       })
@@ -52,12 +51,12 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
       }
       setRoleCounts(newCounts)
 
-      const selectedRolesArray: Role[] = []
+      const selectedRolesArray: string[] = []
       Object.entries(newCounts).forEach(([roleId, count]) => {
         const role = LIST_ROLE.find((r) => r.id === roleId)
         if (role) {
           for (let i = 0; i < count; i++) {
-            selectedRolesArray.push(role)
+            selectedRolesArray.push(role.id)
           }
         }
       })

@@ -9,7 +9,7 @@ export type RoomState = {
   playerId: string
   role: string | null
   phase: Phase
-  alive: boolean
+  alive: boolean | null
   username: string
   avatarKey: number
   rehydrated: boolean
@@ -36,7 +36,7 @@ export const useRoomStore = create<RoomState>()(
       playerId: '',
       role: null,
       phase: 'waiting',
-      alive: true,
+      alive: null,
       username: '',
       avatarKey: 0,
       rehydrated: false,

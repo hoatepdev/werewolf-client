@@ -7,6 +7,7 @@ import QRCode from 'react-qr-code'
 import { Clipboard, CornerUpLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
 
 const CreateRoomPage = () => {
   const socket = getSocket()
@@ -16,22 +17,21 @@ const CreateRoomPage = () => {
   const setRoomCode = useRoomStore((s) => s.setRoomCode)
   const username = useRoomStore((s) => s.username)
   const avatarKey = useRoomStore((s) => s.avatarKey)
+  const setIsGm = useRoomStore((s) => s.setIsGm)
 
   useEffect(() => {
     if (!socket.connected) socket.connect()
-    socket.emit('rq_gm:createRoom', { avatarKey, username })
-
-    socket.on('room:createRoom', (data: { roomCode: string }) => {
-      setRoomCode(data.roomCode)
-      console.log('room:createRoom', data.roomCode)
-    })
-
-    return () => {
-      socket.off('room:createRoom')
-    }
+    socket.emit(
+      'rq_gm:createRoom',
+      { avatarKey, username },
+      (data: { roomCode: string }) => {
+        setRoomCode(data.roomCode)
+      },
+    )
   }, [setRoomCode])
 
   const handleCreateRoom = () => {
+    setIsGm(true)
     router.push('/approve-player')
   }
 
@@ -45,7 +45,7 @@ const CreateRoomPage = () => {
           onClick={() => router.back()}
         >
           {/* Back arrow icon placeholder */}
-          <CornerUpLeft className="h-6 w-6 text-gray-400" />
+          <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
         </button>
       </div>
 
@@ -86,7 +86,6 @@ const CreateRoomPage = () => {
           Players can also copy and paste the following game id to the game
           joining request box in their app
         </p>
-        {/* Game code with copy button */}
         <div className="mb-8 flex w-full items-center rounded-xl border-2 border-yellow-400 bg-[#23232a] px-4 py-3">
           <span className="flex-1 truncate font-mono text-lg text-white">
             {roomCode}
@@ -95,9 +94,8 @@ const CreateRoomPage = () => {
             className="ml-2 text-xl text-yellow-400 hover:text-yellow-500"
             aria-label="Copy room code"
           >
-            {/* Copy icon placeholder */}
             <Clipboard
-              className="h-6 w-6"
+              className="h-6 w-6 cursor-pointer"
               onClick={() => {
                 navigator.clipboard.writeText(roomCode || '')
                 toast.success('Copied to clipboard')
@@ -106,13 +104,13 @@ const CreateRoomPage = () => {
           </button>
         </div>
       </div>
-      {/* Continue button */}
-      <button
-        className="mb-2 w-full max-w-sm rounded-xl bg-yellow-400 py-3 text-lg font-bold text-black transition-colors duration-200 active:bg-yellow-500"
+      <Button
+        variant="yellow"
+        className="mb-2 w-full max-w-sm"
         onClick={handleCreateRoom}
       >
-        Continue
-      </button>
+        Create Room
+      </Button>
     </main>
   )
 }

@@ -39,7 +39,7 @@ export default function RootLayout({
       <body>
         <ProgrammaticDialogProviderSingleton>
           <div className="bg-zinc-900">{children}</div>
-          <Toaster position="top-center" richColors duration={1000} />
+          <Toaster position="top-center" richColors duration={2000} />
         </ProgrammaticDialogProviderSingleton>
       </body>
     </html>

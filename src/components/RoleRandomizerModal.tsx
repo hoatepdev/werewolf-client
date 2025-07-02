@@ -5,6 +5,7 @@ import { Role } from '@/types/role'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LIST_ROLE } from '@/constants/role'
 import Image from 'next/image'
+import { Loader2Icon } from 'lucide-react'
 
 interface RoleRandomizerModalProps {
   assignedRole: Role
@@ -37,6 +38,7 @@ export const RoleRandomizerModal = ({
   open,
 }: RoleRandomizerModalProps) => {
   const [isSpinning, setIsSpinning] = useState(true)
+  const [isReady, setIsReady] = useState(false)
   const [rotation, setRotation] = useState(0)
   const wheelRef = useRef<HTMLDivElement>(null)
 
@@ -50,10 +52,15 @@ export const RoleRandomizerModal = ({
         setRotation(targetRotation)
         setTimeout(() => {
           setIsSpinning(false)
-        }, 3200)
+        }, 5000)
       }, 1000)
     }
   }, [open, assignedRole])
+
+  const handleContinue = () => {
+    setIsReady(true)
+    onContinue()
+  }
 
   return (
     <Dialog open={open}>
@@ -148,14 +155,14 @@ export const RoleRandomizerModal = ({
                               y={textY}
                               textAnchor="middle"
                               alignmentBaseline="middle"
-                              // fontSize="14"
+                              fontSize="28"
                               fontWeight="bold"
                               fill="#222"
                               transform={`rotate(${
                                 -rotation + textAngle
                               }, ${textX}, ${textY})`}
                             >
-                              {role.name}
+                              {role.emoji}
                             </text>
                           </g>
                         )
@@ -199,8 +206,19 @@ export const RoleRandomizerModal = ({
                 <div className="max-w-xs text-center text-base text-zinc-200">
                   {assignedRole.description}
                 </div>
-                <Button variant="yellow" onClick={onContinue}>
-                  Continue
+                <Button
+                  variant="yellow"
+                  onClick={handleContinue}
+                  disabled={isSpinning || isReady}
+                >
+                  {isReady ? (
+                    <>
+                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                      Waiting for players ready
+                    </>
+                  ) : (
+                    'Ready'
+                  )}
                 </Button>
               </motion.div>
             )}

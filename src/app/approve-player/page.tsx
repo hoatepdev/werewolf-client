@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/dialog'
 import { Player } from '@/types/player'
 import { RoleSelection } from '@/components/RoleSelection'
-import { Role } from '@/types/role'
 import { renderAvatar } from '@/helpers'
+import { Button } from '@/components/ui/button'
 
 const initialApproved: { id: number; username: string; avatarKey: number }[] =
   []
@@ -30,55 +30,44 @@ export default function ApprovePlayerPage() {
 
   const [approvedPlayers, setApprovedPlayers] = useState(initialApproved)
   const [pendingPlayers, setPendingPlayers] = useState(initialPending)
-  const [selectedRoles, setSelectedRoles] = useState<Role[]>([])
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [textButton, setTextButton] = useState('Randomize Roles')
 
   const roomCode = useRoomStore((s) => s.roomCode)
-  const setIsGm = useRoomStore((s) => s.setIsGm)
 
   const handleStartGameSuccess = () => {
-    setLoading(false)
-    toast.success('Game started successfully!')
-    router.push(`/room/${roomCode}`)
+    toast.success('Game start after 3s')
+    setTimeout(() => {
+      router.push(`/room/${roomCode}`)
+    }, 3000)
   }
 
-  const handleStartGameError = (error: { message: string }) => {
-    setLoading(false)
-    toast.error(error.message || 'Failed to start game')
+  const handleDataPlayers = (data: Player[]) => {
+    const approvedPlayers: Player[] = []
+    const pendingPlayers: Player[] = []
+
+    data.forEach((player: Player) => {
+      if (player.status === 'approved') {
+        approvedPlayers.push(player)
+      } else if (player.status === 'pending') {
+        pendingPlayers.push(player)
+      }
+    })
+    setApprovedPlayers(approvedPlayers)
+    setPendingPlayers(pendingPlayers)
   }
 
   useEffect(() => {
     if (!socket.connected) socket.connect()
-    const handleDataPlayers = (data: Player[]) => {
-      console.log('⭐️ data', data)
-      const approvedPlayers: Player[] = []
-      const pendingPlayers: Player[] = []
 
-      data.forEach((player: Player) => {
-        if (player.status === 'approved') {
-          approvedPlayers.push(player)
-        } else if (player.status === 'pending') {
-          pendingPlayers.push(player)
-        }
-      })
-      setApprovedPlayers(approvedPlayers)
-      setPendingPlayers(pendingPlayers)
-    }
-
-    // Request the current list of pending/approved players
     socket.emit('rq_gm:getPlayers', { roomCode })
-    socket.on('room:getPlayers', handleDataPlayers)
-    // Listen for updates from the server
 
     socket.on('room:updatePlayers', handleDataPlayers)
-    socket.on('gm:startGameSuccess', handleStartGameSuccess)
-    socket.on('gm:startGameError', handleStartGameError)
-
+    socket.on('room:readySuccess', handleStartGameSuccess)
     return () => {
-      socket.off('room:getPlayers', handleDataPlayers)
-      socket.off('room:updatePlayers', handleDataPlayers)
-      socket.off('gm:startGameSuccess', handleStartGameSuccess)
-      socket.off('gm:startGameError', handleStartGameError)
+      socket.off('room:updatePlayers')
+      socket.off('room:readySuccess')
     }
   }, [roomCode, router])
 
@@ -89,7 +78,6 @@ export default function ApprovePlayerPage() {
   }) => {
     setApprovedPlayers((prev) => [...prev, player])
     setPendingPlayers((prev) => prev.filter((p) => p.id !== player.id))
-    const socket = getSocket()
     if (!socket.connected) socket.connect()
     socket.emit('rq_gm:approvePlayer', { roomCode, playerId: player.id })
   }
@@ -100,25 +88,32 @@ export default function ApprovePlayerPage() {
     avatarKey: number
   }) => {
     setPendingPlayers((prev) => prev.filter((p) => p.id !== player.id))
-    const socket = getSocket()
     if (!socket.connected) socket.connect()
     socket.emit('rq_gm:rejectPlayer', { roomCode, playerId: player.id })
   }
 
-  const handleRoleChange = (roles: Role[]) => {
+  const handleRoleChange = (roles: string[]) => {
     setSelectedRoles(roles)
   }
 
-  const handleStartGame = () => {
+  const handleRandomizeRoles = () => {
     setLoading(true)
-    console.log('⭐ selectedRoles', selectedRoles)
-    // socket.emit("rq_gm:startGame", {
-    //   roomCode,
-    //   roles: selectedRoles,
-    //   playerCount: approvedPlayers.length,
-    // });
-    setIsGm(true)
-    router.push(`/room/${roomCode}`)
+    setTextButton('Waiting for players choose role')
+    socket.emit(
+      'rq_gm:randomizeRoles',
+      {
+        roomCode,
+        roles: selectedRoles,
+      },
+      (message: string) => {
+        if (message) {
+          setLoading(false)
+          toast.error(message || 'Failed to randomize roles')
+        } else {
+          setTextButton('Waiting for players ready')
+        }
+      },
+    )
   }
 
   // const countPlayer = approvedPlayers.length - 1;
@@ -136,7 +131,7 @@ export default function ApprovePlayerPage() {
           aria-label="Back"
           onClick={() => router.back()}
         >
-          <CornerUpLeft className="h-6 w-6 text-gray-400" />
+          <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
         </button>
         <Dialog>
           <DialogTrigger asChild>
@@ -200,7 +195,9 @@ export default function ApprovePlayerPage() {
                   key={player.id}
                   className="flex items-center justify-between gap-4 rounded-xl bg-zinc-800 px-4 py-3"
                 >
-                  <span className="text-2xl">{renderAvatar(player)}</span>
+                  <span className="flex w-6 items-center justify-center text-2xl font-bold text-yellow-400">
+                    {renderAvatar(player)}
+                  </span>
                   <span className="flex-1 text-base font-medium">
                     {player.username}
                   </span>
@@ -222,7 +219,9 @@ export default function ApprovePlayerPage() {
                   key={player.id}
                   className="flex items-center justify-between gap-4 rounded-xl bg-zinc-800 px-4 py-3"
                 >
-                  <span className="text-2xl">{renderAvatar(player)}</span>
+                  <span className="flex w-6 items-center justify-center text-2xl font-bold text-yellow-400">
+                    {renderAvatar(player)}
+                  </span>
                   <span className="flex-1 text-base font-medium">
                     {player.username}
                   </span>
@@ -255,7 +254,6 @@ export default function ApprovePlayerPage() {
         {countPlayer >= 0 && (
           <>
             <hr className="my-4 w-full border-t border-zinc-700" />
-
             <RoleSelection
               onChange={handleRoleChange}
               totalCount={countPlayer}
@@ -268,24 +266,21 @@ export default function ApprovePlayerPage() {
         <div className="mb-2 text-center text-sm text-zinc-400">
           Tapping CONTINUE will random role for all players.
         </div>
-        <button
-          className={`w-full rounded-xl bg-yellow-400 py-3 text-lg font-bold text-black transition-colors duration-200 ${
-            canContinue
-              ? 'active:bg-yellow-500'
-              : 'cursor-not-allowed opacity-50'
-          }`}
+        <Button
+          variant="yellow"
+          className="w-full"
           disabled={!canContinue}
-          onClick={handleStartGame}
+          onClick={handleRandomizeRoles}
         >
           {loading ? (
             <div className="flex items-center justify-center gap-4">
               <Loader2Icon className="animate-spin" />
-              <span>Game is starting</span>
+              <span>{textButton}</span>
             </div>
           ) : (
-            <div>Continue</div>
+            <div>{textButton}</div>
           )}
-        </button>
+        </Button>
       </div>
     </main>
   )

@@ -115,7 +115,6 @@ export default function JoinRoomPage() {
   }, [scanning])
 
   useEffect(() => {
-    // Listen for approval event
     const handleRoomApproved = (data: { roomCode: string }) => {
       setLoading(false)
       router.push(`/lobby/${data.roomCode}`)
@@ -128,8 +127,8 @@ export default function JoinRoomPage() {
     socket.on('player:approved', handleRoomApproved)
     socket.on('player:rejected', handleRoomRejected)
     return () => {
-      socket.off('player:approved', handleRoomApproved)
-      socket.off('player:rejected', handleRoomRejected)
+      socket.off('player:approved')
+      socket.off('player:rejected')
     }
   }, [scanning, router])
 
@@ -164,7 +163,7 @@ export default function JoinRoomPage() {
           aria-label="Back"
           onClick={() => router.back()}
         >
-          <CornerUpLeft className="h-6 w-6 text-gray-400" />
+          <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
         </button>
       </div>
       <div className="flex flex-1 flex-col items-center justify-center px-4">

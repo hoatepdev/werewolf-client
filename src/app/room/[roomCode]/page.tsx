@@ -7,8 +7,8 @@ import { MockDataPanel } from '@/components/MockDataPanel'
 import { Player } from '@/types/player'
 import { CornerUpLeft, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { AVATAR_OPTIONS } from '@/lib/mockAvatar'
 import { confirmDialog } from '@/components/ui/alert-dialog'
+import { renderAvatar } from '@/helpers'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const router = useRouter()
@@ -16,7 +16,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const [showMockPanel, setShowMockPanel] = useState(false)
 
   const { roomCode } = React.use(params)
-
+  console.log(
+    '⭐ store',
+    useRoomStore((s) => s),
+  )
   const phase = useRoomStore((s) => s.phase)
   const setPhase = useRoomStore((s) => s.setPhase)
   const role = useRoomStore((s) => s.role)
@@ -28,10 +31,6 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
   const username = useRoomStore((s) => s.username)
   const avatarKey = useRoomStore((s) => s.avatarKey)
-
-  console.log('⭐ playerId', playerId)
-
-  console.log('⭐ approvedPlayers', approvedPlayers)
 
   useEffect(() => {
     const socket = getSocket()
@@ -47,28 +46,18 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     socket.on('room:alive', (isAlive: boolean) => {
       setAlive(isAlive)
     })
-    socket.on('room:getPlayers', (data: Player[]) => {
-      console.log('⭐ room:getPlayers', data)
-      const approvedPlayers = data.filter(
-        (player) => player.status === 'approved',
-      )
-      setApprovedPlayers(approvedPlayers)
-    })
-    socket.on('room:updatePlayers', (data: Player[]) => {
-      console.log('⭐ room:updatePlayers', data)
-      const approvedPlayers = data.filter(
-        (player) => player.status === 'approved',
-      )
-      setApprovedPlayers(approvedPlayers)
-    })
 
-    // socket.emit("room:getPlayers", { roomCode });
+    socket.on('room:updatePlayers', (data: Player[]) => {
+      const approvedPlayers = data.filter(
+        (player) => player.status === 'approved',
+      )
+      setApprovedPlayers(approvedPlayers)
+    })
 
     return () => {
       socket.off('room:phase')
       socket.off('room:role')
       socket.off('room:alive')
-      socket.off('room:getPlayers')
       socket.off('room:updatePlayers')
     }
   }, [
@@ -117,7 +106,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
             aria-label="Back"
             onClick={handleLeaveRoom}
           >
-            <CornerUpLeft className="h-6 w-6 text-gray-400" />
+            <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
           </button>
           <h1 className="text-xl font-bold">{roomCode}</h1>
         </div>
@@ -135,7 +124,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
               <span className="max-w-[80px] truncate text-sm font-semibold text-yellow-300">
                 {username}
               </span>
-              <span className="text-2xl">{AVATAR_OPTIONS[avatarKey]}</span>
+              <span className="text-2xl">
+                {renderAvatar({ username, avatarKey })}
+              </span>
             </div>
           ) : null}
         </div>

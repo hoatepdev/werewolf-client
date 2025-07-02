@@ -1,96 +1,100 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { getSocket } from "@/lib/socket";
-import { useRoomStore } from "@/hook/useRoomStore";
-import { PlayerGrid } from "@/components/PlayerGrid";
-import { MockDataPanel } from "@/components/MockDataPanel";
-import { Player } from "@/types/player";
-import { CornerUpLeft, Settings } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { AVATAR_OPTIONS } from "@/lib/mockAvatar";
-import { confirmDialog } from "@/components/ui/alert-dialog";
-import RoleRandomizerModal from "@/components/RoleRandomizerModal";
-import { LIST_ROLE } from "@/constants/role";
+'use client'
+import React, { useEffect, useState } from 'react'
+import { getSocket } from '@/lib/socket'
+import { useRoomStore } from '@/hook/useRoomStore'
+import { PlayerGrid } from '@/components/PlayerGrid'
+import { Player } from '@/types/player'
+import { CornerUpLeft, Settings } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { confirmDialog } from '@/components/ui/alert-dialog'
+import RoleRandomizerModal from '@/components/RoleRandomizerModal'
+import { LIST_ROLE } from '@/constants/role'
+import { Role } from '@/types/role'
+import { toast } from 'sonner'
+import { renderAvatar } from '@/helpers'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
-  const router = useRouter();
-  const isGM = useRoomStore((s) => s.isGm);
-  const [showMockPanel, setShowMockPanel] = useState(false);
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [assignedRole, setAssignedRole] = useState(LIST_ROLE[0]);
+  const socket = getSocket()
+  const router = useRouter()
+  const isGM = useRoomStore((s) => s.isGm)
+  const [showMockPanel, setShowMockPanel] = useState(false)
+  const [showRoleModal, setShowRoleModal] = useState(false)
+  const [assignedRole, setAssignedRole] = useState<Role>(LIST_ROLE[0])
 
-  const { roomCode } = React.use(params);
+  const { roomCode } = React.use(params)
+  console.log(
+    '⭐ store',
+    useRoomStore((s) => s),
+  )
 
-  const playerId = useRoomStore((s) => s.playerId);
-  const approvedPlayers = useRoomStore((s) => s.approvedPlayers);
-  const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers);
-  const username = useRoomStore((s) => s.username);
-  const avatarKey = useRoomStore((s) => s.avatarKey);
+  const playerId = useRoomStore((s) => s.playerId)
+  const approvedPlayers = useRoomStore((s) => s.approvedPlayers)
+  const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
+  const username = useRoomStore((s) => s.username)
+  const avatarKey = useRoomStore((s) => s.avatarKey)
+
+  const handleStartGameSuccess = () => {
+    toast.success('Game start after 3s')
+    setTimeout(() => {
+      router.push(`/room/${roomCode}`)
+    }, 3000)
+  }
 
   useEffect(() => {
-    const socket = getSocket();
-    if (!socket.connected) socket.connect();
-    // socket.emit("room:join", { roomCode, playerId, isGM });
-
-    socket.emit("rq_player:getPlayers", { roomCode });
-
-    socket.on("room:getPlayers", (data: Player[]) => {
-      console.log("⭐ room:getPlayers", data);
+    if (!socket.connected) socket.connect()
+    socket.emit('rq_player:getPlayers', { roomCode })
+    socket.on('room:updatePlayers', (data: Player[]) => {
       const approvedPlayers = data.filter(
-        (player) => player.status === "approved",
-      );
-      setApprovedPlayers(approvedPlayers);
-    });
-    socket.on("room:updatePlayers", (data: Player[]) => {
-      console.log("⭐ room:updatePlayers", data);
-      const approvedPlayers = data.filter(
-        (player) => player.status === "approved",
-      );
-      setApprovedPlayers(approvedPlayers);
-    });
-
+        (player) => player.status === 'approved',
+      )
+      setApprovedPlayers(approvedPlayers)
+    })
+    socket.on('player:assignedRole', ({ role }: { role: Player['role'] }) => {
+      toast.success('Random role after 3s')
+      setTimeout(() => {
+        const roleData = LIST_ROLE.find((r) => r.id === role) || LIST_ROLE[0]
+        setAssignedRole(roleData)
+        setShowRoleModal(true)
+      }, 3000)
+    })
+    socket.on('room:readySuccess', handleStartGameSuccess)
     return () => {
-      socket.off("room:getPlayers");
-      socket.off("room:updatePlayers");
-    };
-  }, [roomCode, playerId, isGM, setApprovedPlayers]);
+      socket.off('room:updatePlayers')
+      socket.off('player:assignedRole')
+      socket.off('room:readySuccess')
+    }
+  }, [roomCode, playerId, isGM, setApprovedPlayers])
 
-  // Demo: Show modal after 2s (remove in production)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setAssignedRole(LIST_ROLE[Math.floor(Math.random() * LIST_ROLE.length)]);
-      setShowRoleModal(true);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const toggleMockDataPanel = () => setShowMockPanel(!showMockPanel);
+  const toggleMockDataPanel = () => setShowMockPanel(!showMockPanel)
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
-      title: "Leave Room",
-      description: "Are you sure you want to leave the room?",
-      confirmText: "Leave",
-      cancelText: "Cancel",
-    });
-    if (!confirmed) return;
-    // const socket = getSocket();
+      title: 'Leave Room',
+      description: 'Are you sure you want to leave the room?',
+      confirmText: 'Leave',
+      cancelText: 'Cancel',
+    })
+    if (!confirmed) return
     // socket.emit("room:leave", { roomCode });
-    router.push("/join-room");
-  };
+    router.push('/join-room')
+  }
 
-  const handleContinueRole = () => setShowRoleModal(false);
+  const handleContinueRole = () => {
+    socket.emit('rq_player:ready', { roomCode })
+    // setShowRoleModal(false)
+    // router.push(`/room/${roomCode}`)
+  }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 px-4 py-6 text-white">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex h-10 items-center justify-between">
         <div className="flex items-center">
           <button
             className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
             aria-label="Back"
             onClick={handleLeaveRoom}
           >
-            <CornerUpLeft className="h-6 w-6 text-gray-400" />
+            <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
           </button>
         </div>
         <div className="flex min-w-[120px] items-center justify-end gap-2">
@@ -103,42 +107,46 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
               <Settings className="h-5 w-5" />
             </button>
           ) : username ? (
-            <div className="flex items-center gap-2">
-              <span className="max-w-[80px] truncate text-sm font-semibold text-yellow-300">
+            <div className="flex items-center justify-between gap-2">
+              <span className="max-w-[80px] truncate text-sm font-semibold">
                 {username}
               </span>
-              <span className="text-2xl">{AVATAR_OPTIONS[avatarKey]}</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700 font-bold">
+                <span className="text-2xl">
+                  {renderAvatar({ username, avatarKey })}
+                </span>
+              </div>
             </div>
           ) : null}
         </div>
       </div>
 
       <div className="flex flex-1 flex-col items-center">
-        <div className="text-center mb-4 ">
+        <div className="mb-4 text-center">
           <h1 className="text-xl font-bold">
             Lobby Code: <span className="text-yellow-400">{roomCode}</span>
           </h1>
         </div>
-        <div className="mb-6 w-full max-w-sm">
-          <div className="mb-4 text-center">
-            <h2 className="text-lg font-semibold">
+        <div className="w-full max-w-sm">
+          <div className="mb-12 text-center">
+            <h2 className="font-semibold">
               Players ({approvedPlayers.length}/9)
             </h2>
           </div>
-          <PlayerGrid players={approvedPlayers} currentPlayerId={playerId} />
+          <PlayerGrid
+            players={approvedPlayers}
+            currentPlayerId={playerId}
+            mode="lobby"
+          />
         </div>
       </div>
-      <MockDataPanel
-        isVisible={showMockPanel}
-        toggleMockDataPanel={toggleMockDataPanel}
-      />
       <RoleRandomizerModal
         assignedRole={assignedRole}
         onContinue={handleContinueRole}
         open={showRoleModal}
       />
     </main>
-  );
-};
+  )
+}
 
-export default RoomPage;
+export default RoomPage
