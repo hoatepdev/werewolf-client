@@ -37,10 +37,4 @@ export const LIST_ROLE: Role[] = [
     description: 'Protects 1 player per night',
     emoji: '🛡️',
   },
-  {
-    id: 'idiot',
-    name: 'Idiot',
-    description: 'Wins by getting voted out',
-    emoji: '🤡',
-  },
 ]

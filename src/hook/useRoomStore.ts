@@ -2,14 +2,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Player } from '@/types/player'
 
-export type Phase = 'waiting' | 'night' | 'day' | 'voting' | 'ended'
+export type Phase = 'night' | 'day' | 'voting' | 'ended'
 
 export type RoomState = {
   roomCode: string
   playerId: string
   role: string | null
   phase: Phase
-  alive: boolean | null
+  alive: boolean
   username: string
   avatarKey: number
   rehydrated: boolean
@@ -27,6 +27,7 @@ export type RoomState = {
   setRehydrated: (done: boolean) => void
   setApprovedPlayers: (players: Player[]) => void
   setIsGm: (isGm: boolean) => void
+  setResetGame: () => void
 }
 
 export const useRoomStore = create<RoomState>()(
@@ -35,8 +36,8 @@ export const useRoomStore = create<RoomState>()(
       roomCode: '',
       playerId: '',
       role: null,
-      phase: 'waiting',
-      alive: null,
+      phase: 'night',
+      alive: true,
       username: '',
       avatarKey: 0,
       rehydrated: false,
@@ -54,6 +55,16 @@ export const useRoomStore = create<RoomState>()(
       setRehydrated: (done) => set({ rehydrated: done }),
       setApprovedPlayers: (players) => set({ approvedPlayers: players }),
       setIsGm: (isGm: boolean) => set({ isGm }),
+      setResetGame: () =>
+        set({
+          roomCode: '',
+          playerId: '',
+          role: null,
+          phase: 'night',
+          alive: true,
+          approvedPlayers: [],
+          isGm: false,
+        }),
     }),
     {
       name: 'room-store',

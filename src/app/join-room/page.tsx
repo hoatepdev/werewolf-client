@@ -26,6 +26,7 @@ export default function JoinRoomPage() {
   const [scanning, setScanning] = useState(false)
   const [loading, setLoading] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
+  const setResetGame = useRoomStore((s) => s.setResetGame)
 
   useEffect(() => {
     // Request camera permission on mount
@@ -69,6 +70,7 @@ export default function JoinRoomPage() {
       }
     }
     focusRef.current?.focus()
+    setResetGame()
   }, [])
 
   useEffect(() => {
@@ -130,7 +132,7 @@ export default function JoinRoomPage() {
       socket.off('player:approved')
       socket.off('player:rejected')
     }
-  }, [scanning, router])
+  }, [scanning, router, socket])
 
   const handleJoinRoom = async () => {
     if (!roomCode || !username) {
@@ -138,6 +140,7 @@ export default function JoinRoomPage() {
       return
     }
     setLoading(true)
+
     if (!socket.connected) socket.connect()
     socket.emit(
       'rq_player:joinRoom',

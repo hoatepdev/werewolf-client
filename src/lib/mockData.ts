@@ -96,7 +96,7 @@ export const mockRejectedPlayers: Player[] = [
 
 export const mockRoomData = {
   roomCode: 'ABC123',
-  phase: 'waiting' as Phase,
+  phase: 'night' as Phase,
   playerId: 'player_1',
   role: 'werewolf',
   alive: true,
@@ -106,22 +106,22 @@ export const mockRoomData = {
 export const mockRoomScenarios = {
   empty: {
     players: [],
-    phase: 'waiting' as Phase,
+    phase: 'night' as Phase,
     description: 'Empty room with no players',
   },
   fewPlayers: {
     players: mockPlayers.slice(0, 3),
-    phase: 'waiting' as Phase,
+    phase: 'night' as Phase,
     description: 'Room with 3 players',
   },
   halfFull: {
     players: mockPlayers.slice(0, 5),
-    phase: 'waiting' as Phase,
+    phase: 'night' as Phase,
     description: 'Room with 5 players',
   },
   full: {
     players: mockPlayers,
-    phase: 'waiting' as Phase,
+    phase: 'night' as Phase,
     description: 'Room with 9 players (full)',
   },
   gameStarted: {
@@ -153,7 +153,6 @@ export const mockPlayerRoles = {
   witch: '🧪 Witch',
   hunter: '🎯 Hunter',
   bodyguard: '🛡️ Bodyguard',
-  idiot: '🤡 Idiot',
 }
 
 export const mockSocketEvents = {

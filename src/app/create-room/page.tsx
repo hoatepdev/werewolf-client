@@ -18,6 +18,15 @@ const CreateRoomPage = () => {
   const username = useRoomStore((s) => s.username)
   const avatarKey = useRoomStore((s) => s.avatarKey)
   const setIsGm = useRoomStore((s) => s.setIsGm)
+  const setResetGame = useRoomStore((s) => s.setResetGame)
+  console.log(
+    '⭐ s',
+    useRoomStore((s) => s),
+  )
+
+  useEffect(() => {
+    setResetGame()
+  }, [])
 
   useEffect(() => {
     if (!socket.connected) socket.connect()
@@ -28,7 +37,7 @@ const CreateRoomPage = () => {
         setRoomCode(data.roomCode)
       },
     )
-  }, [setRoomCode])
+  }, [setRoomCode, avatarKey, username, socket])
 
   const handleCreateRoom = () => {
     setIsGm(true)

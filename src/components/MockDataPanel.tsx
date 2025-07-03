@@ -26,6 +26,8 @@ export function MockDataPanel({
   const [customPlayerCount, setCustomPlayerCount] = useState(5)
   const [customPlayerName, setCustomPlayerName] = useState('')
 
+  const alive = useRoomStore((s) => s.alive)
+  const approvedPlayers = useRoomStore((s) => s.approvedPlayers)
   const setPhase = useRoomStore((s) => s.setPhase)
   const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
   const setRole = useRoomStore((s) => s.setRole)
@@ -54,8 +56,7 @@ export function MockDataPanel({
       true,
     )
 
-    const currentPlayers = useRoomStore.getState().approvedPlayers
-    setApprovedPlayers([...currentPlayers, newPlayer])
+    setApprovedPlayers([...approvedPlayers, newPlayer])
     setCustomPlayerName('')
     console.log(`Added player: ${newPlayer.username}`)
   }
@@ -73,7 +74,6 @@ export function MockDataPanel({
       'witch',
       'hunter',
       'bodyguard',
-      'idiot',
     ]
     const randomRole = roles[Math.floor(Math.random() * roles.length)]
     setRole(randomRole)
@@ -81,8 +81,7 @@ export function MockDataPanel({
   }
 
   const toggleAliveStatus = () => {
-    const currentAlive = useRoomStore.getState().alive
-    setAlive(!currentAlive)
+    setAlive(!alive)
     console.log('Toggled alive status')
   }
 
@@ -91,7 +90,7 @@ export function MockDataPanel({
   return (
     <Card
       ref={mockPanelRef}
-      className="fixed top-4 right-4 z-50 max-h-96 w-80 overflow-y-auto border-zinc-600 bg-zinc-800"
+      className="fixed top-4 right-4 z-50 max-h-96 w-80 overflow-x-hidden overflow-y-auto border-zinc-600 bg-zinc-800"
     >
       <CardHeader className="flex w-80 flex-row justify-between bg-zinc-800">
         <CardTitle className="w-full text-sm text-yellow-400">
@@ -197,18 +196,16 @@ export function MockDataPanel({
             Phase Controls
           </h4>
           <div className="grid grid-cols-2 gap-2">
-            {(['waiting', 'night', 'day', 'voting', 'ended'] as const).map(
-              (phase) => (
-                <Button
-                  key={phase}
-                  variant="default"
-                  className="h-auto py-1 text-xs"
-                  onClick={() => setPhase(phase)}
-                >
-                  {phase}
-                </Button>
-              ),
-            )}
+            {(['night', 'day', 'voting', 'ended'] as const).map((phase) => (
+              <Button
+                key={phase}
+                variant="default"
+                className="h-auto py-1 text-xs"
+                onClick={() => setPhase(phase)}
+              >
+                {phase}
+              </Button>
+            ))}
           </div>
         </div>
       </CardContent>

@@ -29,12 +29,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
   const playerId = useRoomStore((s) => s.playerId)
   const approvedPlayers = useRoomStore((s) => s.approvedPlayers)
-  const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
   const username = useRoomStore((s) => s.username)
   const avatarKey = useRoomStore((s) => s.avatarKey)
+  const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
+  const setRole = useRoomStore((s) => s.setRole)
 
   const handleStartGameSuccess = () => {
-    toast.success('Game start after 3s')
+    toast.success('Game starting in 3 seconds...')
     setTimeout(() => {
       router.push(`/room/${roomCode}`)
     }, 3000)
@@ -54,6 +55,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       setTimeout(() => {
         const roleData = LIST_ROLE.find((r) => r.id === role) || LIST_ROLE[0]
         setAssignedRole(roleData)
+        setRole(roleData.id)
         setShowRoleModal(true)
       }, 3000)
     })
@@ -63,7 +65,16 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       socket.off('player:assignedRole')
       socket.off('room:readySuccess')
     }
-  }, [roomCode, playerId, isGM, setApprovedPlayers])
+  }, [
+    roomCode,
+    playerId,
+    isGM,
+    setApprovedPlayers,
+    socket,
+    setAssignedRole,
+    setRole,
+    setShowRoleModal,
+  ])
 
   const toggleMockDataPanel = () => setShowMockPanel(!showMockPanel)
 
@@ -75,14 +86,11 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       cancelText: 'Cancel',
     })
     if (!confirmed) return
-    // socket.emit("room:leave", { roomCode });
     router.push('/join-room')
   }
 
   const handleContinueRole = () => {
     socket.emit('rq_player:ready', { roomCode })
-    // setShowRoleModal(false)
-    // router.push(`/room/${roomCode}`)
   }
 
   return (

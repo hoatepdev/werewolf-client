@@ -34,8 +34,13 @@ export default function ApprovePlayerPage() {
   const [loading, setLoading] = useState(false)
   const [textButton, setTextButton] = useState('Randomize Roles')
 
-  const roomCode = useRoomStore((s) => s.roomCode)
+  const setApprovedPlayersStore = useRoomStore((s) => s.setApprovedPlayers)
 
+  const roomCode = useRoomStore((s) => s.roomCode)
+  console.log(
+    '⭐ store',
+    useRoomStore((s) => s),
+  )
   const handleStartGameSuccess = () => {
     toast.success('Game start after 3s')
     setTimeout(() => {
@@ -54,8 +59,11 @@ export default function ApprovePlayerPage() {
         pendingPlayers.push(player)
       }
     })
-    setApprovedPlayers(approvedPlayers)
+    console.log('⭐ approvedPlayers', approvedPlayers)
+
     setPendingPlayers(pendingPlayers)
+    setApprovedPlayers(approvedPlayers)
+    setApprovedPlayersStore(approvedPlayers)
   }
 
   useEffect(() => {

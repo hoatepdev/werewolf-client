@@ -69,7 +69,7 @@ export const filterPlayersByStatus = () => {
 
 // Example 7: Generate test data for different game phases
 export const generatePhaseTestData = () => {
-  const phases = ['waiting', 'night', 'day', 'voting', 'ended'] as const
+  const phases = ['night', 'day', 'voting', 'ended'] as const
 
   return phases.map((phase) => ({
     phase,

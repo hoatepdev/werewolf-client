@@ -41,24 +41,27 @@ export const RoleRandomizerModal = ({
   const [isReady, setIsReady] = useState(false)
   const [rotation, setRotation] = useState(0)
   const wheelRef = useRef<HTMLDivElement>(null)
+  const [textButton, setTextButton] = useState('Ready')
 
   useEffect(() => {
     if (open) {
       setIsSpinning(true)
       setRotation(0)
+
       // Start spin after a short delay for effect
       setTimeout(() => {
         const targetRotation = getRotationForRole(assignedRole)
         setRotation(targetRotation)
         setTimeout(() => {
           setIsSpinning(false)
-        }, 5000)
+        }, 3000)
       }, 1000)
     }
   }, [open, assignedRole])
 
-  const handleContinue = () => {
+  const handleReady = () => {
     setIsReady(true)
+    setTextButton('Waiting...')
     onContinue()
   }
 
@@ -208,16 +211,16 @@ export const RoleRandomizerModal = ({
                 </div>
                 <Button
                   variant="yellow"
-                  onClick={handleContinue}
+                  onClick={handleReady}
                   disabled={isSpinning || isReady}
                 >
-                  {isReady ? (
-                    <>
+                  {isReady || isSpinning ? (
+                    <div className="flex items-center justify-center">
                       <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                      Waiting for players ready
-                    </>
+                      {textButton}
+                    </div>
                   ) : (
-                    'Ready'
+                    textButton
                   )}
                 </Button>
               </motion.div>

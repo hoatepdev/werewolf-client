@@ -15,15 +15,16 @@ export default function Home() {
   const zustandAvatarKey = useRoomStore((s) => s.avatarKey)
   const setUsername = useRoomStore((s) => s.setUsername)
   const setAvatarKey = useRoomStore((s) => s.setAvatarKey)
-
+  const setResetGame = useRoomStore((s) => s.setResetGame)
   const [step, setStep] = useState<'input' | 'mode'>('input')
   const [name, setName] = useState('')
   const [avatar, setAvatar] = useState<number>(0)
 
   useEffect(() => {
+    setResetGame()
     if (zustandName) setName(zustandName)
     if (typeof zustandAvatarKey === 'number') setAvatar(zustandAvatarKey)
-  }, [zustandName, zustandAvatarKey])
+  }, [zustandName, zustandAvatarKey, setResetGame])
 
   const handleContinue = () => {
     setUsername(name.trim())
@@ -102,7 +103,7 @@ export default function Home() {
               disabled={!name.trim()}
               onClick={handleContinue}
             >
-              Continue
+              Save & Continue
             </Button>
           </div>
         )}
