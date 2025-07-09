@@ -29,7 +29,7 @@ export function PlayerGrid({
         <Card
           key={player.id}
           className={`relative overflow-hidden transition-all duration-200 ${
-            player.id.toString() === currentPlayerId
+            player.id === currentPlayerId
               ? 'bg-zinc-700/50 ring-2 ring-yellow-400'
               : 'bg-zinc-800'
           } ${mode === 'room' && !player.alive ? 'opacity-50' : ''}`}
@@ -37,7 +37,7 @@ export function PlayerGrid({
           <CardContent className="flex flex-col items-center p-3">
             <div
               className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold ${
-                player.id.toString() === currentPlayerId
+                player.id === currentPlayerId
                   ? 'bg-yellow-400 text-black'
                   : 'bg-zinc-600 text-white'
               }`}

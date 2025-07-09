@@ -1,25 +1,24 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { getSocket } from '@/lib/socket'
-import { useRoomStore } from '@/hook/useRoomStore'
-import { PlayerGrid } from '@/components/PlayerGrid'
-import { MockDataPanel } from '@/components/MockDataPanel'
+import { getStateRoomStore, useRoomStore } from '@/hook/useRoomStore'
 import { Player } from '@/types/player'
 import { CornerUpLeft, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+
 import { confirmDialog } from '@/components/ui/alert-dialog'
-import { renderAvatar } from '@/helpers'
+import { PlayerGrid } from '@/components/PlayerGrid'
+import { Button } from '@/components/ui/button'
+import NightPhaseNew from '@/components/phase/NightPhase'
+import NightPhase from '@/components/phase/NightPhase'
+import DayPhase from '@/components/phase/DayPhase'
+import VotingPhase from '@/components/VotingPhase'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
+  const socket = getSocket()
   const router = useRouter()
-  const isGM = useRoomStore((s) => s.isGm)
   const [showMockPanel, setShowMockPanel] = useState(false)
-
   const { roomCode } = React.use(params)
-  console.log(
-    '⭐ store',
-    useRoomStore((s) => s),
-  )
   const phase = useRoomStore((s) => s.phase)
   const setPhase = useRoomStore((s) => s.setPhase)
   const role = useRoomStore((s) => s.role)
@@ -29,60 +28,39 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const playerId = useRoomStore((s) => s.playerId)
   const approvedPlayers = useRoomStore((s) => s.approvedPlayers)
   const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
-  const username = useRoomStore((s) => s.username)
-  const avatarKey = useRoomStore((s) => s.avatarKey)
+  const [nightResult, setNightResult] = useState<{
+    diedPlayerIds: string[]
+    cause: string
+  } | null>(null)
+  console.log('⭐ store', getStateRoomStore())
+
+  const alivePlayers = approvedPlayers
+    .filter((p) => p.alive)
+    .map((p) => ({ id: p.id, name: p.username }))
 
   useEffect(() => {
-    const socket = getSocket()
-    if (!socket.connected) socket.connect()
-    // socket.emit("room:join", { roomCode, playerId, isGM });
-
-    socket.on('room:phase', (newPhase: string) => {
-      setPhase(newPhase as import('@/hook/useRoomStore').Phase)
-    })
-    socket.on('room:role', (newRole: string) => {
-      setRole(newRole)
-    })
-    socket.on('room:alive', (isAlive: boolean) => {
-      setAlive(isAlive)
+    socket.on('game:phaseChanged', (newPhase: { phase: string }) => {
+      setPhase(newPhase.phase as 'night' | 'day' | 'voting' | 'ended')
     })
 
     socket.on('room:updatePlayers', (data: Player[]) => {
-      const approvedPlayers = data.filter(
-        (player) => player.status === 'approved',
-      )
-      setApprovedPlayers(approvedPlayers)
+      const approved = data.filter((player) => player.status === 'approved')
+      setApprovedPlayers(approved)
     })
 
+    socket.on(
+      'game:nightResult',
+      (data: { diedPlayerIds: string[]; cause: string }) => {
+        setNightResult(data)
+      },
+    )
+
     return () => {
-      socket.off('room:phase')
-      socket.off('room:role')
-      socket.off('room:alive')
+      socket.off('game:phaseChanged')
       socket.off('room:updatePlayers')
+      socket.off('game:nightResult')
     }
-  }, [
-    roomCode,
-    playerId,
-    isGM,
-    setPhase,
-    setRole,
-    setAlive,
-    setApprovedPlayers,
-  ])
-
-  const handleNextPhase = () => {
-    const socket = getSocket()
-    socket.emit('rq_gm:nextPhase', { roomCode })
-  }
-
-  const getWaitingMessage = () => {
-    if (isGM) {
-      return 'Waiting for players to join...'
-    }
-    return 'Waiting for GM to start the game...'
-  }
-
-  const toggleMockDataPanel = () => setShowMockPanel(!showMockPanel)
+  }, [roomCode, playerId, setPhase, setRole, setAlive, setApprovedPlayers])
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
@@ -92,14 +70,28 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       cancelText: 'Cancel',
     })
     if (!confirmed) return
-    // const socket = getSocket();
-    // socket.emit("room:leave", { roomCode });
-    router.push('/')
+
+    router.push('/join-room')
+  }
+
+  const renderPhase = () => {
+    switch (phase) {
+      case 'night':
+        return <NightPhase roomCode={roomCode} />
+      case 'day':
+        return <DayPhase nightResult={''} />
+      // case 'voting':
+      //   return <VotingPhase roomCode={roomCode} />
+      // case 'ended':
+      //   return <EndedPhase roomCode={roomCode} />
+      default:
+        return <div>12312312312</div>
+    }
   }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 px-4 py-6 text-white">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex h-10 items-center justify-between">
         <div className="flex items-center">
           <button
             className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
@@ -111,90 +103,51 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           <h1 className="text-xl font-bold">{roomCode}</h1>
         </div>
         <div className="flex min-w-[120px] items-center justify-end gap-2">
-          {isGM ? (
-            <button
-              className="text-zinc-400 transition-colors hover:text-yellow-400"
-              onClick={toggleMockDataPanel}
-              title="Toggle Mock Data Panel"
-            >
-              <Settings className="h-5 w-5" />
-            </button>
-          ) : username ? (
-            <div className="flex items-center gap-2">
-              <span className="max-w-[80px] truncate text-sm font-semibold text-yellow-300">
-                {username}
-              </span>
-              <span className="text-2xl">
-                {renderAvatar({ username, avatarKey })}
-              </span>
-            </div>
-          ) : null}
+          <button
+            className="text-zinc-400 transition-colors hover:text-yellow-400"
+            onClick={() => setShowMockPanel(!showMockPanel)}
+            title="Toggle Mock Data Panel"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
       <div className="flex flex-1 flex-col items-center">
-        <div className="mb-6 w-full max-w-sm">
-          <div className="mb-4 flex items-center justify-center gap-2 text-center">
-            <div className="text-sm text-zinc-400">Phase</div>
-            <div className="rounded-md border border-yellow-400 bg-yellow-400 px-2 py-1 text-xl font-semibold text-black">
-              {phase}
-            </div>
-          </div>
-
-          {phase === 'waiting' && (
-            <div className="mb-6 text-center">
-              <div className="text-lg text-zinc-400">{getWaitingMessage()}</div>
-            </div>
-          )}
+        <div className="mb-4 text-center">
+          <h1 className="text-xl font-bold">
+            Phase:
+            <span className="ml-4 tracking-widest text-yellow-400">
+              {phase.toUpperCase()}
+            </span>
+          </h1>
         </div>
 
-        <div className="mb-6 w-full max-w-sm">
-          <div className="mb-4 text-center">
-            <h2 className="text-lg font-semibold">
-              Players ({approvedPlayers.length}/9)
+        <div className="w-full max-w-sm">
+          <div className="mb-12 text-center">
+            <h2 className="h-6 font-semibold">
+              {alive ? `Your role: ${role}` : 'You are dead'}
             </h2>
           </div>
-          <PlayerGrid players={approvedPlayers} currentPlayerId={playerId} />
+          <PlayerGrid
+            players={approvedPlayers}
+            currentPlayerId={playerId}
+            mode="room"
+          />
         </div>
 
-        {isGM ? (
-          <div className="w-full max-w-sm">
-            <div className="mb-4 text-center">
-              <div className="font-bold text-blue-400">Game Master View</div>
-            </div>
-            <button
-              className="w-full rounded-xl bg-yellow-400 py-3 font-semibold text-black transition-colors hover:bg-yellow-300"
-              onClick={handleNextPhase}
-            >
-              Next Phase
-            </button>
-          </div>
-        ) : (
-          <div className="w-full max-w-sm">
-            <div className="mb-4 text-center">
-              <div className="font-bold text-green-400">Player View</div>
-            </div>
-            <div className="rounded-xl bg-zinc-800 p-4 text-center">
-              <div className="mb-2">
-                Role:{' '}
-                <span className="font-semibold text-yellow-400">
-                  {role || '?'}
-                </span>
-              </div>
-              <div>
-                Status:{' '}
-                <span className={alive ? 'text-green-400' : 'text-red-400'}>
-                  {alive ? 'Alive' : 'Dead'}
-                </span>
-              </div>
-            </div>
+        <div className="w-full">{renderPhase()}</div>
+
+        {nightResult && (
+          <div className="text-center text-zinc-300">
+            {nightResult.cause}
+            {nightResult.diedPlayerIds.map((id) => {
+              const player = approvedPlayers.find((p) => p.id === id)
+              return <div key={id}>{player?.username}</div>
+            })}
           </div>
         )}
       </div>
-      <MockDataPanel
-        isVisible={showMockPanel}
-        toggleMockDataPanel={toggleMockDataPanel}
-      />
     </main>
   )
 }

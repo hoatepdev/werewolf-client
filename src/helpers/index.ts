@@ -15,3 +15,7 @@ export const renderAvatar = (player: Partial<Player>) => {
     ? AVATAR_OPTIONS[player.avatarKey]
     : getInitialsName(player.username || '')
 }
+
+export const firstLetterUppercase = (string: string | null) => {
+  return string ? string.charAt(0).toUpperCase() + string.slice(1) : '?'
+}

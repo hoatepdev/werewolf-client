@@ -4,7 +4,7 @@ import { Check, CornerUpLeft, Loader2Icon, ScanQrCode, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import QRCode from 'react-qr-code'
-import { useRoomStore } from '@/hook/useRoomStore'
+import { getStateRoomStore, useRoomStore } from '@/hook/useRoomStore'
 import { getSocket } from '@/lib/socket'
 import {
   Dialog,
@@ -19,10 +19,10 @@ import { Player } from '@/types/player'
 import { RoleSelection } from '@/components/RoleSelection'
 import { renderAvatar } from '@/helpers'
 import { Button } from '@/components/ui/button'
+import { MIN_PLAYER } from '@/constants'
 
-const initialApproved: { id: number; username: string; avatarKey: number }[] =
-  []
-const initialPending: { id: number; username: string; avatarKey: number }[] = []
+const initialApproved: Player[] = []
+const initialPending: Player[] = []
 
 export default function ApprovePlayerPage() {
   const socket = getSocket()
@@ -35,17 +35,13 @@ export default function ApprovePlayerPage() {
   const [textButton, setTextButton] = useState('Randomize Roles')
 
   const setApprovedPlayersStore = useRoomStore((s) => s.setApprovedPlayers)
-
   const roomCode = useRoomStore((s) => s.roomCode)
-  console.log(
-    '⭐ store',
-    useRoomStore((s) => s),
-  )
+  console.log('⭐ store', getStateRoomStore())
   const handleStartGameSuccess = () => {
-    toast.success('Game start after 3s')
+    toast.success('Game start after 2s')
     setTimeout(() => {
-      router.push(`/room/${roomCode}`)
-    }, 3000)
+      router.push(`/gm-room/${roomCode}`)
+    }, 2000)
   }
 
   const handleDataPlayers = (data: Player[]) => {
@@ -79,22 +75,14 @@ export default function ApprovePlayerPage() {
     }
   }, [roomCode, router])
 
-  const handleApprove = (player: {
-    id: number
-    username: string
-    avatarKey: number
-  }) => {
+  const handleApprove = (player: Player) => {
     setApprovedPlayers((prev) => [...prev, player])
     setPendingPlayers((prev) => prev.filter((p) => p.id !== player.id))
     if (!socket.connected) socket.connect()
     socket.emit('rq_gm:approvePlayer', { roomCode, playerId: player.id })
   }
 
-  const handleReject = (player: {
-    id: number
-    username: string
-    avatarKey: number
-  }) => {
+  const handleReject = (player: Player) => {
     setPendingPlayers((prev) => prev.filter((p) => p.id !== player.id))
     if (!socket.connected) socket.connect()
     socket.emit('rq_gm:rejectPlayer', { roomCode, playerId: player.id })
@@ -124,12 +112,10 @@ export default function ApprovePlayerPage() {
     )
   }
 
-  // const countPlayer = approvedPlayers.length - 1;
-  // const canContinue =
-  //   approvedPlayers.length >= 5 &&
-  //   approvedPlayers.length === selectedRoles.length;
-  const countPlayer = 8
-  const canContinue = true
+  const countPlayer = approvedPlayers.length
+  const canContinue =
+    approvedPlayers.length >= MIN_PLAYER &&
+    approvedPlayers.length === selectedRoles.length
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 px-4 py-6 text-white">

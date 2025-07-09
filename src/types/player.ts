@@ -1,8 +1,8 @@
 export type Player = {
-  id: number
+  id: string
   username: string
   avatarKey: number
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'approved' | 'rejected' | 'gm'
   alive: boolean
   role?: 'villager' | 'werewolf' | 'seer' | 'witch' | 'hunter' | 'bodyguard'
 }

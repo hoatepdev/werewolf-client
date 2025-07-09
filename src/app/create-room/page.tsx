@@ -37,7 +37,7 @@ const CreateRoomPage = () => {
         setRoomCode(data.roomCode)
       },
     )
-  }, [setRoomCode, avatarKey, username, socket])
+  }, [avatarKey, username, socket])
 
   const handleCreateRoom = () => {
     setIsGm(true)

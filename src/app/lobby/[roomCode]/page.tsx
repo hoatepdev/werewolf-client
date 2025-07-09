@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { getSocket } from '@/lib/socket'
-import { useRoomStore } from '@/hook/useRoomStore'
+import { getStateRoomStore, useRoomStore } from '@/hook/useRoomStore'
 import { PlayerGrid } from '@/components/PlayerGrid'
 import { Player } from '@/types/player'
 import { CornerUpLeft, Settings } from 'lucide-react'
@@ -16,22 +16,18 @@ import { renderAvatar } from '@/helpers'
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
   const router = useRouter()
-  const isGM = useRoomStore((s) => s.isGm)
-  const [showMockPanel, setShowMockPanel] = useState(false)
   const [showRoleModal, setShowRoleModal] = useState(false)
   const [assignedRole, setAssignedRole] = useState<Role>(LIST_ROLE[0])
 
   const { roomCode } = React.use(params)
-  console.log(
-    '⭐ store',
-    useRoomStore((s) => s),
-  )
+  console.log('⭐ store', getStateRoomStore())
 
   const playerId = useRoomStore((s) => s.playerId)
   const approvedPlayers = useRoomStore((s) => s.approvedPlayers)
   const username = useRoomStore((s) => s.username)
   const avatarKey = useRoomStore((s) => s.avatarKey)
   const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
+
   const setRole = useRoomStore((s) => s.setRole)
 
   const handleStartGameSuccess = () => {
@@ -51,13 +47,12 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       setApprovedPlayers(approvedPlayers)
     })
     socket.on('player:assignedRole', ({ role }: { role: Player['role'] }) => {
-      toast.success('Random role after 3s')
       setTimeout(() => {
         const roleData = LIST_ROLE.find((r) => r.id === role) || LIST_ROLE[0]
         setAssignedRole(roleData)
         setRole(roleData.id)
         setShowRoleModal(true)
-      }, 3000)
+      }, 1000)
     })
     socket.on('room:readySuccess', handleStartGameSuccess)
     return () => {
@@ -65,18 +60,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       socket.off('player:assignedRole')
       socket.off('room:readySuccess')
     }
-  }, [
-    roomCode,
-    playerId,
-    isGM,
-    setApprovedPlayers,
-    socket,
-    setAssignedRole,
-    setRole,
-    setShowRoleModal,
-  ])
-
-  const toggleMockDataPanel = () => setShowMockPanel(!showMockPanel)
+  }, [roomCode, playerId, socket])
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
@@ -90,6 +74,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   }
 
   const handleContinueRole = () => {
+    console.log('⭐ handleContinueRole', roomCode)
     socket.emit('rq_player:ready', { roomCode })
   }
 
@@ -106,26 +91,16 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           </button>
         </div>
         <div className="flex min-w-[120px] items-center justify-end gap-2">
-          {isGM ? (
-            <button
-              className="text-zinc-400 transition-colors hover:text-yellow-400"
-              onClick={toggleMockDataPanel}
-              title="Toggle Mock Data Panel"
-            >
-              <Settings className="h-5 w-5" />
-            </button>
-          ) : username ? (
-            <div className="flex items-center justify-between gap-2">
-              <span className="max-w-[80px] truncate text-sm font-semibold">
-                {username}
+          <div className="flex items-center justify-between gap-2">
+            <span className="max-w-[80px] truncate text-sm font-semibold">
+              {username}
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700 font-bold">
+              <span className="text-2xl">
+                {renderAvatar({ username, avatarKey })}
               </span>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700 font-bold">
-                <span className="text-2xl">
-                  {renderAvatar({ username, avatarKey })}
-                </span>
-              </div>
             </div>
-          ) : null}
+          </div>
         </div>
       </div>
 

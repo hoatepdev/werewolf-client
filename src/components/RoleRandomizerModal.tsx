@@ -78,7 +78,12 @@ export const RoleRandomizerModal = ({
           <AnimatePresence mode="wait">
             {isSpinning ? (
               <div className="relative">
-                <div className="absolute top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2"
+                >
                   <svg
                     width={WHEEL_SIZE}
                     height={WHEEL_SIZE}
@@ -97,7 +102,7 @@ export const RoleRandomizerModal = ({
                       strokeWidth={3}
                     />
                   </svg>
-                </div>
+                </motion.div>
 
                 <motion.div
                   key="spinner"

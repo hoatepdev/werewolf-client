@@ -24,7 +24,7 @@ export default function Home() {
     setResetGame()
     if (zustandName) setName(zustandName)
     if (typeof zustandAvatarKey === 'number') setAvatar(zustandAvatarKey)
-  }, [zustandName, zustandAvatarKey, setResetGame])
+  }, [zustandName, zustandAvatarKey])
 
   const handleContinue = () => {
     setUsername(name.trim())
@@ -154,7 +154,7 @@ export default function Home() {
           </a>
         </div>
         <div className="text-center text-xs text-zinc-400">
-          VERSION 1.0.3
+          VERSION 1.0.0
           <br />
           Powered by:{' '}
           <a

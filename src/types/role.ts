@@ -1,5 +1,7 @@
+import { Player } from './player'
+
 export interface Role {
-  id: string
+  id: Player['role']
   name: string
   description: string
   emoji: string

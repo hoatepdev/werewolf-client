@@ -8,6 +8,8 @@ import {
   mockRoomScenarios,
   getMockPlayersByCount,
   createMockPlayer,
+  mockGamePresets,
+  mockCurrentPlayer,
 } from '@/lib/mockData'
 import { X } from 'lucide-react'
 import { useClickOutside } from '@/hook/useClickOutside'
@@ -32,6 +34,11 @@ export function MockDataPanel({
   const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
   const setRole = useRoomStore((s) => s.setRole)
   const setAlive = useRoomStore((s) => s.setAlive)
+  const setRoomCode = useRoomStore((s) => s.setRoomCode)
+  const setPlayerId = useRoomStore((s) => s.setPlayerId)
+  const setUsername = useRoomStore((s) => s.setUsername)
+  const setAvatarKey = useRoomStore((s) => s.setAvatarKey)
+  const setResetGame = useRoomStore((s) => s.setResetGame)
 
   const loadScenario = (scenarioName: keyof typeof mockRoomScenarios) => {
     const scenario = mockRoomScenarios[scenarioName]
@@ -50,7 +57,7 @@ export function MockDataPanel({
     if (!customPlayerName.trim()) return
 
     const newPlayer = createMockPlayer(
-      Date.now(),
+      `player_${Date.now()}`,
       customPlayerName,
       'approved',
       true,
@@ -85,6 +92,36 @@ export function MockDataPanel({
     console.log('Toggled alive status')
   }
 
+  const loadGamePreset = (presetName: keyof typeof mockGamePresets) => {
+    const preset = mockGamePresets[presetName]
+    setRoomCode(preset.roomCode)
+    setPhase(preset.phase)
+    setApprovedPlayers(preset.players)
+
+    const currentPlayer = preset.players[0]
+    setPlayerId(currentPlayer.id)
+    setUsername(currentPlayer.username)
+    setRole(currentPlayer.role || null)
+    setAlive(currentPlayer.alive)
+    setAvatarKey(currentPlayer.avatarKey)
+
+    console.log(`Loaded game preset: ${preset.description}`)
+  }
+
+  const loadCurrentPlayerPreset = () => {
+    setPlayerId(mockCurrentPlayer.playerId)
+    setUsername(mockCurrentPlayer.username)
+    setRole(mockCurrentPlayer.role)
+    setAlive(mockCurrentPlayer.alive)
+    setAvatarKey(mockCurrentPlayer.avatarKey)
+    console.log('Loaded current player preset')
+  }
+
+  const resetToDefault = () => {
+    setResetGame()
+    console.log('Reset game to default state')
+  }
+
   if (!isVisible) return null
 
   return (
@@ -101,7 +138,27 @@ export function MockDataPanel({
       <CardContent className="mt-10 space-y-4">
         <div>
           <h4 className="mb-2 text-xs font-semibold text-zinc-300">
-            Scenarios
+            🎮 Game Presets (Complete Setup)
+          </h4>
+          <div className="grid grid-cols-1 gap-2">
+            {Object.entries(mockGamePresets).map(([key, preset]) => (
+              <Button
+                key={key}
+                variant="default"
+                className="h-auto py-1 text-xs"
+                onClick={() =>
+                  loadGamePreset(key as keyof typeof mockGamePresets)
+                }
+              >
+                {preset.description}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="mb-2 text-xs font-semibold text-zinc-300">
+            Scenarios (Basic)
           </h4>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(mockRoomScenarios).map(([key, scenario]) => (
@@ -187,6 +244,20 @@ export function MockDataPanel({
               onClick={toggleAliveStatus}
             >
               Toggle Alive
+            </Button>
+            <Button
+              variant="default"
+              className="h-auto py-1 text-xs"
+              onClick={loadCurrentPlayerPreset}
+            >
+              Load Player
+            </Button>
+            <Button
+              variant="default"
+              className="h-auto py-1 text-xs"
+              onClick={resetToDefault}
+            >
+              Reset All
             </Button>
           </div>
         </div>
