@@ -52,18 +52,24 @@ function useAudioQueue() {
       utterance.pitch = 1.0
       utterance.volume = 1.0
       utterance.onend = () => {
-        isPlayingRef.current = false
-        setQueue((prev) => prev.slice(1))
+        setTimeout(() => {
+          isPlayingRef.current = false
+          setQueue((prev) => prev.slice(1))
+        }, 1000)
       }
       utterance.onerror = () => {
-        isPlayingRef.current = false
-        setQueue((prev) => prev.slice(1))
+        setTimeout(() => {
+          isPlayingRef.current = false
+          setQueue((prev) => prev.slice(1))
+        }, 1000)
       }
       speechSynthesis.speak(utterance)
     } else {
       alert(message)
-      isPlayingRef.current = false
-      setQueue((prev) => prev.slice(1))
+      setTimeout(() => {
+        isPlayingRef.current = false
+        setQueue((prev) => prev.slice(1))
+      }, 1000)
     }
   }, [queue])
 
@@ -269,8 +275,8 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     isPlayingRef,
     audioQueue,
     setCurrentAudio,
-    setAudioQueue,
   } = useAudioQueue()
+
   const {
     isConnected,
     currentPhase,
@@ -326,19 +332,20 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           🎮 Game Control
         </h2>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="yellow"
             onClick={() => handleNextPhase()}
-            className="rounded bg-gray-600 px-4 py-2 hover:bg-gray-700"
+            className="w-1/2"
           >
             Next Phase
-          </button>
+          </Button>
+          <Button
+            className="w-1/2"
+            onClick={() => addToQueue('Kiểm tra âm thanh')}
+          >
+            Test Audio
+          </Button>
         </div>
-        <button
-          onClick={() => addToQueue('Kiểm tra âm thanh')}
-          className="rounded bg-gray-600 px-4 py-2 hover:bg-gray-700"
-        >
-          Test Audio
-        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

@@ -12,7 +12,7 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
 
   const { nightPrompt, setNightPrompt } = useRoomStore()
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
+  const [sending, setSending] = useState(false)
   console.log('⭐ nightPrompt', nightPrompt)
 
   useEffect(() => {
@@ -36,20 +36,22 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
       return
     }
 
-    setPending(true)
+    setSending(true)
 
     socket.emit('night:werewolf-action:done', {
       roomCode,
       targetId: selectedTarget,
     })
     toast.success('Đã gửi vote')
-
-    setPending(false)
   }
 
   const targetPlayer = nightPrompt.candidates?.find(
     (p) => p.id === selectedTarget,
   )
+
+  if (sending) {
+    return null
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-lg bg-gray-900 p-6">
@@ -92,10 +94,10 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
 
       <button
         onClick={handleVote}
-        disabled={!selectedTarget || pending}
+        disabled={!selectedTarget}
         className="w-full rounded-lg bg-red-600 py-3 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
       >
-        {pending ? 'Đang gửi...' : 'Xác nhận'}
+        Xác nhận
       </button>
     </div>
   )

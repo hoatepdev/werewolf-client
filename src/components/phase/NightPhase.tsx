@@ -36,28 +36,10 @@ const NightPhase: React.FC<NightPhaseProps> = ({ roomCode }) => {
       villager: null,
     }
     return roleAction[role]
-    // || (<div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-lg bg-gray-900 p-6">
-    //       <div className="text-center">
-    //         <h3 className="text-xl font-bold text-gray-400">🌙 Đêm</h3>
-    //         <p className="text-sm text-gray-300">
-    //           Hãy nhắm mắt và chờ đợi...
-    //         </p>
-    //       </div>
-    //     </div>
-    //   )
   }
 
   return (
     <div className="flex w-full flex-col gap-6">
-      {/* Action Message */}
-      <div className="mx-auto w-full max-w-md text-center">
-        <div className="rounded-lg bg-gray-900 p-4">
-          <p className="text-lg font-medium text-gray-300">
-            {/* {getActionMessage()} */}
-          </p>
-        </div>
-      </div>
-
       {/* Role-specific action */}
       {renderRoleAction()}
 

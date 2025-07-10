@@ -12,7 +12,7 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
   const { nightPrompt, setNightPrompt } = useRoomStore()
   const [heal, setHeal] = useState<boolean>(false)
   const [poisonTarget, setPoisonTarget] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
     const handler = (data: NightPrompt) => {
@@ -30,21 +30,14 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
   }
 
   const handleAction = async () => {
-    setPending(true)
+    setSending(true)
 
-    try {
-      socket.emit('night:witch-action:done', {
-        roomCode,
-        heal,
-        poisonTargetId: poisonTarget,
-      })
-      toast.success('Đã gửi lựa chọn')
-    } catch (error) {
-      toast.error('Có lỗi xảy ra')
-      console.error('Witch action error:', error)
-    } finally {
-      setPending(false)
-    }
+    socket.emit('night:witch-action:done', {
+      roomCode,
+      heal,
+      poisonTargetId: poisonTarget,
+    })
+    toast.success('Đã gửi lựa chọn')
   }
 
   const killedPlayer = nightPrompt.candidates?.find(
@@ -55,6 +48,10 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
     (p) => p.id === poisonTarget,
   )
 
+  if (sending) {
+    return null
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-lg bg-gray-900 p-6">
       <div className="text-center">
@@ -63,25 +60,22 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
       </div>
 
       {nightPrompt.killedPlayerId && (
-        <div className="w-full rounded-lg bg-red-900/20 p-3">
+        <div className="flex w-full items-center justify-between rounded-lg bg-red-900/20 p-3">
           <p className="text-sm text-red-300">
             Người bị sói cắn:{' '}
             <span className="font-semibold">{killedPlayer?.username}</span>
           </p>
-        </div>
-      )}
-
-      {nightPrompt.canHeal && (
-        <div className="w-full space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
-            <input
-              type="checkbox"
-              checked={heal}
-              onChange={(e) => setHeal(e.target.checked)}
-              className="rounded"
-            />
-            Cứu người bị cắn
-          </label>
+          {nightPrompt.canHeal && (
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
+              <input
+                type="checkbox"
+                checked={heal}
+                onChange={(e) => setHeal(e.target.checked)}
+                className="rounded"
+              />
+              Cứu
+            </label>
+          )}
         </div>
       )}
 
@@ -90,7 +84,7 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
           <label className="text-sm font-medium text-gray-300">
             Chọn người để đầu độc (tùy chọn):
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {nightPrompt.candidates?.map((player) => (
               <button
                 key={player.id}
@@ -123,10 +117,10 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
 
       <button
         onClick={handleAction}
-        disabled={pending}
+        disabled={!poisonTarget && !heal}
         className="w-full rounded-lg bg-purple-600 py-3 font-semibold text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
       >
-        {pending ? 'Đang gửi...' : 'Xác nhận'}
+        Xác nhận
       </button>
     </div>
   )

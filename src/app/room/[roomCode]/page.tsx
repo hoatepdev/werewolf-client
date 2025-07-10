@@ -1,7 +1,11 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { getSocket } from '@/lib/socket'
-import { getStateRoomStore, useRoomStore } from '@/hook/useRoomStore'
+import {
+  getStateRoomStore,
+  NightResult,
+  useRoomStore,
+} from '@/hook/useRoomStore'
 import { Player } from '@/types/player'
 import { CornerUpLeft, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -28,10 +32,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const playerId = useRoomStore((s) => s.playerId)
   const approvedPlayers = useRoomStore((s) => s.approvedPlayers)
   const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
-  const [nightResult, setNightResult] = useState<{
-    diedPlayerIds: string[]
-    cause: string
-  } | null>(null)
+  const [nightResult, setNightResult] = useState<NightResult | null>(null)
   console.log('⭐ store', getStateRoomStore())
 
   const alivePlayers = approvedPlayers
@@ -48,12 +49,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       setApprovedPlayers(approved)
     })
 
-    socket.on(
-      'game:nightResult',
-      (data: { diedPlayerIds: string[]; cause: string }) => {
-        setNightResult(data)
-      },
-    )
+    socket.on('game:nightResult', (data: NightResult) => {
+      setNightResult(data)
+    })
 
     return () => {
       socket.off('game:phaseChanged')
@@ -79,7 +77,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       case 'night':
         return <NightPhase roomCode={roomCode} />
       case 'day':
-        return <DayPhase nightResult={''} />
+        return <DayPhase nightResult={nightResult} />
       // case 'voting':
       //   return <VotingPhase roomCode={roomCode} />
       // case 'ended':
@@ -123,7 +121,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           </h1>
         </div>
 
-        <div className="w-full max-w-sm">
+        <div className="mb-4 w-full max-w-sm">
           <div className="mb-12 text-center">
             <h2 className="h-6 font-semibold">
               {alive ? `Your role: ${role}` : 'You are dead'}

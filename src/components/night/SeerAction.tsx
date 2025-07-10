@@ -16,7 +16,7 @@ const SeerAction: React.FC<SeerActionProps> = ({ roomCode }) => {
     isRedFlag?: boolean
   } | null>(null)
   const [selectedRedFlag, setSelectedRedFlag] = useState<boolean | null>(null)
-  const [pending, setPending] = useState(false)
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
     const handler = (data: NightPrompt) => {
@@ -43,18 +43,20 @@ const SeerAction: React.FC<SeerActionProps> = ({ roomCode }) => {
       return
     }
 
-    setPending(true)
+    setSending(true)
     setSelectedRedFlag(selectedTarget?.isRedFlag || false)
     socket.emit('night:seer-action:done', {
       roomCode,
       targetId: selectedTarget,
     })
     toast.success('Đã gửi lựa chọn')
-
-    setPending(false)
   }
 
   console.log('⭐ targetPlayer', nightPrompt.candidates, selectedTarget)
+
+  if (sending) {
+    return null
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-lg bg-gray-900 p-6">
@@ -85,20 +87,12 @@ const SeerAction: React.FC<SeerActionProps> = ({ roomCode }) => {
         </div>
       </div>
 
-      {selectedTarget && (
-        <div className="w-full rounded-lg bg-gray-800 p-3">
-          <p className="text-sm text-gray-300">
-            <span className="font-semibold text-blue-400">
-              {selectedTarget?.username}
-            </span>
-          </p>
-        </div>
-      )}
-
       {selectedRedFlag !== null && (
         <div className="w-full rounded-lg bg-gray-800 p-3">
           <p className="text-sm text-gray-300">
-            {selectedTarget?.username}:{' '}
+            <span className="mr-2 font-semibold text-blue-400">
+              {selectedTarget?.username}
+            </span>
             {selectedRedFlag ? (
               <span className="font-bold text-red-500">LÀ SÓI</span>
             ) : (
@@ -110,10 +104,10 @@ const SeerAction: React.FC<SeerActionProps> = ({ roomCode }) => {
 
       <button
         onClick={handleVote}
-        disabled={!selectedTarget || pending}
+        disabled={!selectedTarget}
         className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
       >
-        {pending ? 'Đang gửi...' : 'Xác nhận'}
+        Xác nhận
       </button>
     </div>
   )
