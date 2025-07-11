@@ -28,12 +28,10 @@ export function MockDataPanel({
   const [customPlayerCount, setCustomPlayerCount] = useState(5)
   const [customPlayerName, setCustomPlayerName] = useState('')
 
-  const alive = useRoomStore((s) => s.alive)
   const approvedPlayers = useRoomStore((s) => s.approvedPlayers)
   const setPhase = useRoomStore((s) => s.setPhase)
   const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
   const setRole = useRoomStore((s) => s.setRole)
-  const setAlive = useRoomStore((s) => s.setAlive)
   const setRoomCode = useRoomStore((s) => s.setRoomCode)
   const setPlayerId = useRoomStore((s) => s.setPlayerId)
   const setUsername = useRoomStore((s) => s.setUsername)
@@ -83,12 +81,11 @@ export function MockDataPanel({
       'bodyguard',
     ]
     const randomRole = roles[Math.floor(Math.random() * roles.length)]
-    setRole(randomRole)
+    setRole(randomRole as Player['role'])
     console.log(`Set random role: ${randomRole}`)
   }
 
   const toggleAliveStatus = () => {
-    setAlive(!alive)
     console.log('Toggled alive status')
   }
 
@@ -102,7 +99,6 @@ export function MockDataPanel({
     setPlayerId(currentPlayer.id)
     setUsername(currentPlayer.username)
     setRole(currentPlayer.role || null)
-    setAlive(currentPlayer.alive)
     setAvatarKey(currentPlayer.avatarKey)
 
     console.log(`Loaded game preset: ${preset.description}`)
@@ -112,7 +108,6 @@ export function MockDataPanel({
     setPlayerId(mockCurrentPlayer.playerId)
     setUsername(mockCurrentPlayer.username)
     setRole(mockCurrentPlayer.role)
-    setAlive(mockCurrentPlayer.alive)
     setAvatarKey(mockCurrentPlayer.avatarKey)
     console.log('Loaded current player preset')
   }

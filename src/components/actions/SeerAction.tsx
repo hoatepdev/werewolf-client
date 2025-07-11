@@ -43,16 +43,16 @@ const SeerAction: React.FC<SeerActionProps> = ({ roomCode }) => {
       return
     }
 
-    setSending(true)
     setSelectedRedFlag(selectedTarget?.isRedFlag || false)
-    socket.emit('night:seer-action:done', {
-      roomCode,
-      targetId: selectedTarget,
-    })
-    toast.success('Đã gửi lựa chọn')
-  }
 
-  console.log('⭐ targetPlayer', nightPrompt.candidates, selectedTarget)
+    setTimeout(() => {
+      socket.emit('night:seer-action:done', {
+        roomCode,
+        targetId: selectedTarget,
+      })
+      setSending(true)
+    }, 3000)
+  }
 
   if (sending) {
     return null

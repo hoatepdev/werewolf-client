@@ -6,8 +6,8 @@ import { CornerUpLeft, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { MockDataPanel } from '@/components/MockDataPanel'
-import GmMonitoring from '@/components/night/GmMonitoring'
 import { Socket } from 'socket.io-client'
+import { useRoomStore } from '@/hook/useRoomStore'
 
 interface AudioEvent {
   type:
@@ -32,19 +32,22 @@ interface NightActionData {
 }
 
 function useAudioQueue() {
-  const [queue, setQueue] = useState<string[]>([])
   const isPlayingRef = useRef(false)
   const [currentAudio, setCurrentAudio] = useState<AudioEvent | null>(null)
   const [audioQueue, setAudioQueue] = useState<AudioEvent[]>([])
 
-  const addToQueue = useCallback((message: string) => {
-    setQueue((prev) => [...prev, message])
+  console.log('🔊 currentAudio', currentAudio)
+  console.log('🔊 audioQueue', audioQueue)
+
+  const addToQueue = useCallback((audioEvent: AudioEvent) => {
+    setCurrentAudio(audioEvent)
+    setAudioQueue((prev) => [...prev, audioEvent])
   }, [])
 
   const processQueue = useCallback(() => {
-    if (isPlayingRef.current || queue.length === 0) return
+    if (isPlayingRef.current || audioQueue.length === 0) return
     isPlayingRef.current = true
-    const message = queue[0]
+    const message = audioQueue[0].message
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(message)
       utterance.lang = 'vi-VN'
@@ -54,13 +57,15 @@ function useAudioQueue() {
       utterance.onend = () => {
         setTimeout(() => {
           isPlayingRef.current = false
-          setQueue((prev) => prev.slice(1))
+          setCurrentAudio(audioQueue[1])
+          setAudioQueue((prev) => prev.slice(1))
         }, 1000)
       }
       utterance.onerror = () => {
         setTimeout(() => {
           isPlayingRef.current = false
-          setQueue((prev) => prev.slice(1))
+          setCurrentAudio(audioQueue[1])
+          setAudioQueue((prev) => prev.slice(1))
         }, 1000)
       }
       speechSynthesis.speak(utterance)
@@ -68,23 +73,23 @@ function useAudioQueue() {
       alert(message)
       setTimeout(() => {
         isPlayingRef.current = false
-        setQueue((prev) => prev.slice(1))
+        setCurrentAudio(audioQueue[1])
+        setAudioQueue((prev) => prev.slice(1))
       }, 1000)
     }
-  }, [queue])
+  }, [audioQueue])
 
   useEffect(() => {
-    if (!isPlayingRef.current && queue.length > 0) {
+    if (!isPlayingRef.current && audioQueue.length > 0) {
       processQueue()
     }
-  }, [queue, processQueue])
+  }, [audioQueue, processQueue])
 
   return {
     addToQueue,
-    queue,
+    audioQueue,
     currentAudio,
     isPlayingRef,
-    audioQueue,
     setCurrentAudio,
     setAudioQueue,
   }
@@ -93,10 +98,12 @@ function useAudioQueue() {
 const useSocketConnection = (
   roomCode: string,
   socket: Socket,
-  addToQueue: (message: string) => void,
+  addToQueue: (audioEvent: AudioEvent) => void,
+  setCurrentAudio: (audioEvent: AudioEvent) => void,
 ) => {
   const [isConnected, setIsConnected] = useState(false)
-  const [currentPhase, setCurrentPhase] = useState('night')
+  const phase = useRoomStore((s) => s.phase)
+  const setPhase = useRoomStore((s) => s.setPhase)
   const [nightActions, setNightActions] = useState<NightActionData[]>([])
   const [nightResult, setNightResult] = useState<{
     diedPlayerIds: string[]
@@ -117,18 +124,28 @@ const useSocketConnection = (
         setIsConnected(true)
         toast.success('GM connected successfully')
       },
-      'game:phaseChanged': (data: { phase: string }) => {
-        setCurrentPhase(data.phase)
+      'game:phaseChanged': (data: {
+        phase: 'night' | 'day' | 'voting' | 'ended'
+      }) => {
+        setPhase(data.phase)
+      },
+
+      'gm:nightAction': (nightAction: NightActionData) => {
+        setNightActions((prev) => [...prev, nightAction])
+        addToQueue({
+          type: 'nightAction',
+          message: nightAction.message,
+        })
       },
       'game:nightResult': (data: {
         diedPlayerIds: string[]
         cause: string
       }) => {
         setNightResult(data)
-      },
-      'gm:nightAction': (nightAction: NightActionData) => {
-        setNightActions((prev) => [...prev, nightAction])
-        addToQueue(nightAction.message)
+        addToQueue({
+          type: 'nightEnd',
+          message: 'Trời sáng rồi, mời mọi người bàn luận',
+        })
       },
     }
 
@@ -147,10 +164,11 @@ const useSocketConnection = (
 
   return {
     isConnected,
-    currentPhase,
+    phase,
     nightActions,
     nightResult,
     handleNextPhase,
+    setCurrentAudio,
   }
 }
 
@@ -267,38 +285,16 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const { roomCode } = use(params)
   const [showMockPanel, setShowMockPanel] = useState(false)
 
-  console.log('rendered')
-
   const {
-    addToQueue,
-    currentAudio,
     isPlayingRef,
     audioQueue,
+    currentAudio,
+    addToQueue,
     setCurrentAudio,
   } = useAudioQueue()
 
-  const {
-    isConnected,
-    currentPhase,
-    nightActions,
-    nightResult,
-    handleNextPhase,
-  } = useSocketConnection(roomCode, socket, addToQueue)
-
-  useEffect(() => {
-    console.log('🔌 Setting up audio listener')
-
-    socket.on('gm:audio', (audioEvent: AudioEvent) => {
-      console.log('📡 Received gm:audio event:', audioEvent)
-      addToQueue(audioEvent.message)
-      setCurrentAudio(audioEvent)
-    })
-
-    return () => {
-      console.log('🔌 Cleaning up audio listener')
-      socket.off('gm:audio')
-    }
-  }, [])
+  const { isConnected, phase, nightActions, nightResult, handleNextPhase } =
+    useSocketConnection(roomCode, socket, addToQueue, setCurrentAudio)
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col bg-zinc-900 px-4 py-6 text-white">
@@ -332,16 +328,17 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           🎮 Game Control
         </h2>
         <div className="flex items-center gap-2">
-          <Button
-            variant="yellow"
-            onClick={() => handleNextPhase()}
-            className="w-1/2"
-          >
+          <Button variant="yellow" onClick={handleNextPhase} className="w-1/2">
             Next Phase
           </Button>
           <Button
             className="w-1/2"
-            onClick={() => addToQueue('Kiểm tra âm thanh')}
+            onClick={() =>
+              addToQueue({
+                type: 'nightAction',
+                message: 'Kiểm tra âm thanh',
+              })
+            }
           >
             Test Audio
           </Button>
@@ -356,7 +353,6 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           stopAudio={() => setCurrentAudio(null)}
         />
         <AudioQueue audioQueue={audioQueue} playAudio={setCurrentAudio} />
-        <GmMonitoring />
       </div>
 
       <MockDataPanel

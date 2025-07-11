@@ -1,49 +1,38 @@
 import React from 'react'
 import { useRoomStore } from '@/hook/useRoomStore'
-import WerewolfAction from '../night/WerewolfAction'
-import SeerAction from '../night/SeerAction'
-import WitchAction from '../night/WitchAction'
-import BodyguardAction from '../night/BodyguardAction'
-import HunterAction from '../night/HunterAction'
+import WerewolfAction from '../actions/WerewolfAction'
+import SeerAction from '../actions/SeerAction'
+import WitchAction from '../actions/WitchAction'
+import BodyguardAction from '../actions/BodyguardAction'
 
 interface NightPhaseProps {
   roomCode: string
 }
 
 const NightPhase: React.FC<NightPhaseProps> = ({ roomCode }) => {
-  const {
-    phase,
-    role,
-    alive,
-
-    nightPrompt,
-    nightResult,
-    isGm,
-  } = useRoomStore()
+  const { phase, role, nightPrompt, nightResult } = useRoomStore()
 
   if (phase !== 'night') {
     return null
   }
 
   const renderRoleAction = () => {
-    if (!alive || !role) return null
+    if (!role) return null
     const roleAction = {
       werewolf: <WerewolfAction roomCode={roomCode} />,
       seer: <SeerAction roomCode={roomCode} />,
       witch: <WitchAction roomCode={roomCode} />,
       bodyguard: <BodyguardAction roomCode={roomCode} />,
-      hunter: <HunterAction roomCode={roomCode} />,
+      hunter: null,
       villager: null,
     }
-    return roleAction[role]
+    return roleAction[role] || null
   }
 
   return (
     <div className="flex w-full flex-col gap-6">
-      {/* Role-specific action */}
       {renderRoleAction()}
 
-      {/* Night result */}
       {nightResult && (
         <div className="mx-auto w-full max-w-md">
           <div className="rounded-lg bg-gray-900 p-4">

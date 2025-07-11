@@ -31,11 +31,6 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
   }
 
   const handleVote = async () => {
-    if (!selectedTarget) {
-      toast.error('Vui lòng chọn người để cắn')
-      return
-    }
-
     setSending(true)
 
     socket.emit('night:werewolf-action:done', {

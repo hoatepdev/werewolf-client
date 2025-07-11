@@ -375,5 +375,4 @@ export const mockCurrentPlayer = {
   role: 'werewolf',
   alive: true,
   avatarKey: 0,
-  isGm: false,
 }

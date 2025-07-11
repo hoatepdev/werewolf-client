@@ -34,7 +34,7 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
         const role = LIST_ROLE.find((r) => r.id === roleId)
         if (role) {
           for (let i = 0; i < count; i++) {
-            selectedRolesArray.push(role.id)
+            selectedRolesArray.push(role.id!)
           }
         }
       })
@@ -56,7 +56,7 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
         const role = LIST_ROLE.find((r) => r.id === roleId)
         if (role) {
           for (let i = 0; i < count; i++) {
-            selectedRolesArray.push(role.id)
+            selectedRolesArray.push(role.id!)
           }
         }
       })
@@ -82,7 +82,7 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
 
       <div className="grid grid-cols-1 gap-3">
         {LIST_ROLE.map((role) => {
-          const count = roleCounts[role.id] || 0
+          const count = roleCounts[role.id!] || 0
           const isMaxReached = selectedCount >= totalCount
 
           return (
@@ -111,7 +111,7 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleRoleDecrement(role.id)
+                        handleRoleDecrement(role.id!)
                       }}
                       disabled={count === 0}
                       className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors ${
@@ -128,7 +128,7 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleRoleIncrement(role.id)
+                        handleRoleIncrement(role.id!)
                       }}
                       disabled={isMaxReached}
                       className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors ${

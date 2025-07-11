@@ -17,8 +17,8 @@ const CreateRoomPage = () => {
   const setRoomCode = useRoomStore((s) => s.setRoomCode)
   const username = useRoomStore((s) => s.username)
   const avatarKey = useRoomStore((s) => s.avatarKey)
-  const setIsGm = useRoomStore((s) => s.setIsGm)
   const setResetGame = useRoomStore((s) => s.setResetGame)
+
   console.log(
     '⭐ s',
     useRoomStore((s) => s),
@@ -40,7 +40,6 @@ const CreateRoomPage = () => {
   }, [avatarKey, username, socket])
 
   const handleCreateRoom = () => {
-    setIsGm(true)
     router.push('/approve-player')
   }
 

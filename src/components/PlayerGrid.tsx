@@ -9,12 +9,18 @@ interface PlayerGridProps {
   players: Player[]
   currentPlayerId?: string
   mode?: 'lobby' | 'room'
+  selectedId?: string
+  onSelect?: (id: string) => void
+  allowSelect?: boolean
 }
 
 export function PlayerGrid({
   players,
   currentPlayerId,
   mode,
+  selectedId,
+  onSelect,
+  allowSelect,
 }: PlayerGridProps) {
   const maxPlayers = 9
   const emptySlots = maxPlayers - players.length
@@ -29,15 +35,22 @@ export function PlayerGrid({
         <Card
           key={player.id}
           className={`relative overflow-hidden transition-all duration-200 ${
-            player.id === currentPlayerId
+            player.id === currentPlayerId || player.id === selectedId
               ? 'bg-zinc-700/50 ring-2 ring-yellow-400'
               : 'bg-zinc-800'
-          } ${mode === 'room' && !player.alive ? 'opacity-50' : ''}`}
+          } ${mode === 'lobby' || player.alive ? '' : 'opacity-50'} ${
+            allowSelect
+              ? 'cursor-pointer'
+              : 'pointer-events-none cursor-not-allowed'
+          }`}
+          onClick={() => {
+            if (allowSelect) onSelect?.(player.id)
+          }}
         >
           <CardContent className="flex flex-col items-center p-3">
             <div
               className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold ${
-                player.id === currentPlayerId
+                player.id === currentPlayerId || player.id === selectedId
                   ? 'bg-yellow-400 text-black'
                   : 'bg-zinc-600 text-white'
               }`}
