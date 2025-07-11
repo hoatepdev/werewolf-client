@@ -126,14 +126,14 @@ export function MockDataPanel({
     >
       <CardHeader className="flex w-80 flex-row justify-between bg-zinc-800">
         <CardTitle className="w-full text-sm text-yellow-400">
-          🧪 Mock Data Panel
+          🧪 Bảng dữ liệu mẫu
         </CardTitle>
         <X className="h-4 w-4" onClick={toggleMockDataPanel} />
       </CardHeader>
       <CardContent className="mt-10 space-y-4">
         <div>
           <h4 className="mb-2 text-xs font-semibold text-zinc-300">
-            🎮 Game Presets (Complete Setup)
+            🎮 Thiết lập game nhanh
           </h4>
           <div className="grid grid-cols-1 gap-2">
             {Object.entries(mockGamePresets).map(([key, preset]) => (
@@ -153,7 +153,7 @@ export function MockDataPanel({
 
         <div>
           <h4 className="mb-2 text-xs font-semibold text-zinc-300">
-            Scenarios (Basic)
+            Kịch bản (Cơ bản)
           </h4>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(mockRoomScenarios).map(([key, scenario]) => (

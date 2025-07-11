@@ -38,14 +38,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({ messages, onSend, disabled }) => {
             setInput(e.target.value)
           }
           disabled={disabled}
-          placeholder="Type a message..."
+          placeholder="Nhập tin nhắn..."
         />
         <button
           className="rounded bg-yellow-400 px-3 py-1 font-semibold text-black"
           onClick={handleSend}
           disabled={disabled || !input.trim()}
         >
-          Send
+          Gửi
         </button>
       </div>
     </div>

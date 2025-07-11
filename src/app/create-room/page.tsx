@@ -44,27 +44,27 @@ const CreateRoomPage = () => {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-between bg-zinc-900 px-4 py-6">
-      {/* Top bar with back arrow */}
-      <div className="mb-4 flex w-full items-center">
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center bg-zinc-900 px-4 py-6 text-white">
+      <div className="mb-6 flex h-10 w-full items-center justify-between">
         <button
           className="mr-2 text-2xl text-white hover:text-gray-400"
-          aria-label="Back"
+          aria-label="Quay lại"
           onClick={() => router.back()}
         >
           {/* Back arrow icon placeholder */}
           <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
         </button>
+        <h1 className="ml-2 text-xl font-bold">Tạo phòng mới</h1>
       </div>
 
       {/* Main content */}
       <div className="flex w-full max-w-sm flex-1 flex-col items-center justify-center">
         <h1 className="mb-2 text-center text-3xl font-extrabold text-white">
-          Join game
+          Tham gia game
         </h1>
         <p className="mb-6 text-center text-base text-gray-400">
-          Game players need to scan this QR code using their devices to request
-          to join the game
+          Người chơi cần quét mã QR này bằng thiết bị của họ để yêu cầu tham gia
+          game
         </p>
         {/* QR code placeholder with yellow border */}
         <div className="mb-20 rounded-2xl border-4 border-yellow-400 bg-white p-2">
@@ -78,7 +78,7 @@ const CreateRoomPage = () => {
                 className="rounded-xl"
               />
             ) : (
-              <span className="text-gray-400">Generating QR Code...</span>
+              <span className="text-gray-400">Đang tạo mã QR...</span>
             )}
           </div>
         </div>
@@ -86,13 +86,13 @@ const CreateRoomPage = () => {
         <div className="mb-2 flex w-full items-center">
           <div className="h-px flex-1 bg-gray-600" />
           <span className="mx-3 text-sm font-semibold tracking-widest text-gray-400">
-            REQUEST MANUALLY
+            YÊU CẦU THỦ CÔNG
           </span>
           <div className="h-px flex-1 bg-gray-600" />
         </div>
         <p className="mb-4 text-center text-sm text-gray-400">
-          Players can also copy and paste the following game id to the game
-          joining request box in their app
+          Người chơi cũng có thể sao chép và dán mã game sau đây vào hộp yêu cầu
+          tham gia game trong ứng dụng của họ
         </p>
         <div className="mb-8 flex w-full items-center rounded-xl border-2 border-yellow-400 bg-[#23232a] px-4 py-3">
           <span className="flex-1 truncate font-mono text-lg text-white">
@@ -106,18 +106,14 @@ const CreateRoomPage = () => {
               className="h-6 w-6 cursor-pointer"
               onClick={() => {
                 navigator.clipboard.writeText(roomCode || '')
-                toast.success('Copied to clipboard')
+                toast.success('Đã sao chép vào clipboard')
               }}
             />
           </button>
         </div>
       </div>
-      <Button
-        variant="yellow"
-        className="mb-2 w-full max-w-sm"
-        onClick={handleCreateRoom}
-      >
-        Create Room
+      <Button onClick={handleCreateRoom} variant="yellow">
+        Vào phòng chờ
       </Button>
     </main>
   )

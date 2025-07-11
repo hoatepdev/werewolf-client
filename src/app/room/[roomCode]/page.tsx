@@ -95,7 +95,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     <div className="flex flex-1 flex-col items-center">
       <div className="mb-4 text-center">
         <h1 className="text-xl font-bold">
-          Phase:
+          Pha:
           <span className="ml-4 tracking-widest text-yellow-400">
             {phase.toUpperCase()}
           </span>
@@ -105,7 +105,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       <div className="mb-4 w-full max-w-sm">
         <div className="mb-12 text-center">
           <h2 className="h-6 font-semibold">
-            {currentPlayer?.alive ? `Your role: ${role}` : 'You are dead'}
+            {currentPlayer?.alive ? `Vai trò của bạn: ${role}` : 'Bạn đã chết'}
           </h2>
         </div>
         <PlayerGrid

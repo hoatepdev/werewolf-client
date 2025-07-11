@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { getSocket } from '@/lib/socket'
 import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
 
 interface BodyguardActionProps {
   roomCode: string

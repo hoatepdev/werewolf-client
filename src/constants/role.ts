@@ -1,40 +1,40 @@
-import { Role } from '@/types/role'
+import { RoleObject } from '@/types/role'
 
-export const LIST_ROLE: Role[] = [
+export const LIST_ROLE: RoleObject[] = [
   {
     id: 'villager',
-    name: 'Villager',
-    description: 'No special ability',
+    name: 'Dân làng',
+    description: 'Không có khả năng đặc biệt',
     emoji: '🧑‍🌾',
   },
   {
     id: 'werewolf',
-    name: 'Werewolf',
-    description: 'Wake up at night and kill',
+    name: 'Sói',
+    description: 'Thức dậy vào ban đêm để giết một người',
     emoji: '🐺',
   },
   {
     id: 'seer',
-    name: 'Seer',
-    description: "Can see one player's role each night",
+    name: 'Tiên tri',
+    description: 'Có thể kiểm tra một người có phải là sói không',
     emoji: '🔮',
   },
   {
     id: 'witch',
-    name: 'Witch',
-    description: 'Can heal or poison once per game',
+    name: 'Phù thủy',
+    description: 'Có thể hồi phục hoặc đầu độc một người mỗi đêm',
     emoji: '🧪',
   },
   {
     id: 'hunter',
-    name: 'Hunter',
-    description: 'Can kill one person when they die',
+    name: 'Người săn',
+    description: 'Có thể giết một người khi họ chết',
     emoji: '🎯',
   },
   {
     id: 'bodyguard',
-    name: 'Bodyguard',
-    description: 'Protects 1 player per night',
+    name: 'Bảo vệ',
+    description: 'Bảo vệ 1 người mỗi đêm',
     emoji: '🛡️',
   },
 ]

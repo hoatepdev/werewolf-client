@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Role } from '@/types/role'
+import { RoleObject } from '@/types/role'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LIST_ROLE } from '@/constants/role'
 import Image from 'next/image'
 import { Loader2Icon } from 'lucide-react'
 
 interface RoleRandomizerModalProps {
-  assignedRole: Role
+  assignedRole: RoleObject
   onContinue: () => void
   open: boolean
 }
@@ -24,7 +24,7 @@ function getSegmentColor(idx: number) {
   return idx % 2 === 0 ? '#fde047' : '#fbbf24'
 }
 
-function getRotationForRole(role: Role) {
+function getRotationForRole(role: RoleObject) {
   const idx = LIST_ROLE.findIndex((r) => r.id === role.id)
   // The wheel should stop so the selected role is at the top (0deg)
   // SVG 0deg is at 3 o'clock, so rotate so the segment's center is at 270deg

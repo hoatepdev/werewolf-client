@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { confirmDialog } from '@/components/ui/alert-dialog'
 import RoleRandomizerModal from '@/components/RoleRandomizerModal'
 import { LIST_ROLE } from '@/constants/role'
-import { Role } from '@/types/role'
+import { RoleObject } from '@/types/role'
 import { toast } from 'sonner'
 import { renderAvatar } from '@/helpers'
 
@@ -17,7 +17,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
   const router = useRouter()
   const [showRoleModal, setShowRoleModal] = useState(false)
-  const [assignedRole, setAssignedRole] = useState<Role>(LIST_ROLE[0])
+  const [assignedRole, setAssignedRole] = useState<RoleObject>(LIST_ROLE[0])
 
   const { roomCode } = React.use(params)
   console.log('⭐ store', getStateRoomStore())
@@ -31,7 +31,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const setRole = useRoomStore((s) => s.setRole)
 
   const handleStartGameSuccess = () => {
-    toast.success('Game starting in 3 seconds...')
+    toast.success('Bắt đầu game sau 3 giây...')
     setTimeout(() => {
       router.push(`/room/${roomCode}`)
     }, 3000)
@@ -89,6 +89,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           >
             <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
           </button>
+          <h1 className="ml-2 text-xl font-bold">{roomCode}</h1>
         </div>
         <div className="flex min-w-[120px] items-center justify-end gap-2">
           <div className="flex items-center justify-between gap-2">

@@ -63,7 +63,7 @@ export default function Home() {
                 htmlFor="name"
                 className="text-base font-semibold text-zinc-200"
               >
-                Enter your user name
+                Nhập tên người chơi
               </label>
               <Input
                 id="name"
@@ -77,7 +77,7 @@ export default function Home() {
             </div>
             <div className="flex w-full flex-col gap-2">
               <span className="mb-1 text-base font-semibold text-zinc-200">
-                Choose your avatar
+                Chọn avatar của bạn
               </span>
               <div className="flex flex-wrap justify-center gap-3">
                 {AVATAR_OPTIONS.map((opt, index) => (
@@ -103,14 +103,14 @@ export default function Home() {
               disabled={!name.trim()}
               onClick={handleContinue}
             >
-              Save & Continue
+              Lưu & Tiếp tục
             </Button>
           </div>
         )}
         {step === 'mode' && (
           <div className="mb-6 flex w-full max-w-xs flex-col gap-2">
             <p className="mt-2 max-w-xs text-left text-lg text-zinc-300">
-              Choose your game mode
+              Chọn chế độ chơi
             </p>
             <div className="mt-6 flex w-full flex-col gap-4">
               <Button
@@ -118,10 +118,10 @@ export default function Home() {
                 onClick={() => router.push('/join-room')}
                 type="button"
               >
-                PLAYER MODE
+                CHẾ ĐỘ NGƯỜI CHƠI
               </Button>
               <Button onClick={() => router.push('/create-room')} type="button">
-                GAME MASTER MODE
+                CHẾ ĐỘ QUẢN TRÒ
               </Button>
             </div>
           </div>
@@ -135,22 +135,22 @@ export default function Home() {
             href="#"
             className="flex flex-col items-center text-xs text-zinc-200 transition-colors hover:text-yellow-400"
           >
-            <span className="text-xl">📖</span>
-            Guidebook
+            <span className="text-xl">��</span>
+            Hướng dẫn
           </a>
           <a
             href="#"
             className="flex flex-col items-center text-xs text-zinc-200 transition-colors hover:text-yellow-400"
           >
             <span className="text-xl">👥</span>
-            Terms of usage
+            Điều khoản sử dụng
           </a>
           <a
             href="#"
             className="flex flex-col items-center text-xs text-zinc-200 transition-colors hover:text-yellow-400"
           >
             <span className="text-xl">🛡️</span>
-            Privacy policy
+            Chính sách bảo mật
           </a>
         </div>
         <div className="text-center text-xs text-zinc-400">

@@ -63,10 +63,10 @@ export function useProgrammaticDialog() {
           <AlertDialogTitle>
             {options.title ||
               (options.type === 'confirm'
-                ? 'Are you sure?'
+                ? 'Bạn có chắc chắn?'
                 : options.type === 'warning'
-                  ? 'Warning'
-                  : 'Alert')}
+                  ? 'Cảnh báo'
+                  : 'Thông báo')}
           </AlertDialogTitle>
           {options.description && (
             <AlertDialogDescription>
@@ -78,16 +78,16 @@ export function useProgrammaticDialog() {
           {options.type === 'confirm' || options.type === 'warning' ? (
             <>
               <AlertDialogCancel onClick={handleCancel}>
-                {options.cancelText || 'Cancel'}
+                {options.cancelText || 'Hủy'}
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirm}>
                 {options.confirmText ||
-                  (options.type === 'warning' ? 'Proceed' : 'OK')}
+                  (options.type === 'warning' ? 'Tiếp tục' : 'Đồng ý')}
               </AlertDialogAction>
             </>
           ) : (
             <AlertDialogAction onClick={handleConfirm}>
-              {options.confirmText || 'OK'}
+              {options.confirmText || 'Đồng ý'}
             </AlertDialogAction>
           )}
         </AlertDialogFooter>

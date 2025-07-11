@@ -1,7 +1,13 @@
-import { Player } from './player'
+export type Role =
+  | 'villager'
+  | 'werewolf'
+  | 'seer'
+  | 'witch'
+  | 'hunter'
+  | 'bodyguard'
 
-export interface Role {
-  id: Player['role']
+export interface RoleObject {
+  id: Role
   name: string
   description: string
   emoji: string
