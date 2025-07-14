@@ -13,6 +13,8 @@ import {
 } from '@/lib/mockData'
 import { X } from 'lucide-react'
 import { useClickOutside } from '@/hook/useClickOutside'
+import { Player } from '@/types/player'
+import { Role } from '@/types/role'
 
 interface MockDataPanelProps {
   isVisible?: boolean
@@ -28,15 +30,17 @@ export function MockDataPanel({
   const [customPlayerCount, setCustomPlayerCount] = useState(5)
   const [customPlayerName, setCustomPlayerName] = useState('')
 
-  const approvedPlayers = useRoomStore((s) => s.approvedPlayers)
-  const setPhase = useRoomStore((s) => s.setPhase)
-  const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
-  const setRole = useRoomStore((s) => s.setRole)
-  const setRoomCode = useRoomStore((s) => s.setRoomCode)
-  const setPlayerId = useRoomStore((s) => s.setPlayerId)
-  const setUsername = useRoomStore((s) => s.setUsername)
-  const setAvatarKey = useRoomStore((s) => s.setAvatarKey)
-  const setResetGame = useRoomStore((s) => s.setResetGame)
+  const {
+    approvedPlayers,
+    setPhase,
+    setApprovedPlayers,
+    setRole,
+    setRoomCode,
+    setPlayerId,
+    setUsername,
+    setAvatarKey,
+    setResetGame,
+  } = useRoomStore()
 
   const loadScenario = (scenarioName: keyof typeof mockRoomScenarios) => {
     const scenario = mockRoomScenarios[scenarioName]
@@ -72,7 +76,7 @@ export function MockDataPanel({
   }
 
   const setRandomRole = () => {
-    const roles = [
+    const roles: Role[] = [
       'werewolf',
       'villager',
       'seer',
@@ -81,7 +85,7 @@ export function MockDataPanel({
       'bodyguard',
     ]
     const randomRole = roles[Math.floor(Math.random() * roles.length)]
-    setRole(randomRole as Player['role'])
+    setRole(randomRole)
     console.log(`Set random role: ${randomRole}`)
   }
 
@@ -107,7 +111,7 @@ export function MockDataPanel({
   const loadCurrentPlayerPreset = () => {
     setPlayerId(mockCurrentPlayer.playerId)
     setUsername(mockCurrentPlayer.username)
-    setRole(mockCurrentPlayer.role)
+    setRole(mockCurrentPlayer.role as Role)
     setAvatarKey(mockCurrentPlayer.avatarKey)
     console.log('Loaded current player preset')
   }
@@ -173,7 +177,7 @@ export function MockDataPanel({
 
         <div>
           <h4 className="mb-2 text-xs font-semibold text-zinc-300">
-            Custom Player Count
+            Số người chơi tùy chỉnh
           </h4>
           <div className="flex gap-2">
             <input
@@ -189,19 +193,19 @@ export function MockDataPanel({
               className="px-2 py-1 text-xs"
               onClick={loadCustomPlayerCount}
             >
-              Load
+              Tải
             </Button>
           </div>
         </div>
 
         <div>
           <h4 className="mb-2 text-xs font-semibold text-zinc-300">
-            Add Custom Player
+            Thêm người chơi tùy chỉnh
           </h4>
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="Player name"
+              placeholder="Tên người chơi"
               value={customPlayerName}
               onChange={(e) => setCustomPlayerName(e.target.value)}
               className="flex-1 rounded border border-zinc-600 bg-zinc-700 px-2 py-1 text-xs text-white"
@@ -211,55 +215,57 @@ export function MockDataPanel({
               className="px-2 py-1 text-xs"
               onClick={addCustomPlayer}
             >
-              Add
-            </Button>
-          </div>
-        </div>
-
-        <div>
-          <h4 className="mb-2 text-xs font-semibold text-zinc-300">Actions</h4>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="default"
-              className="h-auto py-1 text-xs"
-              onClick={clearPlayers}
-            >
-              Clear Players
-            </Button>
-            <Button
-              variant="default"
-              className="h-auto py-1 text-xs"
-              onClick={setRandomRole}
-            >
-              Random Role
-            </Button>
-            <Button
-              variant="default"
-              className="h-auto py-1 text-xs"
-              onClick={toggleAliveStatus}
-            >
-              Toggle Alive
-            </Button>
-            <Button
-              variant="default"
-              className="h-auto py-1 text-xs"
-              onClick={loadCurrentPlayerPreset}
-            >
-              Load Player
-            </Button>
-            <Button
-              variant="default"
-              className="h-auto py-1 text-xs"
-              onClick={resetToDefault}
-            >
-              Reset All
+              Thêm
             </Button>
           </div>
         </div>
 
         <div>
           <h4 className="mb-2 text-xs font-semibold text-zinc-300">
-            Phase Controls
+            Hành động
+          </h4>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="default"
+              className="h-auto py-1 text-xs"
+              onClick={clearPlayers}
+            >
+              Xóa người chơi
+            </Button>
+            <Button
+              variant="default"
+              className="h-auto py-1 text-xs"
+              onClick={setRandomRole}
+            >
+              Vai ngẫu nhiên
+            </Button>
+            <Button
+              variant="default"
+              className="h-auto py-1 text-xs"
+              onClick={toggleAliveStatus}
+            >
+              Chuyển trạng thái
+            </Button>
+            <Button
+              variant="default"
+              className="h-auto py-1 text-xs"
+              onClick={loadCurrentPlayerPreset}
+            >
+              Tải người chơi
+            </Button>
+            <Button
+              variant="default"
+              className="h-auto py-1 text-xs"
+              onClick={resetToDefault}
+            >
+              Đặt lại tất cả
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="mb-2 text-xs font-semibold text-zinc-300">
+            Điều khiển giai đoạn
           </h4>
           <div className="grid grid-cols-2 gap-2">
             {(['night', 'day', 'voting', 'ended'] as const).map((phase) => (

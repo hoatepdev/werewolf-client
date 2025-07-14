@@ -26,13 +26,13 @@ const GameEnd: React.FC<GameEndProps> = ({
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4">
-      <div className="mb-2 text-center text-2xl font-bold">Game Over</div>
+      <div className="mb-2 text-center text-2xl font-bold">Kết thúc game</div>
       <div className="mb-2 text-center text-lg">
-        Winning Team:{' '}
+        Đội thắng:{' '}
         <span className="font-bold text-yellow-400">{winningTeam}</span>
       </div>
       <div className="w-full">
-        <div className="mb-1 font-semibold">Players</div>
+        <div className="mb-1 font-semibold">Người chơi</div>
         <ul className="divide-y divide-zinc-700">
           {players.map((p: Player) => (
             <li key={p.id} className="flex justify-between py-1">
@@ -41,7 +41,7 @@ const GameEnd: React.FC<GameEndProps> = ({
                 <span className="text-xs text-zinc-400">({p.role})</span>
               </span>
               <span className={p.alive ? 'text-green-400' : 'text-red-400'}>
-                {p.alive ? 'Alive' : 'Dead'}
+                {p.alive ? 'Sống' : 'Chết'}
               </span>
             </li>
           ))}
@@ -52,13 +52,13 @@ const GameEnd: React.FC<GameEndProps> = ({
           className="flex-1 rounded-xl bg-zinc-700 py-2 text-white"
           onClick={onReturn}
         >
-          Return to Home
+          Về trang chủ
         </button>
         <button
           className="flex-1 rounded-xl bg-yellow-400 py-2 font-semibold text-black"
           onClick={onPlayAgain}
         >
-          Play Again
+          Chơi lại
         </button>
       </div>
     </div>

@@ -13,11 +13,8 @@ const CreateRoomPage = () => {
   const socket = getSocket()
   const router = useRouter()
 
-  const roomCode = useRoomStore((s) => s.roomCode)
-  const setRoomCode = useRoomStore((s) => s.setRoomCode)
-  const username = useRoomStore((s) => s.username)
-  const avatarKey = useRoomStore((s) => s.avatarKey)
-  const setResetGame = useRoomStore((s) => s.setResetGame)
+  const { username, roomCode, avatarKey, setRoomCode, setResetGame } =
+    useRoomStore()
 
   console.log(
     '⭐ s',
@@ -40,7 +37,7 @@ const CreateRoomPage = () => {
   }, [avatarKey, username, socket])
 
   const handleCreateRoom = () => {
-    router.push('/approve-player')
+    router.push('/approve-room')
   }
 
   return (
@@ -112,9 +109,11 @@ const CreateRoomPage = () => {
           </button>
         </div>
       </div>
-      <Button onClick={handleCreateRoom} variant="yellow">
-        Vào phòng chờ
-      </Button>
+      <div className="mx-auto mt-auto mb-2 flex w-full max-w-sm flex-col">
+        <Button onClick={handleCreateRoom} variant="yellow">
+          Vào phòng chờ
+        </Button>
+      </div>
     </main>
   )
 }

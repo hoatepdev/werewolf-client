@@ -11,20 +11,19 @@ import Image from 'next/image'
 
 export default function Home() {
   const router = useRouter()
-  const zustandName = useRoomStore((s) => s.username)
-  const zustandAvatarKey = useRoomStore((s) => s.avatarKey)
-  const setUsername = useRoomStore((s) => s.setUsername)
-  const setAvatarKey = useRoomStore((s) => s.setAvatarKey)
-  const setResetGame = useRoomStore((s) => s.setResetGame)
+
+  const { username, avatarKey, setUsername, setAvatarKey, setResetGame } =
+    useRoomStore()
+
   const [step, setStep] = useState<'input' | 'mode'>('input')
   const [name, setName] = useState('')
   const [avatar, setAvatar] = useState<number>(0)
 
   useEffect(() => {
     setResetGame()
-    if (zustandName) setName(zustandName)
-    if (typeof zustandAvatarKey === 'number') setAvatar(zustandAvatarKey)
-  }, [zustandName, zustandAvatarKey])
+    if (username) setName(username)
+    if (typeof avatarKey === 'number') setAvatar(avatarKey)
+  }, [username, avatarKey])
 
   const handleContinue = () => {
     setUsername(name.trim())
@@ -135,7 +134,7 @@ export default function Home() {
             href="#"
             className="flex flex-col items-center text-xs text-zinc-200 transition-colors hover:text-yellow-400"
           >
-            <span className="text-xl">��</span>
+            <span className="text-xl">📖</span>
             Hướng dẫn
           </a>
           <a

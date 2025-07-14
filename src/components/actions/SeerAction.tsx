@@ -2,54 +2,49 @@ import React, { useState, useEffect } from 'react'
 import { getSocket } from '@/lib/socket'
 import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
+import { PlayerGrid } from '../PlayerGrid'
+import { Button } from '../ui/button'
 
-interface SeerActionProps {
+const SeerAction: React.FC<{
   roomCode: string
-}
-
-const SeerAction: React.FC<SeerActionProps> = ({ roomCode }) => {
+}> = ({ roomCode }) => {
   const socket = getSocket()
-  const { nightPrompt, setNightPrompt } = useRoomStore()
+
+  const { nightPrompt, setNightPrompt, approvedPlayers } = useRoomStore()
+
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
     username: string
-    isRedFlag?: boolean
+    role?: string
   } | null>(null)
+
   const [selectedRedFlag, setSelectedRedFlag] = useState<boolean | null>(null)
+
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
     const handler = (data: NightPrompt) => {
-      console.log('⭐ seer data', data)
       setNightPrompt(data)
     }
     socket.on('night:seer-action', handler)
     return () => {
       socket.off('night:seer-action', handler)
     }
-  }, [socket])
+  }, [])
 
   if (!nightPrompt || nightPrompt.type !== 'seer') {
     return null
   }
 
   const handleVote = async () => {
-    if (!selectedTarget) {
-      toast.error('Vui lòng chọn người để xem')
-      return
-    }
-
-    if (selectedRedFlag !== null) {
-      return
-    }
-
-    setSelectedRedFlag(selectedTarget?.isRedFlag || false)
+    setSelectedRedFlag(selectedTarget.role === 'werewolf')
 
     setTimeout(() => {
       socket.emit('night:seer-action:done', {
         roomCode,
-        targetId: selectedTarget,
+        targetId: selectedTarget.id,
       })
+      toast.success('Đã gửi lựa chọn')
       setSending(true)
     }, 3000)
   }
@@ -59,56 +54,52 @@ const SeerAction: React.FC<SeerActionProps> = ({ roomCode }) => {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-lg bg-gray-900 p-6">
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
       <div className="text-center">
         <h3 className="text-xl font-bold text-blue-400">🔮 Lượt Tiên tri</h3>
         <p className="text-sm text-gray-300">{nightPrompt.message}</p>
       </div>
-
-      <div className="w-full space-y-2">
-        <label className="text-sm font-medium text-gray-300">
-          Chọn người để xem:
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          {nightPrompt.candidates?.map((player) => (
-            <button
-              key={player.id}
-              onClick={() => setSelectedTarget(player)}
-              className={`rounded-lg p-3 text-sm font-medium transition-colors ${
-                selectedTarget?.id === player.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-              disabled={selectedRedFlag !== null}
-            >
-              {player.username}
-            </button>
-          ))}
-        </div>
+      <div className="w-full">
+        <PlayerGrid
+          players={approvedPlayers}
+          mode="room"
+          selectedId={selectedTarget?.id}
+          onSelect={(player) => setSelectedTarget(player)}
+          selectableList={nightPrompt.candidates}
+        />
       </div>
-
-      {selectedRedFlag !== null && (
+      {selectedTarget?.id && (
         <div className="w-full rounded-lg bg-gray-800 p-3">
-          <p className="text-sm text-gray-300">
-            <span className="mr-2 font-semibold text-blue-400">
-              {selectedTarget?.username}
-            </span>
-            {selectedRedFlag ? (
-              <span className="font-bold text-red-500">LÀ SÓI</span>
+          <div className="text-gray-300">
+            {selectedRedFlag === null ? (
+              <div>
+                Bạn sẽ xem:&nbsp;
+                <span className="font-bold text-blue-400">
+                  {selectedTarget?.username}
+                </span>
+              </div>
             ) : (
-              <span className="font-bold text-green-500">KHÔNG PHẢI SÓI</span>
+              <div>
+                {selectedTarget?.username}:&nbsp;
+                {selectedRedFlag ? (
+                  <span className="font-bold text-red-500">LÀ SÓI</span>
+                ) : (
+                  <span className="font-bold text-green-500">
+                    KHÔNG PHẢI SÓI
+                  </span>
+                )}
+              </div>
             )}
-          </p>
+          </div>
         </div>
       )}
-
-      <button
+      <Button
         onClick={handleVote}
-        disabled={!selectedTarget}
-        className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+        disabled={!selectedTarget?.id}
+        variant="yellow"
       >
         Xác nhận
-      </button>
+      </Button>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { getSocket } from '@/lib/socket'
 import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { PlayerGrid } from '../PlayerGrid'
 
 interface BodyguardActionProps {
   roomCode: string
@@ -10,9 +11,13 @@ interface BodyguardActionProps {
 
 const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
   const socket = getSocket()
-  const { nightPrompt, setNightPrompt } = useRoomStore()
-  const [selectedTarget, setSelectedTarget] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
+  const { nightPrompt, setNightPrompt, approvedPlayers, playerId } =
+    useRoomStore()
+  const [selectedTarget, setSelectedTarget] = useState<{
+    id: string
+    username: string
+  }>()
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
     const handler = (data: NightPrompt) => {
@@ -23,9 +28,9 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
     return () => {
       socket.off('night:bodyguard-action', handler)
     }
-  }, [socket])
+  }, [])
 
-  if (!nightPrompt || nightPrompt.type !== 'bodyguard') {
+  if (!nightPrompt || nightPrompt.type !== 'bodyguard' || sending) {
     return null
   }
 
@@ -35,28 +40,17 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
       return
     }
 
-    setPending(true)
+    socket.emit('night:bodyguard-action:done', {
+      roomCode,
+      targetId: selectedTarget.id,
+    })
+    setSending(true)
 
-    try {
-      socket.emit('night:bodyguard-action:done', {
-        roomCode,
-        targetId: selectedTarget,
-      })
-      toast.success('Đã gửi lựa chọn')
-    } catch (error) {
-      toast.error('Có lỗi xảy ra')
-      console.error('Bodyguard action error:', error)
-    } finally {
-      setPending(false)
-    }
+    toast.success('Đã gửi lựa chọn')
   }
 
-  const targetPlayer = nightPrompt.candidates?.find(
-    (p) => p.id === selectedTarget,
-  )
-
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-lg bg-gray-900 p-6">
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
       <div className="text-center">
         <h3 className="text-xl font-bold text-green-400">🛡️ Lượt Bảo vệ</h3>
         <p className="text-sm text-gray-300">{nightPrompt.message}</p>
@@ -71,45 +65,34 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
         </div>
       )}
 
-      <div className="w-full space-y-2">
-        <label className="text-sm font-medium text-gray-300">
-          Chọn người để bảo vệ:
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          {nightPrompt.candidates?.map((player) => (
-            <button
-              key={player.id}
-              onClick={() => setSelectedTarget(player.id)}
-              className={`rounded-lg p-3 text-sm font-medium transition-colors ${
-                selectedTarget === player.id
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              {player.username}
-            </button>
-          ))}
-        </div>
+      <div className="w-full">
+        <PlayerGrid
+          players={approvedPlayers}
+          mode="room"
+          selectedId={selectedTarget?.id}
+          onSelect={setSelectedTarget}
+          selectableList={nightPrompt.candidates}
+        />
       </div>
 
-      {selectedTarget && (
+      {selectedTarget?.id && (
         <div className="w-full rounded-lg bg-gray-800 p-3">
           <p className="text-sm text-gray-300">
             Bạn sẽ bảo vệ:{' '}
             <span className="font-semibold text-green-400">
-              {targetPlayer?.username}
+              {selectedTarget?.username}
             </span>
           </p>
         </div>
       )}
 
-      <button
+      <Button
         onClick={handleVote}
-        disabled={!selectedTarget || pending}
-        className="w-full rounded-lg bg-green-600 py-3 font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+        disabled={!selectedTarget?.id}
+        variant="yellow"
       >
-        {pending ? 'Đang gửi...' : 'Xác nhận'}
-      </button>
+        Xác nhận
+      </Button>
     </div>
   )
 }

@@ -1,4 +1,3 @@
-// TODO: remove this component if not used
 import React, { ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -18,7 +17,7 @@ const PhaseTransition: React.FC<PhaseTransitionProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -40 }}
       transition={{ duration: 0.4 }}
-      className="w-full"
+      className="flex h-full w-full flex-1 flex-col"
     >
       {children}
     </motion.div>

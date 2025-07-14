@@ -1,20 +1,53 @@
-import { NightResult } from '@/hook/useRoomStore'
 import React from 'react'
+import { NightResult, useRoomStore } from '@/hook/useRoomStore'
+import PhaseTransitionImage from '../PhaseTransitionImage'
+import { PlayerGrid } from '../PlayerGrid'
 
-interface DayPhaseProps {
-  nightResult: NightResult | null
-}
+const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
+  nightResult,
+}) => {
+  const { approvedPlayers } = useRoomStore()
 
-const DayPhase: React.FC<DayPhaseProps> = ({ nightResult }) => {
-  console.log('⭐ nightResult', nightResult)
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4">
-      <div className="text-center text-lg font-bold">Day Phase</div>
-      <div className="text-center text-zinc-300">
-        {/* {nightResult.diedPlayerIds.map((item) => (
-            <div key={item}>{item}</div>
-          ))} */}
+    <div className="relative h-full w-full flex-1">
+      <PhaseTransitionImage image="/images/phase/day.gif" bgColor="#66A3FF" />
+
+      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-yellow-400">
+            ☀️ Giai đoạn ngày
+          </h3>
+          <p className="text-sm text-gray-300">
+            Trời sáng rồi, mời mọi người thức dậy
+          </p>
+        </div>
+
+        <div className="w-full">
+          <PlayerGrid players={approvedPlayers} mode="room" />
+        </div>
       </div>
+
+      {nightResult && (
+        <div className="mx-auto w-full max-w-md">
+          <div className="rounded-lg bg-gray-900 p-4">
+            <h3 className="mb-2 text-lg font-bold text-red-400">
+              🌙 Kết quả đêm
+            </h3>
+            {nightResult.diedPlayerIds.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-300">
+                  Người chết: {nightResult.diedPlayerIds.length}
+                </p>
+                <p className="text-sm text-gray-300">
+                  Nguyên nhân: {nightResult.cause}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-green-400">Không ai chết trong đêm</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

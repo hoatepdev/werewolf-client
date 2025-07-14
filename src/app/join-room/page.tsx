@@ -18,18 +18,20 @@ export default function JoinRoomPage() {
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null)
   const focusRef = useRef<HTMLInputElement>(null)
 
-  const username = useRoomStore((s) => s.username)
-  const setRoomCodeStore = useRoomStore((s) => s.setRoomCode)
-  const setPlayerId = useRoomStore((s) => s.setPlayerId)
-  const avatarKey = useRoomStore((s) => s.avatarKey)
+  const {
+    username,
+    avatarKey,
+    setPlayerId,
+    setRoomCode: setRoomCodeStore,
+    setResetGame,
+  } = useRoomStore()
+
   const [roomCode, setRoomCode] = useState('')
   const [scanning, setScanning] = useState(false)
   const [loading, setLoading] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
-  const setResetGame = useRoomStore((s) => s.setResetGame)
 
   useEffect(() => {
-    // Request camera permission on mount
     if (typeof window !== 'undefined' && navigator.permissions) {
       navigator.permissions
         .query({ name: 'camera' as PermissionName })
@@ -37,35 +39,39 @@ export default function JoinRoomPage() {
           if (result.state === 'granted') {
             setScanning(true)
           } else if (result.state === 'prompt') {
-            // Try to access camera to trigger prompt
             navigator.mediaDevices
               .getUserMedia({ video: true })
               .then(() => setScanning(true))
               .catch(() => {
-                setScanError('Camera access denied or not available.')
+                setScanError(
+                  'Quyền truy cập camera bị từ chối hoặc không khả dụng.',
+                )
                 setScanning(false)
               })
           } else {
-            setScanError('Camera access denied or not available.')
+            setScanError(
+              'Quyền truy cập camera bị từ chối hoặc không khả dụng.',
+            )
             setScanning(false)
           }
         })
         .catch(() => {
-          setScanError('Camera permission check failed.')
+          setScanError('Kiểm tra quyền camera thất bại.')
           setScanning(false)
         })
     } else {
-      // Fallback: try to access camera directly
       if (typeof window !== 'undefined' && navigator.mediaDevices) {
         navigator.mediaDevices
           .getUserMedia({ video: true })
           .then(() => setScanning(true))
           .catch(() => {
-            setScanError('Camera access denied or not available.')
+            setScanError(
+              'Quyền truy cập camera bị từ chối hoặc không khả dụng.',
+            )
             setScanning(false)
           })
       } else {
-        setScanError('Camera not supported on this device.')
+        setScanError('Camera không được hỗ trợ trên thiết bị này.')
         setScanning(false)
       }
     }
@@ -86,23 +92,19 @@ export default function JoinRoomPage() {
             fps: 10,
             aspectRatio: 1.0,
             disableFlip: false,
-            // videoContainer: scannerRef.current,
           },
           (decodedText: string) => {
             setScanning(false)
             setRoomCode(decodedText)
-            // qrCode.stop().then(() => qrCode.clear());
             html5QrCodeRef.current
               ?.stop()
               .then(() => html5QrCodeRef.current?.clear())
             html5QrCodeRef.current = null
           },
-          () => {
-            // Ignore per-frame scan errors; do not set scanError or stop scanning
-          },
+          () => {},
         )
         .catch(() => {
-          setScanError('Camera access denied or not available.')
+          setScanError('Quyền truy cập camera bị từ chối hoặc không khả dụng.')
           setScanning(false)
         })
     }
@@ -123,7 +125,7 @@ export default function JoinRoomPage() {
     }
     const handleRoomRejected = (data: { message?: string }) => {
       setLoading(false)
-      toast.error(data.message || 'Your request to join was rejected.')
+      toast.error(data.message || 'Yêu cầu tham gia của bạn bị từ chối.')
       setRoomCode('')
     }
     socket.on('player:approved', handleRoomApproved)
@@ -136,7 +138,7 @@ export default function JoinRoomPage() {
 
   const handleJoinRoom = async () => {
     if (!roomCode || !username) {
-      toast.error('Please enter a room code and username')
+      toast.error('Vui lòng nhập mã phòng và tên người dùng')
       return
     }
     setLoading(true)
@@ -149,10 +151,10 @@ export default function JoinRoomPage() {
         if (response.success && response.playerId) {
           setPlayerId(response.playerId)
           setRoomCodeStore(roomCode)
-          toast.success('Request sent! Waiting for approval...')
+          toast.success('Đã gửi yêu cầu! Đang chờ duyệt...')
         } else {
           setLoading(false)
-          toast.error(response.message || 'Failed to join room')
+          toast.error(response.message || 'Không thể tham gia phòng')
         }
       },
     )
@@ -163,7 +165,7 @@ export default function JoinRoomPage() {
       <div className="mb-6 flex items-center justify-between">
         <button
           className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
-          aria-label="Back"
+          aria-label="Quay lại"
           onClick={() => router.back()}
         >
           <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
@@ -186,7 +188,6 @@ export default function JoinRoomPage() {
           {!scanning && !scanError && roomCode && (
             <QRCode
               value={roomCode}
-              //   size={180}
               bgColor="#fff"
               fgColor="#000"
               className="rounded-xl"
@@ -200,12 +201,12 @@ export default function JoinRoomPage() {
         </div>
         <div className="mt-8 mb-16 w-full text-center">
           <p className="text-base font-medium text-zinc-400">
-            Scan a code to request to join a game
+            Quét mã để yêu cầu tham gia game
           </p>
         </div>
         <Input
           className="mx-auto h-16 max-w-xs border-none bg-zinc-800 text-lg text-white focus-visible:ring-0 focus-visible:ring-offset-0"
-          placeholder="Or enter game code"
+          placeholder="Hoặc nhập mã game"
           value={roomCode}
           onChange={(e) => {
             setRoomCode(e.target.value)
@@ -224,10 +225,10 @@ export default function JoinRoomPage() {
           {loading ? (
             <div className="flex items-center justify-center gap-4">
               <Loader2Icon className="animate-spin" />
-              <span>Waiting for approval</span>
+              <span>Đang chờ duyệt</span>
             </div>
           ) : (
-            <div>Request to join</div>
+            <div>Yêu cầu tham gia</div>
           )}
         </Button>
       </div>

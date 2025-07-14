@@ -32,13 +32,14 @@ export default function ApprovePlayerPage() {
   const [pendingPlayers, setPendingPlayers] = useState(initialPending)
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
-  const [textButton, setTextButton] = useState('Randomize Roles')
+  const [textButton, setTextButton] = useState('Phân vai ngẫu nhiên')
 
-  const setApprovedPlayersStore = useRoomStore((s) => s.setApprovedPlayers)
-  const roomCode = useRoomStore((s) => s.roomCode)
+  const { roomCode, setApprovedPlayers: setApprovedPlayersStore } =
+    useRoomStore()
+
   console.log('⭐ store', getStateRoomStore())
   const handleStartGameSuccess = () => {
-    toast.success('Game start after 2s')
+    toast.success('Bắt đầu game sau 2 giây')
     setTimeout(() => {
       router.push(`/gm-room/${roomCode}`)
     }, 2000)
@@ -55,7 +56,6 @@ export default function ApprovePlayerPage() {
         pendingPlayers.push(player)
       }
     })
-    console.log('⭐ approvedPlayers', approvedPlayers)
 
     setPendingPlayers(pendingPlayers)
     setApprovedPlayers(approvedPlayers)
@@ -94,7 +94,7 @@ export default function ApprovePlayerPage() {
 
   const handleRandomizeRoles = () => {
     setLoading(true)
-    setTextButton('Waiting for players choose role')
+    setTextButton('Chờ người chơi chọn vai')
     socket.emit(
       'rq_gm:randomizeRoles',
       {
@@ -104,9 +104,9 @@ export default function ApprovePlayerPage() {
       (message: string) => {
         if (message) {
           setLoading(false)
-          toast.error(message || 'Failed to randomize roles')
+          toast.error(message || 'Không thể phân vai ngẫu nhiên')
         } else {
-          setTextButton('Waiting for players ready')
+          setTextButton('Chờ người chơi sẵn sàng')
         }
       },
     )
@@ -122,7 +122,7 @@ export default function ApprovePlayerPage() {
       <div className="mb-6 flex items-center justify-between">
         <button
           className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
-          aria-label="Back"
+          aria-label="Quay lại"
           onClick={() => router.back()}
         >
           <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
@@ -131,16 +131,16 @@ export default function ApprovePlayerPage() {
           <DialogTrigger asChild>
             <button
               className="text-2xl text-yellow-400 hover:text-yellow-500"
-              aria-label="Scan QR"
+              aria-label="Quét mã QR"
             >
               <ScanQrCode className="h-6 w-6" />
             </button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Join Game QR</DialogTitle>
+              <DialogTitle>Mã QR tham gia game</DialogTitle>
               <DialogDescription>
-                Scan this QR code to join the game
+                Quét mã QR này để tham gia game
               </DialogDescription>
             </DialogHeader>
 
@@ -155,7 +155,7 @@ export default function ApprovePlayerPage() {
                     style={{ borderRadius: '0.75rem' }}
                   />
                 ) : (
-                  <span className="text-gray-400">No Room Code</span>
+                  <span className="text-gray-400">Không có mã phòng</span>
                 )}
               </div>
               <div className="mb-4 text-center text-2xl font-bold text-yellow-400">
@@ -164,9 +164,9 @@ export default function ApprovePlayerPage() {
               <DialogClose asChild>
                 <button
                   className="mt-2 rounded-lg bg-zinc-800 px-4 py-2 text-zinc-200 hover:bg-zinc-700"
-                  aria-label="Close QR dialog"
+                  aria-label="Đóng hộp thoại QR"
                 >
-                  Close
+                  Đóng
                 </button>
               </DialogClose>
             </div>
@@ -176,12 +176,12 @@ export default function ApprovePlayerPage() {
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center">
         <div className="w-full">
           <div className="mb-2 text-base font-semibold tracking-wide">
-            APPROVED USER
+            NGƯỜI CHƠI ĐÃ DUYỆT
           </div>
           <div className="mb-6 space-y-2">
             {approvedPlayers.length === 0 ? (
               <div className="rounded-xl bg-zinc-800 px-4 py-3 text-center text-zinc-400">
-                No player
+                Không có người chơi
               </div>
             ) : (
               approvedPlayers.map((player) => (
@@ -200,12 +200,12 @@ export default function ApprovePlayerPage() {
             )}
           </div>
           <div className="mb-2 text-base font-semibold tracking-wide">
-            PENDING USER
+            NGƯỜI CHƠI CHỜ DUYỆT
           </div>
           <div className="mb-6 space-y-2">
             {pendingPlayers.length === 0 ? (
               <div className="rounded-xl bg-zinc-800 px-4 py-3 text-center text-zinc-400">
-                No player
+                Không có người chơi
               </div>
             ) : (
               pendingPlayers.map((player) => (
@@ -225,7 +225,7 @@ export default function ApprovePlayerPage() {
                       onClick={() => {
                         handleApprove(player)
                       }}
-                      aria-label="Approve"
+                      aria-label="Duyệt"
                     >
                       <Check className="h-6 w-6" />
                     </button>
@@ -234,7 +234,7 @@ export default function ApprovePlayerPage() {
                       onClick={() => {
                         handleReject(player)
                       }}
-                      aria-label="Reject"
+                      aria-label="Từ chối"
                     >
                       <X className="h-6 w-6" />
                     </button>
@@ -258,7 +258,7 @@ export default function ApprovePlayerPage() {
 
       <div className="mx-auto mt-auto mb-2 flex w-full max-w-sm flex-col">
         <div className="mb-2 text-center text-sm text-zinc-400">
-          Tapping CONTINUE will random role for all players.
+          Nhấn TIẾP TỤC sẽ phân vai ngẫu nhiên cho người chơi.
         </div>
         <Button
           variant="yellow"

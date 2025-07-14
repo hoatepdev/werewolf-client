@@ -15,8 +15,7 @@ export default function RoomLayout({
   const router = useRouter()
   const { roomCode } = React.use(params)
 
-  const username = useRoomStore((s) => s.username)
-  const avatarKey = useRoomStore((s) => s.avatarKey)
+  const { username, avatarKey } = useRoomStore()
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
@@ -30,8 +29,8 @@ export default function RoomLayout({
     router.push('/join-room')
   }
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 px-4 py-6 text-white">
-      <div className="mb-6 flex h-10 items-center justify-between">
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 text-white">
+      <div className="flex h-20 items-center justify-between p-4">
         <div className="flex items-center">
           <button
             className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
@@ -55,7 +54,9 @@ export default function RoomLayout({
           </div>
         </div>
       </div>
-      {children}
+      <div className="flex h-[calc(100vh-80px)] w-full flex-1 flex-col items-center">
+        {children}
+      </div>
     </main>
   )
 }

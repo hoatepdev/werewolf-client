@@ -102,8 +102,9 @@ const useSocketConnection = (
   setCurrentAudio: (audioEvent: AudioEvent) => void,
 ) => {
   const [isConnected, setIsConnected] = useState(false)
-  const phase = useRoomStore((s) => s.phase)
-  const setPhase = useRoomStore((s) => s.setPhase)
+
+  const { phase, setPhase } = useRoomStore()
+
   const [nightActions, setNightActions] = useState<NightActionData[]>([])
   const [nightResult, setNightResult] = useState<{
     diedPlayerIds: string[]
@@ -122,7 +123,7 @@ const useSocketConnection = (
         message: string
       }) => {
         setIsConnected(true)
-        toast.success('GM connected successfully')
+        toast.success('GM đã kết nối thành công')
       },
       'game:phaseChanged': (data: {
         phase: 'night' | 'day' | 'voting' | 'ended'
@@ -144,7 +145,7 @@ const useSocketConnection = (
         setNightResult(data)
         addToQueue({
           type: 'nightEnd',
-          message: 'Trời sáng rồi, mời mọi người bàn luận',
+          message: 'Mời mọi người bàn luận',
         })
       },
     }
@@ -182,35 +183,37 @@ const AudioControl = ({
   stopAudio: () => void
 }) => (
   <div className="rounded-lg bg-gray-800 p-6">
-    <h2 className="mb-4 text-lg font-bold text-yellow-400">🎵 Audio Control</h2>
+    <h2 className="mb-4 text-lg font-bold text-yellow-400">
+      🎵 Điều khiển âm thanh
+    </h2>
     {currentAudio ? (
       <div className="flex items-center gap-3">
         <span className="text-2xl">🔊</span>
         <div className="flex-1">
           <p className="font-semibold text-white">{currentAudio.message}</p>
           {currentAudio.role && (
-            <p className="text-sm text-gray-400">Role: {currentAudio.role}</p>
+            <p className="text-sm text-gray-400">Vai: {currentAudio.role}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
           {isPlaying ? (
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              <span className="text-sm text-green-400">Playing...</span>
+              <span className="text-sm text-green-400">Đang phát...</span>
             </div>
           ) : (
-            <span className="text-sm text-gray-400">Ready</span>
+            <span className="text-sm text-gray-400">Sẵn sàng</span>
           )}
           <button
             onClick={stopAudio}
             className="rounded-lg bg-red-600 px-3 py-1 text-sm font-medium hover:bg-red-700"
           >
-            Stop
+            Dừng
           </button>
         </div>
       </div>
     ) : (
-      <p className="text-gray-400">No audio playing</p>
+      <p className="text-gray-400">Không có âm thanh đang phát</p>
     )}
   </div>
 )
@@ -223,7 +226,9 @@ const AudioQueue = ({
   playAudio: (audio: AudioEvent | null) => void
 }) => (
   <div className="rounded-lg bg-gray-800 p-6">
-    <h2 className="mb-4 text-lg font-bold text-blue-400">📋 Audio Queue</h2>
+    <h2 className="mb-4 text-lg font-bold text-blue-400">
+      📋 Hàng đợi âm thanh
+    </h2>
     {audioQueue.length > 0 ? (
       <div className="space-y-2">
         {audioQueue.map((audio: AudioEvent, index: number) => (
@@ -242,13 +247,13 @@ const AudioQueue = ({
               onClick={() => playAudio(audio)}
               className="rounded bg-blue-600 px-2 py-1 text-xs font-medium hover:bg-blue-700"
             >
-              Play
+              Phát
             </button>
           </div>
         ))}
       </div>
     ) : (
-      <p className="text-gray-400">No audio in queue</p>
+      <p className="text-gray-400">Không có âm thanh trong hàng đợi</p>
     )}
   </div>
 )
@@ -260,11 +265,11 @@ const NightActionLog = ({
 }) => (
   <div className="rounded-lg bg-gray-800 p-6">
     <h2 className="mb-4 text-lg font-bold text-blue-400">
-      🌙 Night Action Log
+      🌙 Nhật ký hành động đêm
     </h2>
     <div className="max-h-96 space-y-2 overflow-y-auto">
       {nightActions.length === 0 ? (
-        <p className="text-sm text-gray-400">No night actions yet...</p>
+        <p className="text-sm text-gray-400">Chưa có hành động đêm nào...</p>
       ) : (
         nightActions.map((action, index) => (
           <div key={index} className="rounded bg-gray-700 p-3">
@@ -325,11 +330,11 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
       <div className="mb-4">
         <h2 className="mb-2 text-lg font-bold text-purple-400">
-          🎮 Game Control
+          🎮 Điều khiển game
         </h2>
         <div className="flex items-center gap-2">
           <Button variant="yellow" onClick={handleNextPhase} className="w-1/2">
-            Next Phase
+            Giai đoạn tiếp theo
           </Button>
           <Button
             className="w-1/2"
@@ -340,7 +345,7 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
               })
             }
           >
-            Test Audio
+            Kiểm tra âm thanh
           </Button>
         </div>
       </div>

@@ -73,10 +73,10 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
     <div className="mb-16 w-full">
       <div className="mb-4">
         <h3 className="mb-2 text-base font-semibold tracking-wide">
-          SELECT ROLES
+          CHỌN VAI TRÒ
         </h3>
         <p className="text-sm text-zinc-400">
-          {selectedCount}/{totalCount} roles selected
+          {selectedCount}/{totalCount} vai trò đã chọn
         </p>
       </div>
 
@@ -96,13 +96,15 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
                     : 'border-zinc-700 bg-zinc-800'
               }`}
             >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
+              <CardHeader className="p-4">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{role.emoji}</span>
                     <div>
-                      <CardTitle className="text-base">{role.name}</CardTitle>
-                      <CardDescription className="text-xs">
+                      <CardTitle className="text-base font-semibold text-white">
+                        {role.name}
+                      </CardTitle>
+                      <CardDescription className="text-sm text-zinc-400">
                         {role.description}
                       </CardDescription>
                     </div>
@@ -122,7 +124,7 @@ export function RoleSelection({ onChange, totalCount }: RoleSelectionProps) {
                     >
                       <Minus className="h-4 w-4" />
                     </button>
-                    <span className="w-8 text-center text-lg font-semibold">
+                    <span className="min-w-[1.5rem] text-center text-lg font-bold text-white">
                       {count}
                     </span>
                     <button

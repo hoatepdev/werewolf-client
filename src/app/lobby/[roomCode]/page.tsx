@@ -22,19 +22,20 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const { roomCode } = React.use(params)
   console.log('⭐ store', getStateRoomStore())
 
-  const playerId = useRoomStore((s) => s.playerId)
-  const approvedPlayers = useRoomStore((s) => s.approvedPlayers)
-  const username = useRoomStore((s) => s.username)
-  const avatarKey = useRoomStore((s) => s.avatarKey)
-  const setApprovedPlayers = useRoomStore((s) => s.setApprovedPlayers)
-
-  const setRole = useRoomStore((s) => s.setRole)
+  const {
+    playerId,
+    approvedPlayers,
+    username,
+    avatarKey,
+    setRole,
+    setApprovedPlayers,
+  } = useRoomStore()
 
   const handleStartGameSuccess = () => {
-    toast.success('Bắt đầu game sau 3 giây...')
+    toast.success('Bắt đầu game sau 2 giây...')
     setTimeout(() => {
       router.push(`/room/${roomCode}`)
-    }, 3000)
+    }, 2000)
   }
 
   useEffect(() => {
@@ -64,10 +65,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
-      title: 'Leave Room',
-      description: 'Are you sure you want to leave the room?',
-      confirmText: 'Leave',
-      cancelText: 'Cancel',
+      title: 'Rời phòng',
+      description: 'Bạn có chắc chắn muốn rời khỏi phòng?',
+      confirmText: 'Rời đi',
+      cancelText: 'Hủy',
     })
     if (!confirmed) return
     router.push('/join-room')
@@ -84,7 +85,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         <div className="flex items-center">
           <button
             className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
-            aria-label="Back"
+            aria-label="Quay lại"
             onClick={handleLeaveRoom}
           >
             <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
@@ -108,20 +109,16 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       <div className="flex flex-1 flex-col items-center">
         <div className="mb-4 text-center">
           <h1 className="text-xl font-bold">
-            Lobby Code: <span className="text-yellow-400">{roomCode}</span>
+            Mã phòng: <span className="text-yellow-400">{roomCode}</span>
           </h1>
         </div>
         <div className="w-full max-w-sm">
           <div className="mb-12 text-center">
             <h2 className="font-semibold">
-              Players ({approvedPlayers.length}/9)
+              Người chơi ({approvedPlayers.length}/9)
             </h2>
           </div>
-          <PlayerGrid
-            players={approvedPlayers}
-            currentPlayerId={playerId}
-            mode="lobby"
-          />
+          <PlayerGrid players={approvedPlayers} mode="lobby" />
         </div>
       </div>
       <RoleRandomizerModal

@@ -41,7 +41,7 @@ export const RoleRandomizerModal = ({
   const [isReady, setIsReady] = useState(false)
   const [rotation, setRotation] = useState(0)
   const wheelRef = useRef<HTMLDivElement>(null)
-  const [textButton, setTextButton] = useState('Ready')
+  const [textButton, setTextButton] = useState('Sẵn sàng')
 
   useEffect(() => {
     if (open) {
@@ -61,7 +61,7 @@ export const RoleRandomizerModal = ({
 
   const handleReady = () => {
     setIsReady(true)
-    setTextButton('Waiting...')
+    setTextButton('Đang chờ...')
     onContinue()
   }
 
@@ -218,6 +218,7 @@ export const RoleRandomizerModal = ({
                   variant="yellow"
                   onClick={handleReady}
                   disabled={isSpinning || isReady}
+                  className="w-80 max-w-80"
                 >
                   {isReady || isSpinning ? (
                     <div className="flex items-center justify-center">
