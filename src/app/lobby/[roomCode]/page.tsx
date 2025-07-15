@@ -29,10 +29,11 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     avatarKey,
     setRole,
     setApprovedPlayers,
+    setAlive,
   } = useRoomStore()
 
   const handleStartGameSuccess = () => {
-    toast.success('Bắt đầu game sau 2 giây...')
+    toast.success('Bắt đầu game sau 2 giây ...')
     setTimeout(() => {
       router.push(`/room/${roomCode}`)
     }, 2000)
@@ -75,7 +76,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   }
 
   const handleContinueRole = () => {
-    console.log('⭐ handleContinueRole', roomCode)
+    setAlive(true)
     socket.emit('rq_player:ready', { roomCode })
   }
 

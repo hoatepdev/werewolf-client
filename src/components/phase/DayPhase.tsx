@@ -31,15 +31,18 @@ const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
         <div className="mx-auto w-full max-w-md">
           <div className="rounded-lg bg-gray-900 p-4">
             <h3 className="mb-2 text-lg font-bold text-red-400">
-              🌙 Kết quả đêm
+              🌙 &nbsp; Kết quả đêm
             </h3>
             {nightResult.diedPlayerIds.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-sm text-gray-300">
-                  Người chết: {nightResult.diedPlayerIds.length}
-                </p>
-                <p className="text-sm text-gray-300">
-                  Nguyên nhân: {nightResult.cause}
+                  Người chết:{' '}
+                  {nightResult.diedPlayerIds
+                    .map(
+                      (id) =>
+                        approvedPlayers.find((p) => p.id === id)?.username,
+                    )
+                    .join(', ')}
                 </p>
               </div>
             ) : (

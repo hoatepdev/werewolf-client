@@ -27,7 +27,7 @@ export const LIST_ROLE: RoleObject[] = [
   },
   {
     id: 'hunter',
-    name: 'Người săn',
+    name: 'Thợ săn',
     description: 'Có thể giết một người khi họ chết',
     emoji: '🎯',
   },

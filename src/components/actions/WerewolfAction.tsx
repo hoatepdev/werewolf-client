@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { getSocket } from '@/lib/socket'
-import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
+import {
+  getStateRoomStore,
+  NightPrompt,
+  useRoomStore,
+} from '@/hook/useRoomStore'
 import { toast } from 'sonner'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
@@ -21,6 +25,8 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
   }>()
   const [sending, setSending] = useState(false)
   console.log('⭐ nightPrompt', nightPrompt)
+
+  console.log('⭐ store', getStateRoomStore(), sending)
 
   useEffect(() => {
     const handler = (data: NightPrompt) => {

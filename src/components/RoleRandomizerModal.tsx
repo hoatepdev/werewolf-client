@@ -211,7 +211,7 @@ export const RoleRandomizerModal = ({
                 <div className="text-center text-2xl font-bold text-yellow-400">
                   {assignedRole.name}
                 </div>
-                <div className="max-w-xs text-center text-base text-zinc-200">
+                <div className="text-center text-base text-zinc-200">
                   {assignedRole.description}
                 </div>
                 <Button

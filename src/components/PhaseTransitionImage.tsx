@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 
 const PhaseTransitionImage = ({
   image,
-  duration = 3000,
+  duration = 1500,
   bgColor,
 }: {
   image: string

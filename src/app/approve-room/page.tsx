@@ -39,7 +39,7 @@ export default function ApprovePlayerPage() {
 
   console.log('⭐ store', getStateRoomStore())
   const handleStartGameSuccess = () => {
-    toast.success('Bắt đầu game sau 2 giây')
+    toast.success('Bắt đầu game sau 2 giây ...')
     setTimeout(() => {
       router.push(`/gm-room/${roomCode}`)
     }, 2000)

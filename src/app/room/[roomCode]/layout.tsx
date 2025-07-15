@@ -29,7 +29,7 @@ export default function RoomLayout({
     router.push('/join-room')
   }
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 text-white">
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col overflow-x-hidden bg-zinc-900 text-white">
       <div className="flex h-20 items-center justify-between p-4">
         <div className="flex items-center">
           <button

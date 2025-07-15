@@ -7,8 +7,8 @@ const Waiting = () => {
     <motion.div
       initial={{ opacity: 0, scale: 0.5, y: 100 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 1, ease: 'easeInOut' }}
-      className="w-c absolute inset-0 z-10 flex h-full w-full flex-1 flex-col items-center justify-center bg-black object-cover select-none"
+      transition={{ duration: 1, ease: 'easeInOut', delay: 1.5 }}
+      className="w-c absolute inset-0 z-10 flex h-full w-full flex-1 flex-col items-center justify-center overflow-hidden bg-black object-cover select-none"
     >
       <Image
         src="/images/logo/logo.png"

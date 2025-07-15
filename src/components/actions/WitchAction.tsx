@@ -31,19 +31,25 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
     }
   }, [])
 
-  const handleAction = async () => {
+  const handleAction = async (isSkip: boolean = false) => {
     setSending(true)
 
     socket.emit('night:witch-action:done', {
       roomCode,
-      heal,
-      poisonTargetId: selectedTarget?.id,
+      heal: isSkip ? false : heal,
+      poisonTargetId: isSkip ? undefined : selectedTarget?.id,
     })
     toast.success('Đã gửi lựa chọn')
   }
 
   const handleSelectPlayer = (player: { id: string; username: string }) => {
     setSelectedTarget(player)
+  }
+
+  const handleSkip = () => {
+    setSelectedTarget(undefined)
+    setHeal(false)
+    handleAction(true)
   }
 
   if (!nightPrompt || nightPrompt.type !== 'witch' || sending) {
@@ -102,20 +108,24 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
         </div>
       )}
 
-      <button
-        className="w-full rounded-lg bg-zinc-700 py-3 text-sm font-semibold text-white transition-colors hover:bg-zinc-600 disabled:opacity-50"
-        onClick={() => handleAction()}
-      >
-        Bỏ qua (không cứu/đầu độc)
-      </button>
-
-      <Button
-        onClick={handleAction}
-        disabled={!selectedTarget?.id && !heal}
-        variant="yellow"
-      >
-        Xác nhận
-      </Button>
+      <div className="flex w-full gap-2">
+        <Button
+          onClick={handleSkip}
+          disabled={sending}
+          variant="default"
+          className="w-1/3"
+        >
+          Bỏ qua
+        </Button>
+        <Button
+          onClick={() => handleAction(false)}
+          disabled={!selectedTarget?.id && !heal}
+          variant="yellow"
+          className="w-2/3"
+        >
+          Xác nhận
+        </Button>
+      </div>
     </div>
   )
 }

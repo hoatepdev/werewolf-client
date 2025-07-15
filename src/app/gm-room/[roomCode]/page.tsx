@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { CornerUpLeft, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { MockDataPanel } from '@/components/MockDataPanel'
 import { Socket } from 'socket.io-client'
 import { useRoomStore } from '@/hook/useRoomStore'
 
@@ -17,7 +16,8 @@ interface AudioEvent {
     | 'nightEnd'
     | 'gameEnded'
     | 'nightAction'
-    | 'phaseChange'
+    | 'phaseChanged'
+    | 'votingAction'
   role?: 'werewolf' | 'seer' | 'witch' | 'bodyguard'
   message: string
   timestamp?: number
@@ -138,14 +138,16 @@ const useSocketConnection = (
           message: nightAction.message,
         })
       },
-      'game:nightResult': (data: {
-        diedPlayerIds: string[]
-        cause: string
-      }) => {
-        setNightResult(data)
+      'gm:votingAction': (data: { type: 'votingAction'; message: string }) => {
         addToQueue({
-          type: 'nightEnd',
-          message: 'Mời mọi người bàn luận',
+          type: data.type,
+          message: data.message,
+        })
+      },
+      'gm:gameEnded': (data: { type: 'gameEnded'; message: string }) => {
+        addToQueue({
+          type: data.type,
+          message: data.message,
         })
       },
     }
@@ -288,7 +290,6 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
   const router = useRouter()
   const { roomCode } = use(params)
-  const [showMockPanel, setShowMockPanel] = useState(false)
 
   const {
     isPlayingRef,
@@ -301,6 +302,38 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const { isConnected, phase, nightActions, nightResult, handleNextPhase } =
     useSocketConnection(roomCode, socket, addToQueue, setCurrentAudio)
 
+  const [gmLogs, setGmLogs] = useState<
+    {
+      type: string
+      message: string
+      data?: unknown
+      timestamp?: number
+    }[]
+  >([])
+
+  useEffect(() => {
+    const handleLog =
+      (type: string) => (data: { message: string; timestamp?: number }) => {
+        setGmLogs((logs) => [
+          ...logs,
+          {
+            type,
+            message: data.message,
+            data,
+            timestamp: data.timestamp || Date.now(),
+          },
+        ])
+      }
+    socket.on('gm:nightAction', handleLog('night'))
+    socket.on('gm:votingAction', handleLog('voting'))
+    socket.on('gm:gameEnded', handleLog('end'))
+    return () => {
+      socket.off('gm:nightAction', handleLog('night'))
+      socket.off('gm:votingAction', handleLog('voting'))
+      socket.off('gm:gameEnded', handleLog('end'))
+    }
+  }, [socket])
+
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col bg-zinc-900 px-4 py-6 text-white">
       <div className="mb-6 flex h-10 items-center justify-between">
@@ -311,12 +344,6 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           <h1 className="ml-2 text-xl font-bold">{roomCode}</h1>
         </div>
         <div className="flex items-center gap-4">
-          <button
-            className="text-zinc-400 transition-colors hover:text-yellow-400"
-            onClick={() => setShowMockPanel(!showMockPanel)}
-          >
-            <Settings className="h-5 w-5" />
-          </button>
           <div className="flex items-center gap-2">
             <div
               className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
@@ -333,10 +360,10 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           🎮 Điều khiển game
         </h2>
         <div className="flex items-center gap-2">
-          <Button variant="yellow" onClick={handleNextPhase} className="w-1/2">
+          <Button variant="yellow" onClick={handleNextPhase} className="">
             Giai đoạn tiếp theo
           </Button>
-          <Button
+          {/* <Button
             className="w-1/2"
             onClick={() =>
               addToQueue({
@@ -346,7 +373,7 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
             }
           >
             Kiểm tra âm thanh
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -360,10 +387,23 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         <AudioQueue audioQueue={audioQueue} playAudio={setCurrentAudio} />
       </div>
 
-      <MockDataPanel
-        isVisible={showMockPanel}
-        toggleMockDataPanel={() => setShowMockPanel(!showMockPanel)}
-      />
+      {/* GM LOG */}
+      <div className="mt-4 max-h-96 overflow-y-auto rounded-lg bg-zinc-800 p-4">
+        <h3 className="mb-2 font-bold text-yellow-400">Lịch sử game (log)</h3>
+        <ul className="space-y-1 text-sm">
+          {gmLogs.map((log, idx) => (
+            <li key={idx}>
+              <span className="text-zinc-400">
+                [{new Date(log.timestamp!).toLocaleTimeString()}]
+              </span>
+              <span className="ml-2 font-semibold">
+                {log.type.toUpperCase()}:
+              </span>
+              <span className="ml-2">{log.message}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </main>
   )
 }

@@ -6,29 +6,33 @@ import WitchAction from '../actions/WitchAction'
 import BodyguardAction from '../actions/BodyguardAction'
 import PhaseTransitionImage from '../PhaseTransitionImage'
 import HunterAction from '../actions/HunterAction'
+import Waiting from './Waiting'
+import { Player } from '@/types/player'
 
 interface NightPhaseProps {
   roomCode: string
 }
 
 const NightPhase: React.FC<NightPhaseProps> = ({ roomCode }) => {
-  const { phase, role } = useRoomStore()
+  const { role } = useRoomStore()
 
-  if (phase !== 'night') {
-    return null
-  }
-
-  const renderRoleAction = () => {
-    if (!role) return null
-    const roleAction = {
-      werewolf: <WerewolfAction roomCode={roomCode} />,
-      seer: <SeerAction roomCode={roomCode} />,
-      witch: <WitchAction roomCode={roomCode} />,
-      bodyguard: <BodyguardAction roomCode={roomCode} />,
-      hunter: <HunterAction roomCode={roomCode} />,
-      villager: null,
+  function renderRoleAction(role: Player['role'] | null, roomCode: string) {
+    switch (role) {
+      case 'werewolf':
+        return <WerewolfAction roomCode={roomCode} />
+      case 'seer':
+        return <SeerAction roomCode={roomCode} />
+      case 'witch':
+        return <WitchAction roomCode={roomCode} />
+      case 'bodyguard':
+        return <BodyguardAction roomCode={roomCode} />
+      case 'hunter':
+        return <HunterAction roomCode={roomCode} />
+      case 'villager':
+        return <Waiting />
+      default:
+        return null
     }
-    return roleAction[role] || null
   }
 
   return (
@@ -37,7 +41,7 @@ const NightPhase: React.FC<NightPhaseProps> = ({ roomCode }) => {
         image="/images/phase/night.gif"
         bgColor="bg-[#2E3A62]"
       />
-      {renderRoleAction()}
+      {renderRoleAction(role, roomCode)}
     </div>
   )
 }

@@ -48,6 +48,7 @@ export type RoomState = {
   rehydrated: boolean
   approvedPlayers: Player[]
   socket: import('socket.io-client').Socket | null
+  alive: boolean | null
 
   // Night phase states
   nightPrompt: NightPrompt | null
@@ -63,7 +64,7 @@ export type RoomState = {
   setRehydrated: (done: boolean) => void
   setApprovedPlayers: (players: Player[]) => void
   setResetGame: () => void
-
+  setAlive: (alive: boolean) => void
   // Night phase setters
   setNightPrompt: (prompt: NightPrompt | null) => void
   setNightResult: (result: NightResult | null) => void
@@ -82,7 +83,7 @@ export const useRoomStore = create<RoomState>()(
       username: '',
       avatarKey: 0,
       approvedPlayers: [],
-
+      alive: null,
       // Night phase states
       nightPrompt: null,
       nightResult: null,
@@ -109,7 +110,7 @@ export const useRoomStore = create<RoomState>()(
           nightPrompt: null,
           nightResult: null,
         }),
-
+      setAlive: (alive: boolean) => set({ alive }),
       // Night phase setters
       setNightPrompt: (prompt) => set({ nightPrompt: prompt }),
       setNightResult: (result) => set({ nightResult: result }),
@@ -124,6 +125,7 @@ export const useRoomStore = create<RoomState>()(
         username: state.username,
         avatarKey: state.avatarKey,
         approvedPlayers: state.approvedPlayers,
+        alive: state.alive,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setRehydrated(true)
@@ -144,6 +146,7 @@ export const getStateRoomStore = () => {
     socket,
     nightPrompt,
     nightResult,
+    alive,
   } = useRoomStore.getState()
   return {
     roomCode,
@@ -157,5 +160,6 @@ export const getStateRoomStore = () => {
     socket,
     nightPrompt,
     nightResult,
+    alive,
   }
 }

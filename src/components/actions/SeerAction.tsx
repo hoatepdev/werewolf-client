@@ -4,6 +4,7 @@ import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
+import Waiting from '../phase/Waiting'
 
 const SeerAction: React.FC<{
   roomCode: string
@@ -32,17 +33,17 @@ const SeerAction: React.FC<{
     }
   }, [])
 
-  if (!nightPrompt || nightPrompt.type !== 'seer') {
-    return null
+  if (!nightPrompt || nightPrompt.type !== 'seer' || sending) {
+    return <Waiting />
   }
 
   const handleVote = async () => {
-    setSelectedRedFlag(selectedTarget.role === 'werewolf')
+    setSelectedRedFlag(selectedTarget?.role === 'werewolf')
 
     setTimeout(() => {
       socket.emit('night:seer-action:done', {
         roomCode,
-        targetId: selectedTarget.id,
+        targetId: selectedTarget?.id,
       })
       toast.success('Đã gửi lựa chọn')
       setSending(true)
@@ -80,6 +81,7 @@ const SeerAction: React.FC<{
               </div>
             ) : (
               <div>
+                Người chơi&nbsp;
                 {selectedTarget?.username}:&nbsp;
                 {selectedRedFlag ? (
                   <span className="font-bold text-red-500">LÀ SÓI</span>
@@ -95,7 +97,7 @@ const SeerAction: React.FC<{
       )}
       <Button
         onClick={handleVote}
-        disabled={!selectedTarget?.id}
+        disabled={!selectedTarget?.id || selectedRedFlag !== null}
         variant="yellow"
       >
         Xác nhận

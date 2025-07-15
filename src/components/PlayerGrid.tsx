@@ -34,7 +34,7 @@ export function PlayerGrid({
   const listPlayer = useMemo(() => {
     return players.map((p) => ({
       ...p,
-      isSelectable: selectableList?.some((sp) => sp.id === p.id),
+      isSelectable: selectableList?.some((sp) => sp.id === p.id && p.alive),
     }))
   }, [players, selectableList])
 
