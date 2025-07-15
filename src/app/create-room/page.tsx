@@ -45,7 +45,7 @@ const CreateRoomPage = () => {
   return (
     <MainLayout>
       <PageHeader title="Tạo phòng mới" />
-      <div className="flex w-full max-w-sm flex-1 flex-col items-center justify-center">
+      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center">
         <h1 className="mb-2 text-center text-3xl font-extrabold text-white">
           Tham gia game
         </h1>

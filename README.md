@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Masoi Client
+
+A modern, responsive web client for the 5Star Wolves (Ma Sói) game, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
+
+## Features
+
+- Join or create game rooms for Ma Sói (Werewolf)
+- Real-time gameplay via WebSocket (Socket.IO)
+- Avatar selection and player management
+- Modern UI/UX with Tailwind CSS and Radix UI
+- Vietnamese language support
+
+## Project Structure
+
+- `src/app/` - Main app pages and layout
+  - `page.tsx` - Home page (entry point)
+  - `layout.tsx` - App layout
+  - `create-room/`, `join-room/`, `approve-room/`, `gm-room/`, `lobby/`, `room/` - Game flows
+- `src/components/` - Reusable UI components
+- `src/lib/`, `src/hook/`, `src/types/`, `src/constants/`, `src/helpers/` - Utilities and logic
+- `public/` - Static assets (images, icons)
 
 ## Getting Started
 
-First, run the development server:
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Run the development server
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build for production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `dev`: Start development server
+- `build`: Build for production
+- `start`: Start production server
+- `lint`: Lint code
+- `format`: Format code with Prettier
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Technologies
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Next.js](https://nextjs.org/) (v15)
+- [React](https://react.dev/) (v19)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Socket.IO Client](https://socket.io/)
+- [Radix UI](https://www.radix-ui.com/)
+- [Zustand](https://zustand-demo.pmnd.rs/)
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is private. All rights reserved.
