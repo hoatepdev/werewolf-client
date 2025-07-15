@@ -2,11 +2,12 @@
 import React, { useEffect, useState, useCallback, useRef, use } from 'react'
 import { getSocket } from '@/lib/socket'
 import { useRouter } from 'next/navigation'
-import { CornerUpLeft, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Socket } from 'socket.io-client'
 import { useRoomStore } from '@/hook/useRoomStore'
+import PageHeader from '@/components/PageHeader'
+import MainLayout from '@/components/MainLayout'
 
 interface AudioEvent {
   type:
@@ -335,15 +336,11 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   }, [socket])
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-4xl flex-col bg-zinc-900 px-4 py-6 text-white">
-      <div className="mb-6 flex h-10 items-center justify-between">
-        <div className="flex items-center">
-          <button onClick={() => router.push('/create-room')}>
-            <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
-          </button>
-          <h1 className="ml-2 text-xl font-bold">{roomCode}</h1>
-        </div>
-        <div className="flex items-center gap-4">
+    <MainLayout maxWidth="max-w-4xl">
+      <PageHeader
+        title={roomCode}
+        onBack={() => router.push('/create-room')}
+        right={
           <div className="flex items-center gap-2">
             <div
               className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
@@ -352,9 +349,8 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
               {isConnected ? 'Đã kết nối' : 'Mất kết nối'}
             </span>
           </div>
-        </div>
-      </div>
-
+        }
+      />
       <div className="mb-4">
         <h2 className="mb-2 text-lg font-bold text-purple-400">
           🎮 Điều khiển game
@@ -376,7 +372,6 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           </Button> */}
         </div>
       </div>
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <NightActionLog nightActions={nightActions} />
         <AudioControl
@@ -386,7 +381,6 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         />
         <AudioQueue audioQueue={audioQueue} playAudio={setCurrentAudio} />
       </div>
-
       {/* GM LOG */}
       <div className="mt-4 max-h-96 overflow-y-auto rounded-lg bg-zinc-800 p-4">
         <h3 className="mb-2 font-bold text-yellow-400">Lịch sử game (log)</h3>
@@ -404,7 +398,7 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           ))}
         </ul>
       </div>
-    </main>
+    </MainLayout>
   )
 }
 

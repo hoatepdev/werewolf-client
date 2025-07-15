@@ -4,7 +4,6 @@ import { getSocket } from '@/lib/socket'
 import { getStateRoomStore, useRoomStore } from '@/hook/useRoomStore'
 import { PlayerGrid } from '@/components/PlayerGrid'
 import { Player } from '@/types/player'
-import { CornerUpLeft, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { confirmDialog } from '@/components/ui/alert-dialog'
 import RoleRandomizerModal from '@/components/RoleRandomizerModal'
@@ -12,6 +11,8 @@ import { LIST_ROLE } from '@/constants/role'
 import { RoleObject } from '@/types/role'
 import { toast } from 'sonner'
 import { renderAvatar } from '@/helpers'
+import PageHeader from '@/components/PageHeader'
+import MainLayout from '@/components/MainLayout'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
@@ -81,31 +82,25 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 px-4 py-6 text-white">
-      <div className="mb-6 flex h-10 items-center justify-between">
-        <div className="flex items-center">
-          <button
-            className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
-            aria-label="Quay lại"
-            onClick={handleLeaveRoom}
-          >
-            <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
-          </button>
-          <h1 className="ml-2 text-xl font-bold">{roomCode}</h1>
-        </div>
-        <div className="flex min-w-[120px] items-center justify-end gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="max-w-[80px] truncate text-sm font-semibold">
-              {username}
-            </span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700 font-bold">
-              <span className="text-2xl">
-                {renderAvatar({ username, avatarKey })}
+    <MainLayout>
+      <PageHeader
+        title={roomCode}
+        onBack={handleLeaveRoom}
+        right={
+          <div className="flex min-w-[120px] items-center justify-end gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="max-w-[80px] truncate text-sm font-semibold">
+                {username}
               </span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700 font-bold">
+                <span className="text-2xl">
+                  {renderAvatar({ username, avatarKey })}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div className="flex flex-1 flex-col items-center">
         <div className="mb-4 text-center">
@@ -127,7 +122,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         onContinue={handleContinueRole}
         open={showRoleModal}
       />
-    </main>
+    </MainLayout>
   )
 }
 

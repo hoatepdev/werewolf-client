@@ -4,10 +4,12 @@ import React, { useEffect } from 'react'
 import { getSocket } from '@/lib/socket'
 import { useRoomStore } from '@/hook/useRoomStore'
 import QRCode from 'react-qr-code'
-import { Clipboard, CornerUpLeft } from 'lucide-react'
+import { Clipboard } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import PageHeader from '@/components/PageHeader'
+import MainLayout from '@/components/MainLayout'
 
 const CreateRoomPage = () => {
   const socket = getSocket()
@@ -41,20 +43,8 @@ const CreateRoomPage = () => {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center bg-zinc-900 px-4 py-6 text-white">
-      <div className="mb-6 flex h-10 w-full items-center justify-between">
-        <button
-          className="mr-2 text-2xl text-white hover:text-gray-400"
-          aria-label="Quay lại"
-          onClick={() => router.back()}
-        >
-          {/* Back arrow icon placeholder */}
-          <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
-        </button>
-        <h1 className="ml-2 text-xl font-bold">Tạo phòng mới</h1>
-      </div>
-
-      {/* Main content */}
+    <MainLayout>
+      <PageHeader title="Tạo phòng mới" />
       <div className="flex w-full max-w-sm flex-1 flex-col items-center justify-center">
         <h1 className="mb-2 text-center text-3xl font-extrabold text-white">
           Tham gia game
@@ -63,7 +53,6 @@ const CreateRoomPage = () => {
           Người chơi cần quét mã QR này bằng thiết bị của họ để yêu cầu tham gia
           game
         </p>
-        {/* QR code placeholder with yellow border */}
         <div className="mb-20 rounded-2xl border-4 border-yellow-400 bg-white p-2">
           <div className="flex h-48 w-48 items-center justify-center rounded-xl bg-gray-200">
             {roomCode ? (
@@ -79,7 +68,6 @@ const CreateRoomPage = () => {
             )}
           </div>
         </div>
-        {/* Divider with REQUEST MANUALLY */}
         <div className="mb-2 flex w-full items-center">
           <div className="h-px flex-1 bg-gray-600" />
           <span className="mx-3 text-sm font-semibold tracking-widest text-gray-400">
@@ -114,7 +102,7 @@ const CreateRoomPage = () => {
           Vào phòng chờ
         </Button>
       </div>
-    </main>
+    </MainLayout>
   )
 }
 

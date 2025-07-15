@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import confetti from 'canvas-confetti'
 import { Player } from '@/types/player'
+import { LIST_ROLE } from '@/constants/role'
 
 interface GameEndProps {
   winningTeam: string
@@ -38,7 +39,9 @@ const GameEnd: React.FC<GameEndProps> = ({
             <li key={p.id} className="flex justify-between py-1">
               <span>
                 {p.username}{' '}
-                <span className="text-xs text-zinc-400">({p.role})</span>
+                <span className="text-xs text-zinc-400">
+                  ({LIST_ROLE.find((r) => r.id === p.role)?.name})
+                </span>
               </span>
               <span className={p.alive ? 'text-green-400' : 'text-red-400'}>
                 {p.alive ? 'Sống' : 'Chết'}

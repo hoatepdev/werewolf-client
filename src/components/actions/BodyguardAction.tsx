@@ -57,15 +57,6 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
         <p className="text-sm text-gray-300">{nightPrompt.message}</p>
       </div>
 
-      {nightPrompt.lastProtected && (
-        <div className="w-full rounded-lg bg-yellow-900/50 p-3">
-          <p className="text-sm text-yellow-300">
-            Đêm trước đã bảo vệ:{' '}
-            <span className="font-semibold">{nightPrompt.lastProtected}</span>
-          </p>
-        </div>
-      )}
-
       <div className="w-full">
         <PlayerGrid
           players={approvedPlayers}

@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import { Check, CornerUpLeft, Loader2Icon, ScanQrCode, X } from 'lucide-react'
+import { Check, Loader2Icon, ScanQrCode, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import QRCode from 'react-qr-code'
@@ -20,6 +20,8 @@ import { RoleSelection } from '@/components/RoleSelection'
 import { renderAvatar } from '@/helpers'
 import { Button } from '@/components/ui/button'
 import { MIN_PLAYER } from '@/constants'
+import PageHeader from '@/components/PageHeader'
+import MainLayout from '@/components/MainLayout'
 
 const initialApproved: Player[] = []
 const initialPending: Player[] = []
@@ -118,61 +120,56 @@ export default function ApprovePlayerPage() {
     approvedPlayers.length === selectedRoles.length
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 px-4 py-6 text-white">
-      <div className="mb-6 flex items-center justify-between">
-        <button
-          className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
-          aria-label="Quay lại"
-          onClick={() => router.back()}
-        >
-          <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
-        </button>
-        <Dialog>
-          <DialogTrigger asChild>
-            <button
-              className="text-2xl text-yellow-400 hover:text-yellow-500"
-              aria-label="Quét mã QR"
-            >
-              <ScanQrCode className="h-6 w-6" />
-            </button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Mã QR tham gia game</DialogTitle>
-              <DialogDescription>
-                Quét mã QR này để tham gia game
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="flex flex-col items-center">
-              <div className="mb-4 rounded-xl bg-white p-2">
-                {roomCode ? (
-                  <QRCode
-                    value={roomCode}
-                    size={180}
-                    bgColor="#fff"
-                    fgColor="#000"
-                    style={{ borderRadius: '0.75rem' }}
-                  />
-                ) : (
-                  <span className="text-gray-400">Không có mã phòng</span>
-                )}
+    <MainLayout>
+      <PageHeader
+        title="Phê duyệt người chơi"
+        right={
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                className="text-2xl text-yellow-400 hover:text-yellow-500"
+                aria-label="Quét mã QR"
+              >
+                <ScanQrCode className="h-6 w-6" />
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Mã QR tham gia game</DialogTitle>
+                <DialogDescription>
+                  Quét mã QR này để tham gia game
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col items-center">
+                <div className="mb-4 rounded-xl bg-white p-2">
+                  {roomCode ? (
+                    <QRCode
+                      value={roomCode}
+                      size={180}
+                      bgColor="#fff"
+                      fgColor="#000"
+                      style={{ borderRadius: '0.75rem' }}
+                    />
+                  ) : (
+                    <span className="text-gray-400">Không có mã phòng</span>
+                  )}
+                </div>
+                <div className="mb-4 text-center text-2xl font-bold text-yellow-400">
+                  {roomCode}
+                </div>
+                <DialogClose asChild>
+                  <button
+                    className="mt-2 rounded-lg bg-zinc-800 px-4 py-2 text-zinc-200 hover:bg-zinc-700"
+                    aria-label="Đóng hộp thoại QR"
+                  >
+                    Đóng
+                  </button>
+                </DialogClose>
               </div>
-              <div className="mb-4 text-center text-2xl font-bold text-yellow-400">
-                {roomCode}
-              </div>
-              <DialogClose asChild>
-                <button
-                  className="mt-2 rounded-lg bg-zinc-800 px-4 py-2 text-zinc-200 hover:bg-zinc-700"
-                  aria-label="Đóng hộp thoại QR"
-                >
-                  Đóng
-                </button>
-              </DialogClose>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogContent>
+          </Dialog>
+        }
+      />
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center">
         <div className="w-full">
           <div className="mb-2 text-base font-semibold tracking-wide">
@@ -276,6 +273,6 @@ export default function ApprovePlayerPage() {
           )}
         </Button>
       </div>
-    </main>
+    </MainLayout>
   )
 }

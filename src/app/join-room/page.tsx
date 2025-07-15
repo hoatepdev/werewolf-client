@@ -1,7 +1,7 @@
 'use client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { CornerUpLeft, Loader2Icon } from 'lucide-react'
+import { Loader2Icon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useState, useRef, useEffect } from 'react'
 import { useRoomStore } from '@/hook/useRoomStore'
@@ -9,6 +9,8 @@ import { getSocket } from '@/lib/socket'
 import { toast } from 'sonner'
 import { Html5Qrcode } from 'html5-qrcode'
 import QRCode from 'react-qr-code'
+import PageHeader from '@/components/PageHeader'
+import MainLayout from '@/components/MainLayout'
 
 export default function JoinRoomPage() {
   const socket = getSocket()
@@ -161,16 +163,8 @@ export default function JoinRoomPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col bg-zinc-900 px-4 py-6 text-white">
-      <div className="mb-6 flex items-center justify-between">
-        <button
-          className="mr-2 text-2xl hover:text-gray-400 active:text-gray-500"
-          aria-label="Quay lại"
-          onClick={() => router.back()}
-        >
-          <CornerUpLeft className="h-6 w-6 cursor-pointer text-gray-400" />
-        </button>
-      </div>
+    <MainLayout>
+      <PageHeader title="Tham gia phòng" />
       <div className="flex flex-1 flex-col items-center justify-center px-4">
         <div className="relative mx-auto flex aspect-square w-full max-w-xs items-center justify-center p-6">
           {scanning && (
@@ -232,6 +226,6 @@ export default function JoinRoomPage() {
           )}
         </Button>
       </div>
-    </main>
+    </MainLayout>
   )
 }
