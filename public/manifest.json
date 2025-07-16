@@ -1,0 +1,21 @@
+{
+  "name": "Ma Sói Online",
+  "short_name": "Ma Sói",
+  "description": "Chơi Ma Sói trực tuyến với bạn bè.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/images/logo/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/logo/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

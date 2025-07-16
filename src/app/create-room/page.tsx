@@ -18,11 +18,6 @@ const CreateRoomPage = () => {
   const { username, roomCode, avatarKey, setRoomCode, setResetGame } =
     useRoomStore()
 
-  console.log(
-    '⭐ s',
-    useRoomStore((s) => s),
-  )
-
   useEffect(() => {
     setResetGame()
   }, [])
