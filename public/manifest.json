@@ -1,21 +1,89 @@
 {
-  "name": "Ma Sói Online",
+  "name": "Ma Sói Offline",
   "short_name": "Ma Sói",
-  "description": "Chơi Ma Sói trực tuyến với bạn bè.",
+  "description": "Chơi Ma Sói với bạn bè.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#111827",
+  "background_color": "#18181b",
+  "theme_color": "#18181b",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "vi",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
-      "src": "/images/logo/logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
     },
     {
-      "src": "/images/logo/logo.png",
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tạo phòng mới",
+      "short_name": "Tạo phòng",
+      "description": "Tạo một phòng chơi mới",
+      "url": "/create-room",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Tham gia phòng",
+      "short_name": "Tham gia",
+      "description": "Tham gia vào phòng chơi",
+      "url": "/join-room",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ]
 }
