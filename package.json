@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start:dev": "next dev -p 4000",
-    "build": "next build",
+    "start:dev": "node scripts/build-sw.js && next dev -p 4000",
+    "build": "node scripts/build-sw.js && next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"src/**/*.{js,ts,jsx,tsx,css,scss,json,md}\"",
@@ -18,6 +18,7 @@
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.0.0",
     "framer-motion": "^12.20.1",
     "howler": "^2.2.4",
     "html5-qrcode": "^2.3.8",
