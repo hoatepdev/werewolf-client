@@ -4,7 +4,7 @@ A modern, responsive web client for the 5Star Wolves (Ma Sói) game, built with 
 
 ## Features
 
-- Join or create game rooms for Ma Sói (Werewolf)
+- Join or create game rooms for 5Star Wolves
 - Real-time gameplay via WebSocket (Socket.IO)
 - Avatar selection and player management
 - Modern UI/UX with Tailwind CSS and Radix UI

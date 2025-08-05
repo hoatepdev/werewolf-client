@@ -3,7 +3,7 @@ import './globals.css'
 import { Toaster } from 'sonner'
 import { ProgrammaticDialogProviderSingleton } from '@/components/ui/alert-dialog'
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
-import { registerServiceWorker } from '@/lib/sw-register'
+import { PWAServiceWorker } from '@/components/PWAServiceWorker'
 
 const tiktokSans = {
   variable: '--font-tiktok-sans',
@@ -13,9 +13,9 @@ const tiktokSans = {
 }
 
 export const metadata: Metadata = {
-  title: 'Ma Sói Offline',
+  title: '5Star Wolves Offline',
   description:
-    'Chơi Ma Sói với bạn bè. Tạo phòng, tham gia và chơi cùng bạn bè.',
+    'Chơi ma sói với bạn bè. Tạo phòng, tham gia và chơi cùng bạn bè.',
   keywords: [
     'ma sói',
     'werewolf',
@@ -24,29 +24,29 @@ export const metadata: Metadata = {
     'multiplayer',
     'board game',
   ],
-  authors: [{ name: 'Ma Sói Team' }],
-  creator: 'Ma Sói Team',
-  publisher: 'Ma Sói Team',
+  authors: [{ name: 'hoatepdev' }],
+  creator: 'hoatepdev',
+  publisher: 'hoatepdev',
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://masoi-online.com'),
+  metadataBase: new URL('https://werewolf-client-beta.vercel.app'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'Ma Sói Offline',
-    description: 'Chơi Ma Sói  với bạn bè',
-    url: 'https://masoi-online.com',
-    siteName: 'Ma Sói Offline',
+    title: '5Star Wolves Offline',
+    description: 'Chơi ma sói với bạn bè',
+    url: 'https://werewolf-client-beta.vercel.app',
+    siteName: '5Star Wolves Offline',
     images: [
       {
         url: '/images/logo/logo.png',
         width: 512,
         height: 512,
-        alt: 'Ma Sói Offline Logo',
+        alt: '5Star Wolves Offline Logo',
       },
     ],
     locale: 'vi_VN',
@@ -54,21 +54,21 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Ma Sói Offline',
-    description: 'Chơi Ma Sói  với bạn bè',
+    title: '5Star Wolves Offline',
+    description: 'Chơi ma sói với bạn bè',
     images: ['/images/logo/logo.png'],
   },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Ma Sói Offline',
+    title: '5Star Wolves Offline',
   },
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'Ma Sói Offline',
+    'apple-mobile-web-app-title': '5Star Wolves Offline',
     'msapplication-TileColor': '#18181b',
     'msapplication-config': '/browserconfig.xml',
   },
@@ -88,10 +88,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  if (typeof window !== 'undefined') {
-    registerServiceWorker()
-  }
-
   return (
     <html lang="vi" className={`${tiktokSans.variable} antialiased`}>
       <head>
@@ -99,7 +95,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Ma Sói Offline" />
+        <meta
+          name="apple-mobile-web-app-title"
+          content="5Star Wolves Offline"
+        />
         <meta name="msapplication-TileColor" content="#18181b" />
         <meta
           name="msapplication-TileImage"
@@ -111,6 +110,7 @@ export default function RootLayout({
           <div className="bg-zinc-900">{children}</div>
           <Toaster position="top-center" richColors duration={2000} />
           <PWAInstallPrompt />
+          <PWAServiceWorker />
         </ProgrammaticDialogProviderSingleton>
       </body>
     </html>
