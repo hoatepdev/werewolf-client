@@ -14,8 +14,37 @@ export function PWAInstallPrompt() {
     useState<BeforeInstallPromptEvent | null>(null)
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
+    const checkInstallation = () => {
+      const isStandalone = window.matchMedia(
+        '(display-mode: standalone)',
+      ).matches
+      const isInstalled = localStorage.getItem('pwa-installed') === 'true'
+
+      if (isStandalone || isInstalled) {
+        setIsInstalled(true)
+        return
+      }
+
+      const isMobileDevice =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        )
+      setIsMobile(isMobileDevice)
+
+      if (isMobileDevice) {
+        const hasShownPrompt = localStorage.getItem('pwa-prompt-shown')
+        if (!hasShownPrompt) {
+          setTimeout(() => {
+            setShowInstallPrompt(true)
+            localStorage.setItem('pwa-prompt-shown', 'true')
+          }, 2000)
+        }
+      }
+    }
+
     const handler = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
@@ -23,10 +52,7 @@ export function PWAInstallPrompt() {
     }
 
     window.addEventListener('beforeinstallprompt', handler)
-
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true)
-    }
+    checkInstallation()
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler)
@@ -34,16 +60,33 @@ export function PWAInstallPrompt() {
   }, [])
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
 
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
+      if (outcome === 'accepted') {
+        setIsInstalled(true)
+        localStorage.setItem('pwa-installed', 'true')
+      }
 
-    if (outcome === 'accepted') {
-      setIsInstalled(true)
+      setDeferredPrompt(null)
+    } else {
+      if (isMobile) {
+        const installInstructions = `
+          Để cài đặt ứng dụng:
+          
+          iOS (Safari):
+          1. Nhấn vào biểu tượng chia sẻ (□↑)
+          2. Chọn "Thêm vào Màn hình chính"
+          
+          Android (Chrome):
+          1. Nhấn vào menu (⋮)
+          2. Chọn "Cài đặt ứng dụng"
+        `
+        alert(installInstructions)
+      }
     }
 
-    setDeferredPrompt(null)
     setShowInstallPrompt(false)
   }
 
@@ -115,7 +158,7 @@ export function PWAInstallPrompt() {
 
         <div className="flex gap-3">
           <Button onClick={handleInstall} variant="yellow" className="flex-1">
-            Cài đặt ngay
+            {deferredPrompt ? 'Cài đặt ngay' : 'Hướng dẫn cài đặt'}
           </Button>
 
           <Button
