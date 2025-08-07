@@ -93,6 +93,7 @@ export function PWAInstallPrompt() {
   const handleDismiss = () => {
     setShowInstallPrompt(false)
     setDeferredPrompt(null)
+    localStorage.setItem('pwa-prompt-shown', 'false')
   }
 
   if (isInstalled || !showInstallPrompt) {

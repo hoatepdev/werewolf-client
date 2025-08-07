@@ -8,3 +8,10 @@ export type Player = {
   alive: boolean
   role?: Role
 }
+export interface GameStats {
+  totalPlayers: number
+  alivePlayers: number
+  deadPlayers: number
+  werewolves: number
+  villagers: number
+}

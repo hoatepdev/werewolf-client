@@ -54,6 +54,9 @@ export type RoomState = {
   nightPrompt: NightPrompt | null
   nightResult: NightResult | null
 
+  // Hunter death shooting state
+  hunterDeathShooting: boolean
+
   setSocket: (socket: import('socket.io-client').Socket) => void
   setRoomCode: (roomCode: string) => void
   setPlayerId: (playerId: string) => void
@@ -68,6 +71,8 @@ export type RoomState = {
   // Night phase setters
   setNightPrompt: (prompt: NightPrompt | null) => void
   setNightResult: (result: NightResult | null) => void
+  // Hunter death shooting setter
+  setHunterDeathShooting: (shooting: boolean) => void
 }
 
 export const useRoomStore = create<RoomState>()(
@@ -87,6 +92,7 @@ export const useRoomStore = create<RoomState>()(
       // Night phase states
       nightPrompt: null,
       nightResult: null,
+      hunterDeathShooting: false,
 
       setSocket: (socket) => set({ socket }),
       setRoomCode: (roomCode: string) => set({ roomCode }),
@@ -109,11 +115,15 @@ export const useRoomStore = create<RoomState>()(
           approvedPlayers: [],
           nightPrompt: null,
           nightResult: null,
+          hunterDeathShooting: false,
         }),
       setAlive: (alive: boolean) => set({ alive }),
       // Night phase setters
       setNightPrompt: (prompt) => set({ nightPrompt: prompt }),
       setNightResult: (result) => set({ nightResult: result }),
+      // Hunter death shooting setter
+      setHunterDeathShooting: (shooting: boolean) =>
+        set({ hunterDeathShooting: shooting }),
     }),
     {
       name: 'room-store',
@@ -147,6 +157,7 @@ export const getStateRoomStore = () => {
     nightPrompt,
     nightResult,
     alive,
+    hunterDeathShooting,
   } = useRoomStore.getState()
   return {
     roomCode,
@@ -161,5 +172,6 @@ export const getStateRoomStore = () => {
     nightPrompt,
     nightResult,
     alive,
+    hunterDeathShooting,
   }
 }

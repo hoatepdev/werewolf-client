@@ -1,1 +1,1 @@
-export const MIN_PLAYER = 1
+export const MIN_PLAYER = 4

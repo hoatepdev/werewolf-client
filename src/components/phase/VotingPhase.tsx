@@ -9,8 +9,15 @@ import { Loader2Icon } from 'lucide-react'
 
 const VotingPhase: React.FC = () => {
   const socket = getSocket()
-  const { playerId, approvedPlayers, roomCode, setApprovedPlayers, setAlive } =
-    useRoomStore()
+  const {
+    playerId,
+    approvedPlayers,
+    roomCode,
+    setApprovedPlayers,
+    setAlive,
+    role,
+    setHunterDeathShooting,
+  } = useRoomStore()
 
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
@@ -33,6 +40,20 @@ const VotingPhase: React.FC = () => {
       }
       if (data.eliminatedPlayerId === playerId) {
         setAlive(false)
+        // Check if the eliminated player is a hunter
+        const eliminatedPlayer = approvedPlayers.find(
+          (p) => p.id === data.eliminatedPlayerId,
+        )
+        if (
+          eliminatedPlayer?.role === 'hunter' &&
+          data.eliminatedPlayerId === playerId
+        ) {
+          setHunterDeathShooting(true)
+        }
+        // Check if the eliminated player is a tanner (they win when voted)
+        if (eliminatedPlayer?.role === 'tanner' && data.cause === 'vote') {
+          toast.success('🎉 Chán đời đã thắng khi bị vote chết!')
+        }
       }
     }
 

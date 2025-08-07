@@ -5,7 +5,7 @@ import SeerAction from '../actions/SeerAction'
 import WitchAction from '../actions/WitchAction'
 import BodyguardAction from '../actions/BodyguardAction'
 import PhaseTransitionImage from '../PhaseTransitionImage'
-import HunterAction from '../actions/HunterAction'
+
 import Waiting from './Waiting'
 import { Player } from '@/types/player'
 
@@ -27,8 +27,8 @@ const NightPhase: React.FC<NightPhaseProps> = ({ roomCode }) => {
       case 'bodyguard':
         return <BodyguardAction roomCode={roomCode} />
       case 'hunter':
-        return <HunterAction roomCode={roomCode} />
       case 'villager':
+      case 'tanner':
         return <Waiting />
       default:
         return null

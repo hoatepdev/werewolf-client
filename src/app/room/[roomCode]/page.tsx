@@ -14,6 +14,7 @@ import PhaseTransition from '@/components/PhaseTransition'
 import VotingPhase from '@/components/phase/VotingPhase'
 import GameEnd from '@/components/GameEnd'
 import Waiting from '@/components/phase/Waiting'
+import HunterDeathShoot from '@/components/actions/HunterDeathShoot'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
@@ -32,6 +33,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     setAlive,
     setNightPrompt,
     alive,
+    role,
+    hunterDeathShooting,
+    setHunterDeathShooting,
   } = useRoomStore()
 
   console.log('⭐ store', getStateRoomStore())
@@ -57,6 +61,11 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         }
         if (p === playerId) {
           setAlive(false)
+          // Check if the dead player is a hunter
+          const deadPlayer = approvedPlayers.find((player) => player.id === p)
+          if (deadPlayer?.role === 'hunter' && p === playerId) {
+            setHunterDeathShooting(true)
+          }
         }
       })
       console.log('⭐ newApprovedPlayers', newApprovedPlayers)
@@ -66,14 +75,24 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
     socket.on('game:hunterShoot', ({ hunterId }: { hunterId: string }) => {
       console.log('⭐ game:hunterShoot', hunterId)
-      toast.info('Thợ săn đã bắn!')
+      if (hunterId === playerId && role === 'hunter') {
+        setHunterDeathShooting(true)
+      } else {
+        toast.info('Thợ săn đã bắn!')
+      }
     })
 
     socket.on(
       'game:gameEnded',
-      ({ winner }: { winner: 'villagers' | 'werewolves' }) => {
+      ({ winner }: { winner: 'villagers' | 'werewolves' | 'tanner' }) => {
         console.log('⭐ game:gameEnded', winner)
-        setGameWinner(winner === 'villagers' ? 'Dân làng' : 'Sói')
+        if (winner === 'villagers') {
+          setGameWinner('Dân làng')
+        } else if (winner === 'werewolves') {
+          setGameWinner('Sói')
+        } else if (winner === 'tanner') {
+          setGameWinner('Chán đời')
+        }
       },
     )
 
@@ -86,6 +105,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   }, [])
 
   const renderPhase = () => {
+    if (hunterDeathShooting && role === 'hunter') {
+      return <HunterDeathShoot roomCode={roomCode} />
+    }
     if (!alive) return <Waiting />
     if (gameWinner) {
       return (

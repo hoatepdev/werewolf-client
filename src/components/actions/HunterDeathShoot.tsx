@@ -1,54 +1,56 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { getSocket } from '@/lib/socket'
-import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
+import { useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
-import Waiting from '../phase/Waiting'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
 
-interface HunterActionProps {
+interface HunterDeathShootProps {
   roomCode: string
 }
 
-const HunterAction: React.FC<HunterActionProps> = ({ roomCode }) => {
+const HunterDeathShoot: React.FC<HunterDeathShootProps> = ({ roomCode }) => {
   const socket = getSocket()
-  const { nightPrompt, setNightPrompt, approvedPlayers } = useRoomStore()
+  const { approvedPlayers, setHunterDeathShooting } = useRoomStore()
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
     username: string
   }>()
   const [sending, setSending] = useState(false)
 
-  useEffect(() => {
-    const handler = (data: NightPrompt) => {
-      console.log('⭐ hunter data', data)
-      setNightPrompt(data)
-    }
-    socket.on('night:hunter-action', handler)
-    return () => {
-      socket.off('night:hunter-action', handler)
-    }
-  }, [])
+  const alivePlayers = approvedPlayers.filter((p) => p.alive)
 
-  if (!nightPrompt || nightPrompt.type !== 'hunter' || sending) {
-    return <Waiting />
+  const handleShoot = async () => {
+    if (!selectedTarget) return
+
+    setSending(true)
+    socket.emit('game:hunterShoot:done', {
+      roomCode,
+      targetId: selectedTarget.id,
+    })
+    toast.success('Đã bắn mục tiêu')
+    setHunterDeathShooting(false)
   }
 
-  const handleVote = async (isSkip: boolean = false) => {
+  const handleSkip = async () => {
     setSending(true)
-
-    socket.emit('night:hunter-action:done', {
+    socket.emit('game:hunterShoot:done', {
       roomCode,
-      targetId: isSkip ? undefined : selectedTarget?.id,
+      targetId: undefined,
     })
-    toast.success('Đã gửi lựa chọn')
+    toast.success('Đã bỏ qua lượt bắn')
+    setHunterDeathShooting(false)
   }
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
       <div className="text-center">
-        <h3 className="text-xl font-bold text-orange-400">🏹 Lượt Thợ săn</h3>
-        <p className="text-sm text-gray-300">{nightPrompt.message}</p>
+        <h3 className="text-xl font-bold text-orange-400">
+          🏹 Thợ săn bắn cuối
+        </h3>
+        <p className="text-sm text-gray-300">
+          Bạn đã chết! Chọn một người để bắn trước khi rời khỏi cuộc chơi
+        </p>
       </div>
       <div className="w-full">
         <PlayerGrid
@@ -56,7 +58,7 @@ const HunterAction: React.FC<HunterActionProps> = ({ roomCode }) => {
           mode="room"
           selectedId={selectedTarget?.id}
           onSelect={setSelectedTarget}
-          selectableList={nightPrompt.candidates}
+          selectableList={alivePlayers}
         />
       </div>
       {selectedTarget?.id && (
@@ -71,7 +73,7 @@ const HunterAction: React.FC<HunterActionProps> = ({ roomCode }) => {
       )}
       <div className="flex w-full gap-2">
         <Button
-          onClick={() => handleVote(true)}
+          onClick={handleSkip}
           disabled={sending}
           variant="default"
           className="w-1/3"
@@ -79,16 +81,16 @@ const HunterAction: React.FC<HunterActionProps> = ({ roomCode }) => {
           Bỏ qua
         </Button>
         <Button
-          onClick={() => handleVote(false)}
-          disabled={sending}
+          onClick={handleShoot}
+          disabled={!selectedTarget?.id || sending}
           variant="yellow"
           className="w-2/3"
         >
-          {sending ? 'Đang gửi...' : 'Xác nhận'}
+          {sending ? 'Đang gửi...' : 'Bắn'}
         </Button>
       </div>
     </div>
   )
 }
 
-export default HunterAction
+export default HunterDeathShoot

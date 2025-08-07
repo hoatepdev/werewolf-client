@@ -37,4 +37,10 @@ export const LIST_ROLE: RoleObject[] = [
     description: 'Bảo vệ 1 người mỗi đêm',
     emoji: '🛡️',
   },
+  {
+    id: 'tanner',
+    name: 'Chán đời',
+    description: 'Thắng khi bị vote chết',
+    emoji: '😵',
+  },
 ]
