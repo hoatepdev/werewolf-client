@@ -15,6 +15,7 @@ import VotingPhase from '@/components/phase/VotingPhase'
 import GameEnd from '@/components/GameEnd'
 import Waiting from '@/components/phase/Waiting'
 import HunterDeathShoot from '@/components/actions/HunterDeathShoot'
+import { checkWinCondition, getWinnerDisplayName } from '@/helpers/winConditions'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
@@ -71,6 +72,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       console.log('⭐ newApprovedPlayers', newApprovedPlayers)
 
       setApprovedPlayers(newApprovedPlayers)
+      
+      // Check win condition after night deaths
+      const winCondition = checkWinCondition(newApprovedPlayers)
+      if (winCondition) {
+        setGameWinner(getWinnerDisplayName(winCondition))
+        socket.emit('game:checkWinCondition', { roomCode, winner: winCondition })
+      }
     })
 
     socket.on('game:hunterShoot', ({ hunterId }: { hunterId: string }) => {

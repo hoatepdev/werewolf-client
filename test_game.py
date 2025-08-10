@@ -31,8 +31,9 @@ class Player:
     role: Optional[str] = None
 
 class GameTester:
-    def __init__(self, server_url: str = "http://localhost:4001"):
+    def __init__(self, server_url: str = "http://localhost:4000", socket_url: str = "http://localhost:4001"):
         self.server_url = server_url
+        self.socket_url = socket_url
         self.gm_socket = None
         self.player_sockets = []
         self.room_code = None
@@ -57,7 +58,7 @@ class GameTester:
         
     def test_server_connection(self):
         try:
-            response = requests.get(f"{self.server_url}/health", timeout=5)
+            response = requests.get(f"{self.server_url}/api/health", timeout=5)
             self.log_test("Server Connection", response.status_code == 200, f"Status: {response.status_code}")
             return response.status_code == 200
         except Exception as e:
@@ -67,7 +68,7 @@ class GameTester:
     def test_room_creation(self):
         try:
             self.gm_socket = self.create_socket_client("GM")
-            self.gm_socket.connect(self.server_url)
+            self.gm_socket.connect(self.socket_url)
             
             room_created = False
             room_data = None
@@ -107,7 +108,7 @@ class GameTester:
             
             for i in range(num_players):
                 player_socket = self.create_socket_client(f"Player{i+1}")
-                player_socket.connect(self.server_url)
+                player_socket.connect(self.socket_url)
                 self.player_sockets.append(player_socket)
                 
                 @player_socket.on('connect')
@@ -333,7 +334,7 @@ class GameTester:
             @self.gm_socket.on('gm:playersUpdate')
             def on_players_update(data):
                 nonlocal elimination_success
-                players = data.get('players', [])
+                players = data
                 dead_players = [p for p in players if not p.get('alive', True)]
                 if dead_players:
                     elimination_success = True

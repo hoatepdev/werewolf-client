@@ -1,0 +1,4 @@
+instructions:
+  - name: "Setup and gameplay Instructions for the Werewolf (Ma sói) app"
+    description: "This instruction provides step-by-step guidance on how to set up, join, and play a game of Werewolf (Ma Sói) using the app, including role assignment, night/day phases, voting, and winning conditions."
+    content_file: "werewolf-setup-gameplay.md"

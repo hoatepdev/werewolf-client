@@ -13,7 +13,7 @@ const tiktokSans = {
 }
 
 export const metadata: Metadata = {
-  title: '5Star Wolves Offline',
+  title: '5Star Werewolf Offline',
   description:
     'Chơi ma sói với bạn bè. Tạo phòng, tham gia và chơi cùng bạn bè.',
   keywords: [
@@ -37,16 +37,16 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: '5Star Wolves Offline',
+    title: '5Star Werewolf Offline',
     description: 'Chơi ma sói với bạn bè',
     url: 'https://werewolf-client-beta.vercel.app',
-    siteName: '5Star Wolves Offline',
+    siteName: '5Star Werewolf Offline',
     images: [
       {
         url: '/images/logo/logo.png',
         width: 512,
         height: 512,
-        alt: '5Star Wolves Offline Logo',
+        alt: '5Star Werewolf Offline Logo',
       },
     ],
     locale: 'vi_VN',
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: '5Star Wolves Offline',
+    title: '5Star Werewolf Offline',
     description: 'Chơi ma sói với bạn bè',
     images: ['/images/logo/logo.png'],
   },
@@ -62,13 +62,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: '5Star Wolves Offline',
+    title: '5Star Werewolf Offline',
   },
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': '5Star Wolves Offline',
+    'apple-mobile-web-app-title': '5Star Werewolf Offline',
     'msapplication-TileColor': '#18181b',
     'msapplication-config': '/browserconfig.xml',
   },
@@ -97,7 +97,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta
           name="apple-mobile-web-app-title"
-          content="5Star Wolves Offline"
+          content="5Star Werewolf Offline"
         />
         <meta name="msapplication-TileColor" content="#18181b" />
         <meta

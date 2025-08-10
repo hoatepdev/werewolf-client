@@ -38,7 +38,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-2 text-center text-4xl font-extrabold tracking-tight text-white">
           <Image
             src="/images/logo/logo.png"
-            alt="5Star Wolves"
+            alt="5Star Werewolf"
             width={80}
             height={80}
           />

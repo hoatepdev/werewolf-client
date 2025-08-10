@@ -20,6 +20,11 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
   }>()
   const [sending, setSending] = useState(false)
 
+  // Filter out last protected player from candidates
+  const availableCandidates = nightPrompt?.candidates?.filter(
+    candidate => candidate.id !== nightPrompt?.lastProtected
+  ) || []
+
   useEffect(() => {
     const handler = (data: NightPrompt) => {
       console.log('⭐ bodyguard data', data)
@@ -63,9 +68,21 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
           mode="room"
           selectedId={selectedTarget?.id}
           onSelect={setSelectedTarget}
-          selectableList={nightPrompt.candidates}
+          selectableList={availableCandidates}
         />
       </div>
+
+      {nightPrompt?.lastProtected && (
+        <div className="w-full rounded-lg bg-orange-900/20 p-3">
+          <p className="text-sm text-orange-300">
+            ⚠️ Bạn không thể bảo vệ{' '}
+            <span className="font-semibold">
+              {approvedPlayers.find(p => p.id === nightPrompt.lastProtected)?.username}
+            </span>{' '}
+            hai đêm liên tiếp
+          </p>
+        </div>
+      )}
 
       {selectedTarget?.id && (
         <div className="w-full rounded-lg bg-gray-800 p-3">

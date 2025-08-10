@@ -93,7 +93,7 @@ export function PWAInstallPrompt() {
   const handleDismiss = () => {
     setShowInstallPrompt(false)
     setDeferredPrompt(null)
-    localStorage.setItem('pwa-prompt-shown', 'false')
+    localStorage.removeItemItem('pwa-prompt-shown')
   }
 
   if (isInstalled || !showInstallPrompt) {
@@ -111,10 +111,11 @@ export function PWAInstallPrompt() {
         <div className="mb-6 flex items-start gap-4">
           <div className="min-w-0 flex-1">
             <h3 className="mb-2 text-lg font-bold text-white">
-              Cài đặt 5Star Wolves Offline
+              Cài đặt 5Star Werewolf Offline
             </h3>
             <p className="text-sm leading-relaxed text-zinc-300">
-              Cài đặt ứng dụng để có trải nghiệm tốt hơn và chơi offline
+              Cài đặt ứng dụng để có trải nghiệm tốt hơn và chơi offline với mọi
+              người
             </p>
           </div>
         </div>

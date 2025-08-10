@@ -150,6 +150,8 @@ export default function JoinRoomPage() {
       'rq_player:joinRoom',
       { roomCode, avatarKey, username },
       (response: { success: boolean; playerId?: string; message?: string }) => {
+        console.log('⭐ response', response)
+
         if (response.success && response.playerId) {
           setPlayerId(response.playerId)
           setRoomCodeStore(roomCode)

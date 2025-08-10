@@ -138,9 +138,9 @@ const useSocketConnection = (
       }) => {
         setPhase(data.phase)
       },
-      'gm:playersUpdate': (data: { players: Player[] }) => {
-        setPlayers(data.players)
-        updateGameStats(data.players)
+      'gm:playersUpdate': (players: Player[]) => {
+        setPlayers(players)
+        updateGameStats(players)
       },
       'gm:nightAction': (nightAction: NightActionData) => {
         setNightActions((prev) => [...prev, nightAction])

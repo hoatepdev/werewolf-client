@@ -6,6 +6,7 @@ import PhaseTransitionImage from '../PhaseTransitionImage'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
 import { Loader2Icon } from 'lucide-react'
+import { checkWinCondition, getWinnerDisplayName } from '@/helpers/winConditions'
 
 const VotingPhase: React.FC = () => {
   const socket = getSocket()
@@ -53,6 +54,14 @@ const VotingPhase: React.FC = () => {
         // Check if the eliminated player is a tanner (they win when voted)
         if (eliminatedPlayer?.role === 'tanner' && data.cause === 'vote') {
           toast.success('🎉 Chán đời đã thắng khi bị vote chết!')
+          // Emit tanner win to server to end game immediately
+          socket.emit('game:tannerWin', { roomCode })
+        } else {
+          // Check win condition after voting elimination (if not tanner)
+          const winCondition = checkWinCondition(newApprovedPlayers)
+          if (winCondition) {
+            socket.emit('game:checkWinCondition', { roomCode, winner: winCondition })
+          }
         }
       }
     }

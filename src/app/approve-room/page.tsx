@@ -48,6 +48,8 @@ export default function ApprovePlayerPage() {
   }
 
   const handleDataPlayers = (data: Player[]) => {
+    console.log('⭐ data', data)
+
     const approvedPlayers: Player[] = []
     const pendingPlayers: Player[] = []
 
@@ -69,10 +71,10 @@ export default function ApprovePlayerPage() {
 
     socket.emit('rq_gm:getPlayers', { roomCode })
 
-    socket.on('room:updatePlayers', handleDataPlayers)
+    socket.on('gm:playersUpdate', handleDataPlayers)
     socket.on('room:readySuccess', handleStartGameSuccess)
     return () => {
-      socket.off('room:updatePlayers')
+      socket.off('gm:playersUpdate')
       socket.off('room:readySuccess')
     }
   }, [roomCode, router])

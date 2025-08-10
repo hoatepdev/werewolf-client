@@ -1,10 +1,10 @@
 # Masoi Client
 
-A modern, responsive web client for the 5Star Wolves (Ma Sói) game, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
+A modern, responsive web client for the 5Star Werewolf (Ma Sói) game, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
 
 ## Features
 
-- Join or create game rooms for 5Star Wolves
+- Join or create game rooms for 5Star Werewolf
 - Real-time gameplay via WebSocket (Socket.IO)
 - Avatar selection and player management
 - Modern UI/UX with Tailwind CSS and Radix UI
