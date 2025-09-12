@@ -55,7 +55,7 @@ function useAudioQueue() {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(message)
       utterance.lang = 'vi-VN'
-      utterance.rate = 0.8
+      utterance.rate = 1.2
       utterance.pitch = 1.0
       utterance.volume = 1.0
       utterance.onend = () => {
@@ -120,9 +120,7 @@ const useSocketConnection = (
   const [nightActions, setNightActions] = useState<NightActionData[]>([])
 
   useEffect(() => {
-    const gmRoomId = `gm_${roomCode}`
-
-    socket.emit('rq_gm:connectGmRoom', { roomCode, gmRoomId })
+    socket.emit('rq_gm:connectGmRoom', { roomCode, gmRoomId: roomCode })
 
     const handlers = {
       'gm:connected': (data: {
@@ -138,9 +136,13 @@ const useSocketConnection = (
       }) => {
         setPhase(data.phase)
       },
-      'gm:playersUpdate': (players: Player[]) => {
-        setPlayers(players)
-        updateGameStats(players)
+      'room:updatePlayers': (players: Player[]) => {
+        console.log('⭐ players', players)
+        const approvedPlayers = players.filter(
+          (player) => player.status === 'approved',
+        )
+        setPlayers(approvedPlayers)
+        updateGameStats(approvedPlayers)
       },
       'gm:nightAction': (nightAction: NightActionData) => {
         setNightActions((prev) => [...prev, nightAction])
@@ -534,60 +536,64 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         }
       />
 
-      <div className="mb-4">
+      <div className="">
         <h2 className="mb-2 text-lg font-bold text-purple-400">
           🎮 Điều khiển game
         </h2>
-        <div className="flex items-center gap-2">
-          <Button variant="yellow" onClick={handleNextPhase} className="">
+        <div className="flex items-center gap-20">
+          <Button
+            variant="yellow"
+            onClick={handleNextPhase}
+            disabled={['night', 'ended'].includes(phase)}
+          >
             Giai đoạn tiếp theo
           </Button>
           <Button onClick={handleGetPlayers} className="">
             Làm mới danh sách
           </Button>
-          <div className="ml-4 flex items-center gap-2">
-            <span className="text-sm text-gray-300">Giai đoạn hiện tại:</span>
-            <span
-              className={`rounded px-2 py-1 text-sm font-medium ${
-                phase === 'night'
-                  ? 'bg-blue-600'
-                  : phase === 'day'
-                    ? 'bg-yellow-600'
-                    : phase === 'voting'
-                      ? 'bg-red-600'
-                      : phase === 'ended'
-                        ? 'bg-gray-600'
-                        : 'bg-gray-600'
-              }`}
-            >
-              {phase === 'night'
-                ? 'Đêm'
+        </div>
+        <div className="mt-4 flex items-center gap-2">
+          <span className="text-sm text-gray-300">Giai đoạn hiện tại:</span>
+          <span
+            className={`rounded px-2 py-1 text-sm font-medium ${
+              phase === 'night'
+                ? 'bg-blue-600'
                 : phase === 'day'
-                  ? 'Ngày'
+                  ? 'bg-yellow-600'
                   : phase === 'voting'
-                    ? 'Bỏ phiếu'
+                    ? 'bg-red-600'
                     : phase === 'ended'
-                      ? 'Kết thúc'
-                      : 'Chưa bắt đầu'}
-            </span>
-          </div>
+                      ? 'bg-gray-600'
+                      : 'bg-gray-600'
+            }`}
+          >
+            {phase === 'night'
+              ? 'Đêm'
+              : phase === 'day'
+                ? 'Ngày'
+                : phase === 'voting'
+                  ? 'Bỏ phiếu'
+                  : phase === 'ended'
+                    ? 'Kết thúc'
+                    : 'Chưa bắt đầu'}
+          </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <GameStats gameStats={gameStats} />
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <AudioControl
+            currentAudio={currentAudio}
+            isPlaying={isPlayingRef.current}
+            stopAudio={() => setCurrentAudio(null)}
+          />
+          <AudioQueue audioQueue={audioQueue} playAudio={setCurrentAudio} />
+        </div>
         <PlayerList
           players={players}
           onEliminate={handleEliminatePlayer}
           onRevive={handleRevivePlayer}
         />
-        <NightActionLog nightActions={nightActions} />
-        <AudioControl
-          currentAudio={currentAudio}
-          isPlaying={isPlayingRef.current}
-          stopAudio={() => setCurrentAudio(null)}
-        />
-        <AudioQueue audioQueue={audioQueue} playAudio={setCurrentAudio} />
       </div>
 
       <div className="mt-6 max-h-96 overflow-y-auto rounded-lg bg-zinc-800 p-4">
@@ -605,6 +611,10 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
             </li>
           ))}
         </ul>
+      </div>
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <GameStats gameStats={gameStats} />
+        <NightActionLog nightActions={nightActions} />
       </div>
     </MainLayout>
   )

@@ -20,7 +20,7 @@ const CreateRoomPage = () => {
 
   useEffect(() => {
     setResetGame()
-  }, [])
+  }, [setResetGame])
 
   useEffect(() => {
     if (!socket.connected) socket.connect()
@@ -34,7 +34,7 @@ const CreateRoomPage = () => {
   }, [avatarKey, username, socket])
 
   const handleCreateRoom = () => {
-    router.push('/approve-room')
+    router.push(`/approve-room/${roomCode}`)
   }
 
   return (

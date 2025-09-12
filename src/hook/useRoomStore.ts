@@ -138,7 +138,11 @@ export const useRoomStore = create<RoomState>()(
         alive: state.alive,
       }),
       onRehydrateStorage: () => (state) => {
-        state?.setRehydrated(true)
+        if (state) {
+          setTimeout(() => {
+            state.setRehydrated(true)
+          }, 0)
+        }
       },
     },
   ),

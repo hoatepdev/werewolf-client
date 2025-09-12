@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, use } from 'react'
 import { Check, Loader2Icon, ScanQrCode, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -26,7 +26,12 @@ import MainLayout from '@/components/MainLayout'
 const initialApproved: Player[] = []
 const initialPending: Player[] = []
 
-export default function ApprovePlayerPage() {
+export default function ApprovePlayerPage({
+  params,
+}: {
+  params: Promise<{ roomCode: string }>
+}) {
+  const { roomCode } = use(params)
   const socket = getSocket()
   const router = useRouter()
 
@@ -36,8 +41,7 @@ export default function ApprovePlayerPage() {
   const [loading, setLoading] = useState(false)
   const [textButton, setTextButton] = useState('Phân vai ngẫu nhiên')
 
-  const { roomCode, setApprovedPlayers: setApprovedPlayersStore } =
-    useRoomStore()
+  const { setApprovedPlayers: setApprovedPlayersStore } = useRoomStore()
 
   console.log('⭐ store', getStateRoomStore())
   const handleStartGameSuccess = () => {
@@ -71,13 +75,13 @@ export default function ApprovePlayerPage() {
 
     socket.emit('rq_gm:getPlayers', { roomCode })
 
-    socket.on('gm:playersUpdate', handleDataPlayers)
+    socket.on('room:updatePlayers', handleDataPlayers)
     socket.on('room:readySuccess', handleStartGameSuccess)
     return () => {
-      socket.off('gm:playersUpdate')
+      socket.off('room:updatePlayers')
       socket.off('room:readySuccess')
     }
-  }, [roomCode, router])
+  }, [roomCode])
 
   const handleApprove = (player: Player) => {
     setApprovedPlayers((prev) => [...prev, player])
@@ -220,7 +224,7 @@ export default function ApprovePlayerPage() {
                   </span>
                   <div className="flex gap-4">
                     <button
-                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-500 text-lg text-green-500 hover:bg-green-600 hover:text-white focus:outline-none"
+                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-green-500 text-lg text-green-500 hover:bg-green-600 hover:text-white focus:outline-none"
                       onClick={() => {
                         handleApprove(player)
                       }}
@@ -229,7 +233,7 @@ export default function ApprovePlayerPage() {
                       <Check className="h-6 w-6" />
                     </button>
                     <button
-                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-500 text-lg text-red-500 hover:bg-red-600 hover:text-white focus:outline-none active:bg-red-700"
+                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-red-500 text-lg text-red-500 hover:bg-red-600 hover:text-white focus:outline-none active:bg-red-700"
                       onClick={() => {
                         handleReject(player)
                       }}

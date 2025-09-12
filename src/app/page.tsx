@@ -22,6 +22,9 @@ export default function Home() {
 
   useEffect(() => {
     setResetGame()
+  }, [setResetGame])
+
+  useEffect(() => {
     if (username) setName(username)
     if (typeof avatarKey === 'number') setAvatar(avatarKey)
   }, [username, avatarKey])
@@ -43,7 +46,8 @@ export default function Home() {
             height={80}
           />
           <div>
-            <span className="text-yellow-400">5S</span>tar Wolves
+            <span className="text-yellow-400">5S</span>tar Were
+            <span className="text-yellow-400">wolf</span>
           </div>
         </div>
         <motion.div

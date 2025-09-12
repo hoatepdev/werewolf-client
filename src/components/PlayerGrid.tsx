@@ -11,7 +11,7 @@ interface PlayerGridProps {
   currentPlayerId?: string
   mode?: 'lobby' | 'room'
   selectedId?: string
-  onSelect?: (player: Player) => void
+  onSelect?: (player: Player | null) => void
   selectableList?: { id: string; username: string }[]
 }
 
@@ -56,8 +56,13 @@ export function PlayerGrid({
               : 'pointer-events-none cursor-not-allowed opacity-50'
           }`}
           onClick={() => {
-            if (player.isSelectable) onSelect?.(player)
-            else toast.error('Bạn không thể chọn người này')
+            if (player.isSelectable) {
+              if (player.id === selectedId) {
+                onSelect?.(null)
+              } else {
+                onSelect?.(player)
+              }
+            } else toast.error('Bạn không thể chọn người này')
           }}
         >
           <CardContent className="flex flex-col items-center p-3">

@@ -35,11 +35,9 @@ export function PWAInstallPrompt() {
       setIsMobile(isMobileDevice)
 
       if (isMobileDevice) {
-        const hasShownPrompt = localStorage.getItem('pwa-prompt-shown')
-        if (!hasShownPrompt) {
+        if (!localStorage.getItem('pwa-prompt-dismissed')) {
           setTimeout(() => {
             setShowInstallPrompt(true)
-            localStorage.setItem('pwa-prompt-shown', 'true')
           }, 2000)
         }
       }
@@ -48,7 +46,9 @@ export function PWAInstallPrompt() {
     const handler = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
-      setShowInstallPrompt(true)
+      if (!localStorage.getItem('pwa-prompt-dismissed')) {
+        setShowInstallPrompt(true)
+      }
     }
 
     window.addEventListener('beforeinstallprompt', handler)
@@ -67,6 +67,7 @@ export function PWAInstallPrompt() {
       if (outcome === 'accepted') {
         setIsInstalled(true)
         localStorage.setItem('pwa-installed', 'true')
+        localStorage.removeItem('pwa-prompt-dismissed')
       }
 
       setDeferredPrompt(null)
@@ -84,6 +85,7 @@ export function PWAInstallPrompt() {
           2. Chọn "Cài đặt ứng dụng"
         `
         alert(installInstructions)
+        localStorage.removeItem('pwa-prompt-dismissed')
       }
     }
 
@@ -93,7 +95,7 @@ export function PWAInstallPrompt() {
   const handleDismiss = () => {
     setShowInstallPrompt(false)
     setDeferredPrompt(null)
-    localStorage.removeItemItem('pwa-prompt-shown')
+    localStorage.setItem('pwa-prompt-dismissed', 'true')
   }
 
   if (isInstalled || !showInstallPrompt) {

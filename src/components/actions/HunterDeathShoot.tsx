@@ -16,7 +16,7 @@ const HunterDeathShoot: React.FC<HunterDeathShootProps> = ({ roomCode }) => {
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
     username: string
-  }>()
+  } | null>(null)
   const [sending, setSending] = useState(false)
 
   const alivePlayers = approvedPlayers.filter((p) => p.alive)
@@ -25,19 +25,19 @@ const HunterDeathShoot: React.FC<HunterDeathShootProps> = ({ roomCode }) => {
     if (!selectedTarget) return
 
     setSending(true)
-    
+
     // Update local state to mark target as dead for win condition check
-    const updatedPlayers = approvedPlayers.map(p => 
-      p.id === selectedTarget.id ? { ...p, alive: false } : p
+    const updatedPlayers = approvedPlayers.map((p) =>
+      p.id === selectedTarget.id ? { ...p, alive: false } : p,
     )
-    
+
     // Check win condition after hunter shot
     const winCondition = checkWinCondition(updatedPlayers)
-    
+
     socket.emit('game:hunterShoot:done', {
       roomCode,
       targetId: selectedTarget.id,
-      winCondition: winCondition // Send win condition to server
+      winCondition: winCondition, // Send win condition to server
     })
     toast.success('Đã bắn mục tiêu')
     setHunterDeathShooting(false)

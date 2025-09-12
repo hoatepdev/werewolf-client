@@ -13,11 +13,12 @@ interface WitchActionProps {
 const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
   const socket = getSocket()
   const { nightPrompt, setNightPrompt, approvedPlayers } = useRoomStore()
+  console.log('⭐ useRoomStore', useRoomStore())
   const [heal, setHeal] = useState<boolean>(false)
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
     username: string
-  }>()
+  } | null>(null)
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
@@ -42,12 +43,14 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
     toast.success('Đã gửi lựa chọn')
   }
 
-  const handleSelectPlayer = (player: { id: string; username: string }) => {
+  const handleSelectPlayer = (
+    player: { id: string; username: string } | null,
+  ) => {
     setSelectedTarget(player)
   }
 
   const handleSkip = () => {
-    setSelectedTarget(undefined)
+    setSelectedTarget(null)
     setHeal(false)
     handleAction(true)
   }

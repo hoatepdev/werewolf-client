@@ -8,7 +8,9 @@ export function getSocket(): Socket {
     socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
       autoConnect: false,
     })
-    store.setSocket(socket)
+    setTimeout(() => {
+      store.setSocket(socket)
+    }, 0)
   }
   return socket
 }

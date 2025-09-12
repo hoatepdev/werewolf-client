@@ -78,8 +78,11 @@ export default function JoinRoomPage() {
       }
     }
     focusRef.current?.focus()
-    setResetGame()
   }, [])
+
+  useEffect(() => {
+    setResetGame()
+  }, [setResetGame])
 
   useEffect(() => {
     if (scanning && scannerRef.current && typeof window !== 'undefined') {
@@ -136,7 +139,7 @@ export default function JoinRoomPage() {
       socket.off('player:approved')
       socket.off('player:rejected')
     }
-  }, [scanning, router, socket])
+  }, [router, socket])
 
   const handleJoinRoom = async () => {
     if (!roomCode || !username) {

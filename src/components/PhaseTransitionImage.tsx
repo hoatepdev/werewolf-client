@@ -8,7 +8,7 @@ const PhaseTransitionImage = ({
 }: {
   image: string
   duration?: number
-  bgColor: string
+  bgColor?: string
 }) => {
   const [isVisible, setIsVisible] = useState(true)
 
@@ -34,7 +34,7 @@ const PhaseTransitionImage = ({
             x: 100,
             transition: { duration: 0.5, ease: 'easeInOut' },
           }}
-          className={`absolute inset-0 z-10 flex h-full w-full flex-1 items-center justify-center ${bgColor} object-cover select-none`}
+          className={`absolute inset-0 z-10 flex h-full w-full flex-1 items-center justify-center rounded-lg ${bgColor} object-cover select-none`}
         >
           <img src={image} alt={image} className="h-auto w-full object-cover" />
         </motion.div>
