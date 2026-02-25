@@ -16,11 +16,9 @@ const SeerAction: React.FC<{
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
     username: string
-    role?: string
   } | null>(null)
 
-  const [selectedRedFlag, setSelectedRedFlag] = useState<boolean | null>(null)
-
+  const [seerResult, setSeerResult] = useState<boolean | null>(null)
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
@@ -33,25 +31,36 @@ const SeerAction: React.FC<{
     }
   }, [])
 
-  if (!nightPrompt || nightPrompt.type !== 'seer' || sending) {
+  useEffect(() => {
+    const handler = ({
+      targetId,
+      isWerewolf,
+    }: {
+      targetId: string
+      isWerewolf: boolean
+    }) => {
+      if (selectedTarget?.id === targetId) {
+        setSeerResult(isWerewolf)
+      }
+    }
+    socket.on('night:seer-result', handler)
+    return () => {
+      socket.off('night:seer-result', handler)
+    }
+  }, [selectedTarget])
+
+  if (!nightPrompt || nightPrompt.type !== 'seer') {
     return <Waiting />
   }
 
-  const handleVote = async () => {
-    setSelectedRedFlag(selectedTarget?.role === 'werewolf')
-
-    setTimeout(() => {
-      socket.emit('night:seer-action:done', {
-        roomCode,
-        targetId: selectedTarget?.id,
-      })
-      toast.success('Đã gửi lựa chọn')
-      setSending(true)
-    }, 3000)
-  }
-
-  if (sending) {
-    return null
+  const handleVote = () => {
+    if (!selectedTarget) return
+    socket.emit('night:seer-action:done', {
+      roomCode,
+      targetId: selectedTarget.id,
+    })
+    toast.success('Đã gửi lựa chọn')
+    setSending(true)
   }
 
   return (
@@ -72,18 +81,18 @@ const SeerAction: React.FC<{
       {selectedTarget?.id && (
         <div className="w-full rounded-lg bg-gray-800 p-3">
           <div className="text-gray-300">
-            {selectedRedFlag === null ? (
+            {seerResult === null ? (
               <div>
                 Bạn sẽ xem:&nbsp;
                 <span className="font-bold text-blue-400">
-                  {selectedTarget?.username}
+                  {selectedTarget.username}
                 </span>
               </div>
             ) : (
               <div>
                 Người chơi&nbsp;
-                {selectedTarget?.username}:&nbsp;
-                {selectedRedFlag ? (
+                {selectedTarget.username}:&nbsp;
+                {seerResult ? (
                   <span className="font-bold text-red-500">LÀ SÓI</span>
                 ) : (
                   <span className="font-bold text-green-500">
@@ -97,7 +106,7 @@ const SeerAction: React.FC<{
       )}
       <Button
         onClick={handleVote}
-        disabled={!selectedTarget?.id || selectedRedFlag !== null}
+        disabled={!selectedTarget?.id || sending}
         variant="yellow"
       >
         Xác nhận

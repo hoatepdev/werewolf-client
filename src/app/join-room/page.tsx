@@ -26,6 +26,7 @@ export default function JoinRoomPage() {
     setPlayerId,
     setRoomCode: setRoomCodeStore,
     setResetGame,
+    persistentPlayerId,
   } = useRoomStore()
 
   const [roomCode, setRoomCode] = useState('')
@@ -151,7 +152,7 @@ export default function JoinRoomPage() {
     if (!socket.connected) socket.connect()
     socket.emit(
       'rq_player:joinRoom',
-      { roomCode, avatarKey, username },
+      { roomCode, avatarKey, username, persistentPlayerId },
       (response: { success: boolean; playerId?: string; message?: string }) => {
         console.log('⭐ response', response)
 

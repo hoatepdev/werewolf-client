@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Player } from '@/types/player'
 
-export type Phase = 'night' | 'day' | 'voting' | 'ended'
+export type Phase = 'night' | 'day' | 'voting' | 'conclude' | 'ended'
 
 export type NightStep =
   | 'werewolf'
@@ -42,6 +42,7 @@ export interface NightResult {
 export type RoomState = {
   roomCode: string
   playerId: string
+  persistentPlayerId: string
   role: Player['role'] | null
   phase: Phase
   username: string
@@ -83,6 +84,7 @@ export const useRoomStore = create<RoomState>()(
       socket: null,
       roomCode: '',
       playerId: '',
+      persistentPlayerId: crypto.randomUUID(),
       role: null,
       phase: 'night',
       username: '',
@@ -135,6 +137,7 @@ export const useRoomStore = create<RoomState>()(
       partialize: (state) => ({
         roomCode: state.roomCode,
         playerId: state.playerId,
+        persistentPlayerId: state.persistentPlayerId,
         role: state.role,
         phase: state.phase,
         username: state.username,

@@ -39,7 +39,7 @@ export function useSocketConnection(
         toast.success('GM đã kết nối thành công')
       },
       'game:phaseChanged': (data: {
-        phase: 'night' | 'day' | 'voting' | 'ended'
+        phase: 'night' | 'day' | 'voting' | 'conclude' | 'ended'
       }) => {
         setPhase(data.phase)
       },
@@ -68,6 +68,14 @@ export function useSocketConnection(
           type: data.type,
           message: data.message,
         })
+      },
+      'room:playerDisconnected': ({
+        username,
+      }: {
+        playerId: string
+        username: string
+      }) => {
+        toast.warning(`${username} đã mất kết nối`)
       },
     } as const
 

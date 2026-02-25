@@ -58,10 +58,17 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       }, 1000)
     })
     socket.on('room:readySuccess', handleStartGameSuccess)
+    socket.on(
+      'room:playerDisconnected',
+      ({ username }: { playerId: string; username: string }) => {
+        toast.warning(`${username} đã mất kết nối`)
+      },
+    )
     return () => {
       socket.off('room:updatePlayers')
       socket.off('player:assignedRole')
       socket.off('room:readySuccess')
+      socket.off('room:playerDisconnected')
     }
   }, [roomCode, playerId, socket])
 

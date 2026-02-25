@@ -26,6 +26,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
   const {
     playerId,
+    persistentPlayerId,
     phase,
     setPhase,
     approvedPlayers,
@@ -41,40 +42,33 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   console.log('⭐ store', getStateRoomStore())
 
   useEffect(() => {
+    // Reconnect: re-register with server using persistent ID
+    const handleReconnect = () => {
+      socket.emit('rq_player:rejoinRoom', { roomCode, persistentPlayerId })
+    }
+    socket.on('connect', handleReconnect)
+
     socket.on('game:phaseChanged', (newPhase: { phase: string }) => {
-      setPhase(newPhase.phase as 'night' | 'day' | 'voting' | 'ended')
+      setPhase(newPhase.phase as 'night' | 'day' | 'voting' | 'conclude' | 'ended')
       setNightPrompt(null)
     })
 
-    socket.on('game:nightResult', ({ diedPlayerIds, cause }: NightResult) => {
-      console.log('⭐ game:nightResult', diedPlayerIds, cause)
-      setNightResult({ diedPlayerIds, cause })
+    socket.on('game:nightResult', ({ diedPlayerIds, cause, deaths }: NightResult) => {
+      setNightResult({ diedPlayerIds, cause, deaths })
 
-      const newApprovedPlayers: Player[] = [...approvedPlayers]
+      const newApprovedPlayers: Player[] = approvedPlayers.map((player) =>
+        diedPlayerIds.includes(player.id) ? { ...player, alive: false } : player,
+      )
 
-      diedPlayerIds.forEach((p) => {
-        const foundPlayerIndex = approvedPlayers.findIndex(
-          (player) => player.id === p,
-        )
-        if (foundPlayerIndex !== -1) {
-          newApprovedPlayers[foundPlayerIndex].alive = false
-        }
-        if (p === playerId) {
-          setAlive(false)
-          // Check if the dead player is a hunter
-          const deadPlayer = approvedPlayers.find((player) => player.id === p)
-          if (deadPlayer?.role === 'hunter' && p === playerId) {
-            setHunterDeathShooting(true)
-          }
-        }
-      })
-      console.log('⭐ newApprovedPlayers', newApprovedPlayers)
+      if (diedPlayerIds.includes(playerId)) {
+        setAlive(false)
+        // Hunter death shoot is triggered by game:hunterShoot, not here
+      }
 
       setApprovedPlayers(newApprovedPlayers)
     })
 
     socket.on('game:hunterShoot', ({ hunterId }: { hunterId: string }) => {
-      console.log('⭐ game:hunterShoot', hunterId)
       if (hunterId === playerId && role === 'hunter') {
         setHunterDeathShooting(true)
       } else {
@@ -85,7 +79,6 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     socket.on(
       'game:gameEnded',
       ({ winner }: { winner: 'villagers' | 'werewolves' | 'tanner' }) => {
-        console.log('⭐ game:gameEnded', winner)
         if (winner === 'villagers') {
           setGameWinner('Dân làng')
         } else if (winner === 'werewolves') {
@@ -97,12 +90,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     )
 
     return () => {
+      socket.off('connect', handleReconnect)
       socket.off('game:phaseChanged')
       socket.off('game:nightResult')
       socket.off('game:hunterShoot')
       socket.off('game:gameEnded')
     }
-  }, [])
+  }, [approvedPlayers, playerId, persistentPlayerId, role, roomCode])
 
   const renderPhase = () => {
     if (hunterDeathShooting && role === 'hunter') {
@@ -127,6 +121,8 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         return <DayPhase nightResult={nightResult} />
       case 'voting':
         return <VotingPhase />
+      case 'conclude':
+        return <DayPhase nightResult={nightResult} />
       default:
         return <div>null</div>
     }
