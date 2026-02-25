@@ -69,7 +69,7 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
           players={approvedPlayers}
           mode="room"
           selectedId={selectedTarget?.id}
-          onSelect={(player) => setSelectedTarget(player)}
+          onSelect={(player) => setSelectedTarget(player ?? undefined)}
           selectableList={nightPrompt.candidates}
         />
       </div>

@@ -37,12 +37,28 @@ const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
               <div className="space-y-2">
                 <p className="text-sm text-gray-300">
                   Người chết:{' '}
-                  {nightResult.diedPlayerIds
-                    .map(
-                      (id) =>
-                        approvedPlayers.find((p) => p.id === id)?.username,
-                    )
-                    .join(', ')}
+                  {nightResult.deaths
+                    ? nightResult.deaths
+                        .map((d) => {
+                          const player = approvedPlayers.find(
+                            (p) => p.id === d.playerId,
+                          )
+                          const causeText =
+                            d.cause === 'werewolf'
+                              ? 'bị sói cắn'
+                              : d.cause === 'witch'
+                                ? 'bị đầu độc'
+                                : ''
+                          return `${player?.username}${causeText ? ` (${causeText})` : ''}`
+                        })
+                        .join(', ')
+                    : nightResult.diedPlayerIds
+                        .map(
+                          (id) =>
+                            approvedPlayers.find((p) => p.id === id)
+                              ?.username,
+                        )
+                        .join(', ')}
                 </p>
               </div>
             ) : (

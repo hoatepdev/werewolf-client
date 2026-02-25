@@ -1,12 +1,14 @@
 import { Role } from './role'
 
+type StatusPlayer = 'pending' | 'approved' | 'rejected' | 'gm'
+
 export type Player = {
   id: string
-  username: string
   avatarKey: number
-  status: 'pending' | 'approved' | 'rejected' | 'gm'
+  username: string
+  status: StatusPlayer
   alive: boolean
-  role?: Role
+  role: Role
 }
 export interface GameStats {
   totalPlayers: number

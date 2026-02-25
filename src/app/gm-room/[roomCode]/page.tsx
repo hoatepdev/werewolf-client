@@ -1,473 +1,41 @@
 'use client'
-import React, { useEffect, useState, useCallback, useRef, use } from 'react'
+import React, { useEffect, useState } from 'react'
 import { getSocket } from '@/lib/socket'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
+import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Socket } from 'socket.io-client'
-import { useRoomStore } from '@/hook/useRoomStore'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
-import { Player } from '@/types/player'
-import { renderAvatar } from '@/helpers'
-import type { GameStats } from '@/types/player'
+import { useAudioQueue } from './modules/use-audio-queue'
+import { useSocketConnection } from './modules/use-socket-connection'
+import { AudioControl } from './modules/audio-control'
+import { AudioQueue } from './modules/audio-queue'
+import { NightActionLog } from './modules/night-action-log'
+import { GameStatsCard } from './modules/game-stats'
+import { PlayerList } from './modules/player-list'
+import { MockPlayersComponent } from './modules/mock-player'
 
-interface AudioEvent {
-  type:
-    | 'nightStart'
-    | 'roleWake'
-    | 'roleSleep'
-    | 'nightEnd'
-    | 'gameEnded'
-    | 'nightAction'
-    | 'phaseChanged'
-    | 'votingAction'
-  role?: 'werewolf' | 'seer' | 'witch' | 'bodyguard'
-  message: string
-  timestamp?: number
-  data?: NightActionData | { phase: string }
-}
-
-interface NightActionData {
-  step: string
-  action: string
-  message: string
-  timestamp: number
-}
-
-function useAudioQueue() {
-  const isPlayingRef = useRef(false)
-  const [currentAudio, setCurrentAudio] = useState<AudioEvent | null>(null)
-  const [audioQueue, setAudioQueue] = useState<AudioEvent[]>([])
-
-  console.log('🔊 currentAudio', currentAudio)
-  console.log('🔊 audioQueue', audioQueue)
-
-  const addToQueue = useCallback((audioEvent: AudioEvent) => {
-    setCurrentAudio(audioEvent)
-    setAudioQueue((prev) => [...prev, audioEvent])
-  }, [])
-
-  const processQueue = useCallback(() => {
-    if (isPlayingRef.current || audioQueue.length === 0) return
-    isPlayingRef.current = true
-    const message = audioQueue[0].message
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(message)
-      utterance.lang = 'vi-VN'
-      utterance.rate = 1.2
-      utterance.pitch = 1.0
-      utterance.volume = 1.0
-      utterance.onend = () => {
-        setTimeout(() => {
-          isPlayingRef.current = false
-          setCurrentAudio(audioQueue[1])
-          setAudioQueue((prev) => prev.slice(1))
-        }, 1000)
-      }
-      utterance.onerror = () => {
-        setTimeout(() => {
-          isPlayingRef.current = false
-          setCurrentAudio(audioQueue[1])
-          setAudioQueue((prev) => prev.slice(1))
-        }, 1000)
-      }
-      speechSynthesis.speak(utterance)
-    } else {
-      alert(message)
-      setTimeout(() => {
-        isPlayingRef.current = false
-        setCurrentAudio(audioQueue[1])
-        setAudioQueue((prev) => prev.slice(1))
-      }, 1000)
-    }
-  }, [audioQueue])
-
-  useEffect(() => {
-    if (!isPlayingRef.current && audioQueue.length > 0) {
-      processQueue()
-    }
-  }, [audioQueue, processQueue])
-
-  return {
-    addToQueue,
-    audioQueue,
-    currentAudio,
-    isPlayingRef,
-    setCurrentAudio,
-    setAudioQueue,
-  }
-}
-
-const useSocketConnection = (
-  roomCode: string,
-  socket: Socket,
-  addToQueue: (audioEvent: AudioEvent) => void,
-  setCurrentAudio: (audioEvent: AudioEvent) => void,
-) => {
-  const [isConnected, setIsConnected] = useState(false)
-  const [players, setPlayers] = useState<Player[]>([])
-  const [gameStats, setGameStats] = useState({
-    totalPlayers: 0,
-    alivePlayers: 0,
-    deadPlayers: 0,
-    werewolves: 0,
-    villagers: 0,
-  })
-
-  const { phase, setPhase } = useRoomStore()
-
-  const [nightActions, setNightActions] = useState<NightActionData[]>([])
-
-  useEffect(() => {
-    socket.emit('rq_gm:connectGmRoom', { roomCode, gmRoomId: roomCode })
-
-    const handlers = {
-      'gm:connected': (data: {
-        roomCode: string
-        gmRoomId: string
-        message: string
-      }) => {
-        setIsConnected(true)
-        toast.success('GM đã kết nối thành công')
-      },
-      'game:phaseChanged': (data: {
-        phase: 'night' | 'day' | 'voting' | 'ended'
-      }) => {
-        setPhase(data.phase)
-      },
-      'room:updatePlayers': (players: Player[]) => {
-        console.log('⭐ players', players)
-        const approvedPlayers = players.filter(
-          (player) => player.status === 'approved',
-        )
-        setPlayers(approvedPlayers)
-        updateGameStats(approvedPlayers)
-      },
-      'gm:nightAction': (nightAction: NightActionData) => {
-        setNightActions((prev) => [...prev, nightAction])
-        addToQueue({
-          type: 'nightAction',
-          message: nightAction.message,
-        })
-      },
-      'gm:votingAction': (data: { type: 'votingAction'; message: string }) => {
-        addToQueue({
-          type: data.type,
-          message: data.message,
-        })
-      },
-      'gm:gameEnded': (data: { type: 'gameEnded'; message: string }) => {
-        addToQueue({
-          type: data.type,
-          message: data.message,
-        })
-      },
-    }
-
-    Object.entries(handlers).forEach(([event, handler]) => {
-      socket.on(event, handler)
-    })
-
-    return () => {
-      Object.keys(handlers).forEach((event) => socket.off(event))
-    }
-  }, [roomCode])
-
-  const updateGameStats = (playerList: Player[]) => {
-    const alivePlayers = playerList.filter((p) => p.alive)
-    const deadPlayers = playerList.filter((p) => !p.alive)
-    const werewolves = alivePlayers.filter((p) => p.role === 'werewolf')
-    const villagers = alivePlayers.filter(
-      (p) => p.role !== 'werewolf' && p.role !== 'tanner',
-    )
-
-    setGameStats({
-      totalPlayers: playerList.length,
-      alivePlayers: alivePlayers.length,
-      deadPlayers: deadPlayers.length,
-      werewolves: werewolves.length,
-      villagers: villagers.length,
-    })
-  }
-
-  const handleNextPhase = () => {
-    socket.emit('rq_gm:nextPhase', { roomCode })
-  }
-
-  const handleEliminatePlayer = (playerId: string, reason: string) => {
-    socket.emit('rq_gm:eliminatePlayer', { roomCode, playerId, reason })
-    toast.success(`Đã loại bỏ người chơi: ${reason}`)
-  }
-
-  const handleRevivePlayer = (playerId: string) => {
-    socket.emit('rq_gm:revivePlayer', { roomCode, playerId })
-    toast.success('Đã hồi sinh người chơi')
-  }
-
-  const handleGetPlayers = () => {
-    socket.emit('rq_gm:getPlayers', { roomCode })
-  }
-
-  return {
-    isConnected,
-    phase,
-    players,
-    gameStats,
-    nightActions,
-    handleNextPhase,
-    handleEliminatePlayer,
-    handleRevivePlayer,
-    handleGetPlayers,
-    setCurrentAudio,
-  }
-}
-
-const AudioControl = ({
-  currentAudio,
-  isPlaying,
-  stopAudio,
-}: {
-  currentAudio: AudioEvent | null
-  isPlaying: boolean
-  stopAudio: () => void
-}) => (
-  <div className="rounded-lg bg-gray-800 p-6">
-    <h2 className="mb-4 text-lg font-bold text-yellow-400">
-      🎵 Điều khiển âm thanh
-    </h2>
-    {currentAudio ? (
-      <div className="flex items-center gap-3">
-        <span className="text-2xl">🔊</span>
-        <div className="flex-1">
-          <p className="font-semibold text-white">{currentAudio.message}</p>
-          {currentAudio.role && (
-            <p className="text-sm text-gray-400">Vai: {currentAudio.role}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {isPlaying ? (
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              <span className="text-sm text-green-400">Đang phát...</span>
-            </div>
-          ) : (
-            <span className="text-sm text-gray-400">Sẵn sàng</span>
-          )}
-          <button
-            onClick={stopAudio}
-            className="rounded-lg bg-red-600 px-3 py-1 text-sm font-medium hover:bg-red-700"
-          >
-            Dừng
-          </button>
-        </div>
-      </div>
-    ) : (
-      <p className="text-gray-400">Không có âm thanh đang phát</p>
-    )}
-  </div>
-)
-
-const AudioQueue = ({
-  audioQueue,
-  playAudio,
-}: {
-  audioQueue: AudioEvent[]
-  playAudio: (audio: AudioEvent | null) => void
-}) => (
-  <div className="rounded-lg bg-gray-800 p-6">
-    <h2 className="mb-4 text-lg font-bold text-blue-400">
-      📋 Hàng đợi âm thanh
-    </h2>
-    {audioQueue.length > 0 ? (
-      <div className="space-y-2">
-        {audioQueue.map((audio: AudioEvent, index: number) => (
-          <div
-            key={index}
-            className="flex items-center gap-3 rounded-lg bg-gray-700 p-3"
-          >
-            <span className="text-lg">🔊</span>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">{audio.message}</p>
-              {audio.role && (
-                <p className="text-xs text-gray-400">{audio.role}</p>
-              )}
-            </div>
-            <button
-              onClick={() => playAudio(audio)}
-              className="rounded bg-blue-600 px-2 py-1 text-xs font-medium hover:bg-blue-700"
-            >
-              Phát
-            </button>
-          </div>
-        ))}
-      </div>
-    ) : (
-      <p className="text-gray-400">Không có âm thanh trong hàng đợi</p>
-    )}
-  </div>
-)
-
-const NightActionLog = ({
-  nightActions,
-}: {
-  nightActions: NightActionData[]
-}) => (
-  <div className="rounded-lg bg-gray-800 p-6">
-    <h2 className="mb-4 text-lg font-bold text-blue-400">
-      🌙 Nhật ký hành động đêm
-    </h2>
-    <div className="max-h-96 space-y-2 overflow-y-auto">
-      {nightActions.length === 0 ? (
-        <p className="text-sm text-gray-400">Chưa có hành động đêm nào...</p>
-      ) : (
-        nightActions.map((action, index) => (
-          <div key={index} className="rounded bg-gray-700 p-3">
-            <p className="text-sm font-medium text-white">{action.message}</p>
-            <p className="mt-1 text-xs text-gray-400">
-              {new Date(action.timestamp).toLocaleTimeString()}
-            </p>
-          </div>
-        ))
-      )}
-    </div>
-  </div>
-)
-
-const GameStats = ({ gameStats }: { gameStats: GameStats }) => (
-  <div className="rounded-lg bg-gray-800 p-6">
-    <h2 className="mb-4 text-lg font-bold text-green-400">📊 Thống kê game</h2>
-    <div className="grid grid-cols-2 gap-4">
-      <div className="text-center">
-        <p className="text-2xl font-bold text-white">
-          {gameStats.totalPlayers}
-        </p>
-        <p className="text-sm text-gray-400">Tổng người chơi</p>
-      </div>
-      <div className="text-center">
-        <p className="text-2xl font-bold text-green-400">
-          {gameStats.alivePlayers}
-        </p>
-        <p className="text-sm text-gray-400">Còn sống</p>
-      </div>
-      <div className="text-center">
-        <p className="text-2xl font-bold text-red-400">
-          {gameStats.deadPlayers}
-        </p>
-        <p className="text-sm text-gray-400">Đã chết</p>
-      </div>
-      <div className="text-center">
-        <p className="text-2xl font-bold text-purple-400">
-          {gameStats.werewolves}
-        </p>
-        <p className="text-sm text-gray-400">Sói còn sống</p>
-      </div>
-      <div className="text-center">
-        <p className="text-2xl font-bold text-blue-400">
-          {gameStats.villagers}
-        </p>
-        <p className="text-sm text-gray-400">Dân làng còn sống</p>
-      </div>
-    </div>
-  </div>
-)
-
-const PlayerList = ({
-  players,
-  onEliminate,
-  onRevive,
-}: {
-  players: Player[]
-  onEliminate: (playerId: string, reason: string) => void
-  onRevive: (playerId: string) => void
-}) => (
-  <div className="rounded-lg bg-gray-800 p-6">
-    <h2 className="mb-4 text-lg font-bold text-purple-400">
-      👥 Danh sách người chơi
-    </h2>
-    <div className="max-h-96 space-y-2 overflow-y-auto">
-      {players.length === 0 ? (
-        <p className="text-sm text-gray-400">Chưa có người chơi nào...</p>
-      ) : (
-        players.map((player) => (
-          <div
-            key={player.id}
-            className={`flex items-center gap-3 rounded-lg p-3 ${
-              player.alive ? 'bg-gray-700' : 'bg-red-900/50'
-            }`}
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-600">
-              {renderAvatar(player)}
-            </div>
-            <div className="flex-1">
-              <p
-                className={`font-medium ${player.alive ? 'text-white' : 'text-red-300'}`}
-              >
-                {player.username}
-              </p>
-              <div className="flex items-center gap-2 text-xs">
-                <span
-                  className={`rounded px-2 py-1 ${
-                    player.role === 'werewolf'
-                      ? 'bg-red-600'
-                      : player.role === 'seer'
-                        ? 'bg-blue-600'
-                        : player.role === 'witch'
-                          ? 'bg-purple-600'
-                          : player.role === 'hunter'
-                            ? 'bg-orange-600'
-                            : player.role === 'bodyguard'
-                              ? 'bg-green-600'
-                              : player.role === 'tanner'
-                                ? 'bg-yellow-600'
-                                : 'bg-gray-600'
-                  }`}
-                >
-                  {player.role || 'Chưa phân vai'}
-                </span>
-                <span
-                  className={`rounded px-2 py-1 ${
-                    player.alive ? 'bg-green-600' : 'bg-red-600'
-                  }`}
-                >
-                  {player.alive ? 'Sống' : 'Chết'}
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {player.alive ? (
-                <button
-                  onClick={() => onEliminate(player.id, 'GM loại bỏ')}
-                  className="rounded bg-red-600 px-2 py-1 text-xs font-medium hover:bg-red-700"
-                >
-                  Loại bỏ
-                </button>
-              ) : (
-                <button
-                  onClick={() => onRevive(player.id)}
-                  className="rounded bg-green-600 px-2 py-1 text-xs font-medium hover:bg-green-700"
-                >
-                  Hồi sinh
-                </button>
-              )}
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  </div>
-)
-
-const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
+const GmRoomPage = () => {
   const socket = getSocket()
   const router = useRouter()
-  const { roomCode } = use(params)
+  const params = useParams<{ roomCode: string }>()
+  const roomCode = params.roomCode
+
+  const [gmLogs, setGmLogs] = useState<
+    {
+      type: string
+      message: string
+      data?: unknown
+      timestamp?: number
+    }[]
+  >([])
+  const [forceRender, setForceRender] = useState(false)
 
   const {
     isPlayingRef,
     audioQueue,
     currentAudio,
     addToQueue,
+    audioStatus,
     setCurrentAudio,
   } = useAudioQueue()
 
@@ -481,16 +49,14 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     handleEliminatePlayer,
     handleRevivePlayer,
     handleGetPlayers,
-  } = useSocketConnection(roomCode, socket, addToQueue, setCurrentAudio)
-
-  const [gmLogs, setGmLogs] = useState<
-    {
-      type: string
-      message: string
-      data?: unknown
-      timestamp?: number
-    }[]
-  >([])
+    handleSetMockPlayers,
+  } = useSocketConnection(
+    roomCode,
+    socket,
+    addToQueue,
+    setCurrentAudio,
+    forceRender,
+  )
 
   useEffect(() => {
     const handleLog =
@@ -513,11 +79,11 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       socket.off('gm:votingAction', handleLog('voting'))
       socket.off('gm:gameEnded', handleLog('end'))
     }
-  }, [socket])
+  }, [socket, forceRender])
 
   useEffect(() => {
     handleGetPlayers()
-  }, [])
+  }, [handleGetPlayers, forceRender])
 
   return (
     <MainLayout maxWidth="max-w-6xl">
@@ -532,6 +98,12 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
             <span className="text-sm text-gray-300">
               {isConnected ? 'Đã kết nối' : 'Mất kết nối'}
             </span>
+            <MockPlayersComponent
+              socket={socket}
+              forceRender={forceRender}
+              setForceRender={setForceRender}
+              handleSetMockPlayers={handleSetMockPlayers}
+            />
           </div>
         }
       />
@@ -544,7 +116,7 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           <Button
             variant="yellow"
             onClick={handleNextPhase}
-            disabled={['night', 'ended'].includes(phase)}
+            // disabled={['night', 'ended'].includes(phase)}
           >
             Giai đoạn tiếp theo
           </Button>
@@ -585,6 +157,7 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           <AudioControl
             currentAudio={currentAudio}
             isPlaying={isPlayingRef.current}
+            audioStatus={audioStatus}
             stopAudio={() => setCurrentAudio(null)}
           />
           <AudioQueue audioQueue={audioQueue} playAudio={setCurrentAudio} />
@@ -613,7 +186,7 @@ const GmRoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         </ul>
       </div>
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <GameStats gameStats={gameStats} />
+        <GameStatsCard gameStats={gameStats} />
         <NightActionLog nightActions={nightActions} />
       </div>
     </MainLayout>

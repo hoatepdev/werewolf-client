@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
 
 const PhaseTransitionImage = ({
@@ -23,7 +24,7 @@ const PhaseTransitionImage = ({
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, x: -100 }}
+          initial={{ opacity: 0, x: 0 }}
           animate={{
             opacity: 1,
             x: 0,
@@ -31,12 +32,18 @@ const PhaseTransitionImage = ({
           }}
           exit={{
             opacity: 0,
-            x: 100,
+            x: 0,
             transition: { duration: 0.5, ease: 'easeInOut' },
           }}
-          className={`absolute inset-0 z-10 flex h-full w-full flex-1 items-center justify-center rounded-lg ${bgColor} object-cover select-none`}
+          className={`absolute inset-0 z-10 flex h-screen w-full flex-1 items-center justify-center rounded-lg ${bgColor} object-cover select-none`}
         >
-          <img src={image} alt={image} className="h-auto w-full object-cover" />
+          <Image
+            src={image}
+            alt={image}
+            className="h-auto w-full object-cover"
+            width={1000}
+            height={1000}
+          />
         </motion.div>
       )}
     </AnimatePresence>

@@ -35,6 +35,7 @@ export interface NightPrompt {
 
 export interface NightResult {
   diedPlayerIds: string[]
+  deaths?: Array<{ playerId: string; cause: string }>
   cause: 'werewolf' | 'witch' | 'protected' | 'hunter'
 }
 
@@ -68,16 +69,15 @@ export type RoomState = {
   setApprovedPlayers: (players: Player[]) => void
   setResetGame: () => void
   setAlive: (alive: boolean) => void
-  // Night phase setters
   setNightPrompt: (prompt: NightPrompt | null) => void
   setNightResult: (result: NightResult | null) => void
-  // Hunter death shooting setter
   setHunterDeathShooting: (shooting: boolean) => void
+  setStateRoomStore: (state: Partial<RoomState>) => void
 }
 
 export const useRoomStore = create<RoomState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       rehydrated: false,
 
       socket: null,
@@ -124,6 +124,11 @@ export const useRoomStore = create<RoomState>()(
       // Hunter death shooting setter
       setHunterDeathShooting: (shooting: boolean) =>
         set({ hunterDeathShooting: shooting }),
+      setStateRoomStore: (state: Partial<RoomState>) =>
+        set({
+          ...get(),
+          ...state,
+        }),
     }),
     {
       name: 'room-store',

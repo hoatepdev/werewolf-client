@@ -6,7 +6,6 @@ import PhaseTransitionImage from '../PhaseTransitionImage'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
 import { Loader2Icon } from 'lucide-react'
-import { checkWinCondition, getWinnerDisplayName } from '@/helpers/winConditions'
 
 const VotingPhase: React.FC = () => {
   const socket = getSocket()
@@ -28,9 +27,20 @@ const VotingPhase: React.FC = () => {
 
   useEffect(() => {
     const handleVotingResult = (data: {
-      eliminatedPlayerId: string
-      cause: 'vote' | 'hunter'
+      eliminatedPlayerId: string | null
+      cause: 'vote' | 'hunter' | 'tie' | 'no_votes'
+      tiedPlayerIds?: string[]
     }) => {
+      // Tie or no votes — no one is eliminated
+      if (!data.eliminatedPlayerId) {
+        toast.info(
+          data.cause === 'tie'
+            ? 'Hòa phiếu! Không ai bị loại.'
+            : 'Không ai bỏ phiếu. Không ai bị loại.',
+        )
+        return
+      }
+
       const newApprovedPlayers = [...approvedPlayers]
       const foundPlayerIndex = approvedPlayers.findIndex(
         (player) => player.id === data.eliminatedPlayerId,
@@ -50,18 +60,6 @@ const VotingPhase: React.FC = () => {
           data.eliminatedPlayerId === playerId
         ) {
           setHunterDeathShooting(true)
-        }
-        // Check if the eliminated player is a tanner (they win when voted)
-        if (eliminatedPlayer?.role === 'tanner' && data.cause === 'vote') {
-          toast.success('🎉 Chán đời đã thắng khi bị vote chết!')
-          // Emit tanner win to server to end game immediately
-          socket.emit('game:tannerWin', { roomCode })
-        } else {
-          // Check win condition after voting elimination (if not tanner)
-          const winCondition = checkWinCondition(newApprovedPlayers)
-          if (winCondition) {
-            socket.emit('game:checkWinCondition', { roomCode, winner: winCondition })
-          }
         }
       }
     }

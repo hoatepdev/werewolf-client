@@ -9,7 +9,7 @@ export function getSocket(): Socket {
       autoConnect: false,
     })
     setTimeout(() => {
-      store.setSocket(socket)
+      store.setSocket(socket as Socket)
     }, 0)
   }
   return socket

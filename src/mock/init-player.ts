@@ -1,0 +1,68 @@
+import { Player } from '@/types/player'
+
+export const players: Player[] = [
+  {
+    id: '1pIhrUlQ2QuBWkvLAAAD',
+    avatarKey: 17,
+    username: 'Tuấn',
+    status: 'approved',
+    role: 'villager',
+    alive: true,
+  },
+  {
+    id: 'tNDwIKN7689VEHmPAAAF',
+    avatarKey: 4,
+    username: 'Diệp',
+    status: 'approved',
+    role: 'hunter',
+    alive: true,
+  },
+  {
+    id: 'miQHfOK4qSkCRG9NAAAH',
+    avatarKey: 10,
+    username: 'Harry',
+    status: 'approved',
+    role: 'werewolf',
+    alive: true,
+  },
+  {
+    id: 'lcifX5eNBzatv1htAAAJ',
+    avatarKey: 5,
+    username: 'Hạnh',
+    status: 'approved',
+    role: 'witch',
+    alive: true,
+  },
+  {
+    id: 'xZqFmfBRYCLiwmffAAAL',
+    avatarKey: 9,
+    username: 'Hòa',
+    status: 'approved',
+    role: 'bodyguard',
+    alive: true,
+  },
+  {
+    id: '0FZx1XBAd2P-NVaRAAAN',
+    avatarKey: 2,
+    username: 'Tẹt',
+    status: 'approved',
+    role: 'seer',
+    alive: true,
+  },
+  {
+    id: 'TxJ-1aUBIzfuymXyAAAP',
+    avatarKey: 8,
+    username: 'Đạt',
+    status: 'approved',
+    role: 'villager',
+    alive: true,
+  },
+  {
+    id: 'ayzpJAdIOHYNSyR9AAAR',
+    avatarKey: 7,
+    username: 'Giang',
+    status: 'approved',
+    role: 'werewolf',
+    alive: true,
+  },
+]
