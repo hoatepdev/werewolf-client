@@ -11,7 +11,7 @@ const SeerAction: React.FC<{
 }> = ({ roomCode }) => {
   const socket = getSocket()
 
-  const { nightPrompt, setNightPrompt, approvedPlayers } = useRoomStore()
+  const { nightPrompt, setNightPrompt, approvedPlayers, playerId } = useRoomStore()
 
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
@@ -73,6 +73,7 @@ const SeerAction: React.FC<{
         <PlayerGrid
           players={approvedPlayers}
           mode="room"
+          currentPlayerId={playerId}
           selectedId={selectedTarget?.id}
           onSelect={(player) => setSelectedTarget(player)}
           selectableList={nightPrompt.candidates}

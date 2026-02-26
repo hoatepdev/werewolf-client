@@ -6,11 +6,11 @@ import { PlayerGrid } from '../PlayerGrid'
 const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
   nightResult,
 }) => {
-  const { approvedPlayers } = useRoomStore()
+  const { approvedPlayers, playerId } = useRoomStore()
 
   return (
     <div className="relative h-full w-full flex-1">
-      <PhaseTransitionImage image="/images/phase/day.gif" bgColor="#66A3FF" />
+      <PhaseTransitionImage image="/images/phase/day.jpg" bgColor="#66A3FF" />
 
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
         <div className="text-center">
@@ -23,7 +23,7 @@ const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
         </div>
 
         <div className="w-full">
-          <PlayerGrid players={approvedPlayers} mode="room" />
+          <PlayerGrid players={approvedPlayers} mode="room" currentPlayerId={playerId} />
         </div>
       </div>
 
@@ -55,8 +55,7 @@ const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
                     : nightResult.diedPlayerIds
                         .map(
                           (id) =>
-                            approvedPlayers.find((p) => p.id === id)
-                              ?.username,
+                            approvedPlayers.find((p) => p.id === id)?.username,
                         )
                         .join(', ')}
                 </p>

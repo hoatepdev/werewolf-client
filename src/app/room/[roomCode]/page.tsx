@@ -13,8 +13,10 @@ import DayPhase from '@/components/phase/DayPhase'
 import PhaseTransition from '@/components/PhaseTransition'
 import VotingPhase from '@/components/phase/VotingPhase'
 import GameEnd from '@/components/GameEnd'
+import WinnerReveal from '@/components/WinnerReveal'
 import Waiting from '@/components/phase/Waiting'
 import HunterDeathShoot from '@/components/actions/HunterDeathShoot'
+import { playSound, triggerHaptic, initAudio } from '@/lib/audio'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
@@ -22,7 +24,8 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const { roomCode } = React.use(params)
 
   const [nightResult, setNightResult] = useState<NightResult | null>(null)
-  const [gameWinner, setGameWinner] = useState<string | null>(null)
+  const [gameWinner, setGameWinner] = useState<'villagers' | 'werewolves' | 'tanner' | null>(null)
+  const [showReveal, setShowReveal] = useState(false)
 
   const {
     playerId,
@@ -48,9 +51,18 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     }
     socket.on('connect', handleReconnect)
 
+    // Ensure audio constraints are initialized
+    initAudio()
+
     socket.on('game:phaseChanged', (newPhase: { phase: string }) => {
       setPhase(newPhase.phase as 'night' | 'day' | 'voting' | 'conclude' | 'ended')
       setNightPrompt(null)
+
+      if (newPhase.phase === 'night') {
+        playSound('night_start')
+      } else if (newPhase.phase === 'day') {
+        playSound('day_start')
+      }
     })
 
     socket.on('game:nightResult', ({ diedPlayerIds, cause, deaths }: NightResult) => {
@@ -62,7 +74,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
       if (diedPlayerIds.includes(playerId)) {
         setAlive(false)
+        playSound('player_die')
+        triggerHaptic([200, 100, 200, 100, 500]) // Heavy death vibration
         // Hunter death shoot is triggered by game:hunterShoot, not here
+      } else if (diedPlayerIds.length > 0) {
+        // Someone else died
+        playSound('player_die')
+        triggerHaptic(50) // Small bump
       }
 
       setApprovedPlayers(newApprovedPlayers)
@@ -79,13 +97,8 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     socket.on(
       'game:gameEnded',
       ({ winner }: { winner: 'villagers' | 'werewolves' | 'tanner' }) => {
-        if (winner === 'villagers') {
-          setGameWinner('Dân làng')
-        } else if (winner === 'werewolves') {
-          setGameWinner('Sói')
-        } else if (winner === 'tanner') {
-          setGameWinner('Chán đời')
-        }
+        setGameWinner(winner)
+        setShowReveal(true)
       },
     )
 
@@ -103,7 +116,19 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       return <HunterDeathShoot roomCode={roomCode} />
     }
     if (!alive) return <Waiting />
-    if (gameWinner) {
+
+    // Winner reveal animation first
+    if (gameWinner && showReveal) {
+      return (
+        <WinnerReveal
+          winner={gameWinner}
+          onComplete={() => setShowReveal(false)}
+        />
+      )
+    }
+
+    // After reveal, show the final game end screen
+    if (gameWinner && !showReveal) {
       return (
         <GameEnd
           winningTeam={gameWinner}

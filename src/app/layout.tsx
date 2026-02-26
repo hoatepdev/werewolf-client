@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import { ProgrammaticDialogProviderSingleton } from '@/components/ui/alert-dialog'
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import { PWAServiceWorker } from '@/components/PWAServiceWorker'
+import { BackgroundEngine } from '@/components/game/background/BackgroundEngine'
 
 const tiktokSans = {
   variable: '--font-tiktok-sans',
@@ -107,7 +108,8 @@ export default function RootLayout({
       </head>
       <body>
         <ProgrammaticDialogProviderSingleton>
-          <div className="bg-zinc-900">{children}</div>
+          <BackgroundEngine />
+          <div className="bg-transparent">{children}</div>
           <Toaster position="top-center" richColors duration={2000} />
           <PWAInstallPrompt />
           <PWAServiceWorker />

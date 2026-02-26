@@ -3,8 +3,16 @@ import confetti from 'canvas-confetti'
 import { Player } from '@/types/player'
 import { LIST_ROLE } from '@/constants/role'
 
+type WinnerType = 'villagers' | 'werewolves' | 'tanner'
+
+const WINNER_DISPLAY: Record<WinnerType, { name: string; emoji: string; color: string }> = {
+  villagers: { name: 'Dân làng', emoji: '🏘️', color: 'text-blue-400' },
+  werewolves: { name: 'Sói', emoji: '🐺', color: 'text-red-400' },
+  tanner: { name: 'Chán đời', emoji: '😈', color: 'text-purple-400' },
+}
+
 interface GameEndProps {
-  winningTeam: string
+  winningTeam: WinnerType
   players: Player[]
   onReturn: () => void
   onPlayAgain: () => void
@@ -16,11 +24,14 @@ const GameEnd: React.FC<GameEndProps> = ({
   onReturn,
   onPlayAgain,
 }) => {
+  const config = WINNER_DISPLAY[winningTeam]
+
   useEffect(() => {
+    // Smaller confetti burst for the result screen
     confetti({
-      particleCount: 120,
-      spread: 90,
-      origin: { y: 0.6 },
+      particleCount: 60,
+      spread: 70,
+      origin: { y: 0.7 },
       zIndex: 9999,
     })
   }, [])
@@ -28,9 +39,10 @@ const GameEnd: React.FC<GameEndProps> = ({
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4">
       <div className="mb-2 text-center text-2xl font-bold">Kết thúc game</div>
-      <div className="mb-2 text-center text-lg">
-        Đội thắng:{' '}
-        <span className="font-bold text-yellow-400">{winningTeam}</span>
+      <div className="mb-2 flex items-center justify-center gap-2 text-lg">
+        <span className="text-3xl">{config.emoji}</span>
+        <span className="font-bold text-yellow-400">{config.name}</span>
+        <span className="text-3xl">{config.emoji}</span>
       </div>
       <div className="w-full">
         <div className="mb-1 font-semibold">Người chơi</div>

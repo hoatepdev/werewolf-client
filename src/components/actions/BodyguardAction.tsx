@@ -66,6 +66,7 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
         <PlayerGrid
           players={approvedPlayers}
           mode="room"
+          currentPlayerId={playerId}
           selectedId={selectedTarget?.id}
           onSelect={(player) => setSelectedTarget(player ?? undefined)}
           selectableList={availableCandidates}

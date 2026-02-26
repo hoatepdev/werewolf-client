@@ -4,28 +4,14 @@ import { Player } from '@/types/player'
 
 export type Phase = 'night' | 'day' | 'voting' | 'conclude' | 'ended'
 
-export type NightStep =
-  | 'werewolf'
-  | 'seer'
-  | 'witch'
-  | 'bodyguard'
-  | 'nightStart'
-  | 'nightEnd'
-  | 'dayStart'
-  | 'voting'
-  | 'votingResult'
-  | 'gameEnded'
-
 export interface NightPrompt {
   type: 'werewolf' | 'seer' | 'witch' | 'bodyguard' | 'hunter'
   message: string
   candidates?: Array<{
     id: string
     username: string
-    isRedFlag?: boolean
   }>
   werewolves?: Array<{ id: string; username: string }>
-  targetKilledByWerewolf?: string
   killedPlayerId?: string
   canHeal?: boolean
   canPoison?: boolean
@@ -78,7 +64,7 @@ export type RoomState = {
 
 export const useRoomStore = create<RoomState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       rehydrated: false,
 
       socket: null,
@@ -126,11 +112,7 @@ export const useRoomStore = create<RoomState>()(
       // Hunter death shooting setter
       setHunterDeathShooting: (shooting: boolean) =>
         set({ hunterDeathShooting: shooting }),
-      setStateRoomStore: (state: Partial<RoomState>) =>
-        set({
-          ...get(),
-          ...state,
-        }),
+      setStateRoomStore: (state: Partial<RoomState>) => set(state),
     }),
     {
       name: 'room-store',
@@ -159,6 +141,7 @@ export const getStateRoomStore = () => {
   const {
     roomCode,
     playerId,
+    persistentPlayerId,
     role,
     phase,
     username,
@@ -174,6 +157,7 @@ export const getStateRoomStore = () => {
   return {
     roomCode,
     playerId,
+    persistentPlayerId,
     role,
     phase,
     username,

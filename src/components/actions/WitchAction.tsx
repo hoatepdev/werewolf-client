@@ -12,7 +12,7 @@ interface WitchActionProps {
 
 const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
   const socket = getSocket()
-  const { nightPrompt, setNightPrompt, approvedPlayers } = useRoomStore()
+  const { nightPrompt, setNightPrompt, approvedPlayers, playerId } = useRoomStore()
   console.log('⭐ useRoomStore', useRoomStore())
   const [heal, setHeal] = useState<boolean>(false)
   const [selectedTarget, setSelectedTarget] = useState<{
@@ -69,6 +69,7 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
         <PlayerGrid
           players={approvedPlayers}
           mode="room"
+          currentPlayerId={playerId}
           selectedId={selectedTarget?.id}
           onSelect={handleSelectPlayer}
           selectableList={nightPrompt.candidates}

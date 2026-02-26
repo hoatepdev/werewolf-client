@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { phaseVariants } from '@/lib/motion'
 
 interface PhaseTransitionProps {
   phase: string
@@ -13,10 +14,10 @@ const PhaseTransition: React.FC<PhaseTransitionProps> = ({
   <AnimatePresence mode="wait">
     <motion.div
       key={phase}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
+      variants={phaseVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
       className="flex h-full w-full flex-1 flex-col"
     >
       {children}

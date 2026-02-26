@@ -11,7 +11,7 @@ interface HunterDeathShootProps {
 
 const HunterDeathShoot: React.FC<HunterDeathShootProps> = ({ roomCode }) => {
   const socket = getSocket()
-  const { approvedPlayers, setHunterDeathShooting } = useRoomStore()
+  const { approvedPlayers, setHunterDeathShooting, playerId } = useRoomStore()
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
     username: string
@@ -57,6 +57,7 @@ const HunterDeathShoot: React.FC<HunterDeathShootProps> = ({ roomCode }) => {
         <PlayerGrid
           players={approvedPlayers}
           mode="room"
+          currentPlayerId={playerId}
           selectedId={selectedTarget?.id}
           onSelect={setSelectedTarget}
           selectableList={alivePlayers}

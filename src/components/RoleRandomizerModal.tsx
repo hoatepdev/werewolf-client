@@ -5,7 +5,7 @@ import { RoleObject } from '@/types/role'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LIST_ROLE } from '@/constants/role'
 import Image from 'next/image'
-import { Loader2Icon } from 'lucide-react'
+import { Loader2Icon, Fingerprint } from 'lucide-react'
 
 interface RoleRandomizerModalProps {
   assignedRole: RoleObject
@@ -42,6 +42,7 @@ export const RoleRandomizerModal = ({
   const [rotation, setRotation] = useState(0)
   const wheelRef = useRef<HTMLDivElement>(null)
   const [textButton, setTextButton] = useState('Sẵn sàng')
+  const [isRevealed, setIsRevealed] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -113,7 +114,7 @@ export const RoleRandomizerModal = ({
                 >
                   <motion.div
                     ref={wheelRef}
-                    style={{ width: WHEEL_SIZE, height: WHEEL_SIZE }}
+                    style={{ width: WHEEL_SIZE, height: WHEEL_SIZE, willChange: 'transform' }}
                     animate={{ rotate: rotation }}
                     transition={{
                       type: 'spring',
@@ -199,36 +200,79 @@ export const RoleRandomizerModal = ({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex min-h-[320px] flex-col items-center justify-center gap-6"
+                className="flex min-h-[400px] flex-col items-center justify-center gap-6 select-none"
               >
-                <Image
-                  width={192}
-                  height={258}
-                  src={`/images/role/${assignedRole.id}.png`}
-                  alt={assignedRole.name}
-                  className="rounded-xl border-4 border-yellow-400 bg-zinc-800 object-contain shadow-lg"
-                />
-                <div className="text-center text-2xl font-bold text-yellow-400">
-                  {assignedRole.name}
-                </div>
-                <div className="text-center text-base text-zinc-200">
-                  {assignedRole.description}
-                </div>
-                <Button
-                  variant="yellow"
-                  onClick={handleReady}
-                  disabled={isSpinning || isReady}
-                  className="w-80 max-w-80"
+                <div
+                  className="relative cursor-pointer touch-none"
+                  onPointerDown={() => setIsRevealed(true)}
+                  onPointerUp={() => setIsRevealed(false)}
+                  onPointerLeave={() => setIsRevealed(false)}
+                  onContextMenu={(e) => e.preventDefault()}
                 >
-                  {isReady || isSpinning ? (
-                    <div className="flex items-center justify-center">
-                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                      {textButton}
+                  <div
+                    className={`flex flex-col items-center justify-center transition-all duration-300 ${
+                      isRevealed ? 'opacity-100 blur-none' : 'opacity-0 blur-md translate-y-2'
+                    }`}
+                  >
+                    <Image
+                      width={192}
+                      height={258}
+                      src={`/images/role/${assignedRole.id}.png`}
+                      alt={assignedRole.name}
+                      autoFocus={false}
+                      className="rounded-xl border-4 border-yellow-400 bg-zinc-800 object-contain shadow-lg"
+                      priority
+                    />
+                    <div className="mt-4 text-center text-2xl font-bold text-yellow-400">
+                      {assignedRole.name}
                     </div>
-                  ) : (
-                    textButton
-                  )}
-                </Button>
+                    <div className="mt-1 max-w-[280px] text-center text-base text-zinc-200">
+                      {assignedRole.description}
+                    </div>
+                  </div>
+
+                  {/* Hidden Overlay */}
+                  <div
+                    className={`absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-zinc-800/95 transition-all duration-300 ${
+                      isRevealed
+                        ? 'pointer-events-none opacity-0 scale-105'
+                        : 'opacity-100 scale-100 border-2 border-dashed border-zinc-500 hover:border-yellow-400'
+                    }`}
+                  >
+                    <Fingerprint className="mb-4 h-16 w-16 animate-pulse text-yellow-400" />
+                    <div className="text-center font-medium text-zinc-200">
+                      Chạm và giữ<br />
+                      để xem vai trò
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2 h-12 w-full max-w-[280px]">
+                  <AnimatePresence>
+                    {!isSpinning && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0, transition: { delay: 0.5 } }}
+                      >
+                        <Button
+                          variant="yellow"
+                          onClick={handleReady}
+                          disabled={isReady}
+                          className="w-full shadow-md"
+                        >
+                          {isReady ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <Loader2Icon className="h-4 w-4 animate-spin" />
+                              {textButton}
+                            </div>
+                          ) : (
+                            textButton
+                          )}
+                        </Button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

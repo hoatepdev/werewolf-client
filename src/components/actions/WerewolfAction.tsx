@@ -17,7 +17,7 @@ interface WerewolfActionProps {
 const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
   const socket = getSocket()
 
-  const { nightPrompt, setNightPrompt, approvedPlayers } = useRoomStore()
+  const { nightPrompt, setNightPrompt, approvedPlayers, playerId } = useRoomStore()
 
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
@@ -68,6 +68,7 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
         <PlayerGrid
           players={approvedPlayers}
           mode="room"
+          currentPlayerId={playerId}
           selectedId={selectedTarget?.id}
           onSelect={(player) => setSelectedTarget(player ?? undefined)}
           selectableList={nightPrompt.candidates}

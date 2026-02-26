@@ -168,7 +168,7 @@ export function PWAInstallPrompt() {
           <Button
             variant="black"
             onClick={handleDismiss}
-            className="flex h-12 w-12 transform items-center justify-center rounded-xl border border-zinc-600/50 bg-gradient-to-br from-zinc-800 to-zinc-900 p-0 shadow-lg transition-all duration-200 hover:scale-105 hover:from-zinc-700 hover:to-zinc-800"
+            className="flex h-12 w-12 transform items-center justify-center rounded-xl border border-zinc-600/50 bg-gradient-to-br from-zinc-800 to-zinc-900 p-0 py-3 shadow-lg transition-all duration-200 hover:scale-105 hover:from-zinc-700 hover:to-zinc-800"
           >
             <X className="h-5 w-5" />
           </Button>

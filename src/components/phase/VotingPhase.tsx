@@ -84,7 +84,7 @@ const VotingPhase: React.FC = () => {
   return (
     <div className="relative h-full w-full flex-1">
       <PhaseTransitionImage
-        image="/images/phase/voting.gif"
+        image="/images/phase/voting.jpg"
         bgColor="#2E3A62"
       />
 
@@ -102,6 +102,7 @@ const VotingPhase: React.FC = () => {
           <PlayerGrid
             players={approvedPlayers}
             mode="room"
+            currentPlayerId={playerId}
             selectedId={selectedTarget?.id}
             onSelect={(player) => setSelectedTarget(player)}
             selectableList={approvedPlayers.filter((p) => p.alive)}

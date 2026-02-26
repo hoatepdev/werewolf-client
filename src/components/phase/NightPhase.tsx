@@ -37,7 +37,7 @@ const NightPhase: React.FC<NightPhaseProps> = ({ roomCode }) => {
 
   return (
     <div className="relative h-full w-full flex-1 overflow-hidden">
-      <PhaseTransitionImage image="/images/phase/night.gif" bgColor="" />
+      <PhaseTransitionImage image="/images/phase/night.jpg" bgColor="" />
       {renderRoleAction(role, roomCode)}
     </div>
   )
