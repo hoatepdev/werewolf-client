@@ -53,3 +53,40 @@ export const staggerItemVars: Variants = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0, transition: springTransition },
 }
+
+// 4. Overlay variants (For Private Mode slide-up animation)
+export const overlayVariants: Variants = {
+  hidden: {
+    y: '100%',
+    opacity: 0,
+  },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.4,
+      ease: slowEaseOut,
+    },
+  },
+  exit: {
+    y: '100%',
+    opacity: 0,
+    transition: {
+      duration: 0.3,
+      ease: slowEaseOut,
+    },
+  },
+}
+
+// 5. Backdrop variants (For overlay backdrop fade)
+export const backdropVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.3 },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.2 },
+  },
+}

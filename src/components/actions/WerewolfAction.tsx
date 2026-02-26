@@ -8,7 +8,7 @@ import {
 import { toast } from 'sonner'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
-import Waiting from '../phase/Waiting'
+import NightPhase from '../phase/NightPhase'
 
 interface WerewolfActionProps {
   roomCode: string
@@ -17,7 +17,8 @@ interface WerewolfActionProps {
 const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
   const socket = getSocket()
 
-  const { nightPrompt, setNightPrompt, approvedPlayers, playerId } = useRoomStore()
+  const { nightPrompt, setNightPrompt, approvedPlayers, playerId } =
+    useRoomStore()
 
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
@@ -55,7 +56,7 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
   }
 
   if (!nightPrompt || nightPrompt.type !== 'werewolf' || sending) {
-    return <Waiting />
+    return <NightPhase roomCode={roomCode} />
   }
 
   return (

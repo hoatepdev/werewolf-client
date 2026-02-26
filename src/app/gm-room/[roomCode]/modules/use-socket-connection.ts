@@ -39,7 +39,7 @@ export function useSocketConnection(
         toast.success('GM đã kết nối thành công')
       },
       'game:phaseChanged': (data: {
-        phase: 'night' | 'day' | 'voting' | 'conclude' | 'ended'
+        phase: 'night' | 'day' | 'voting' | 'ended'
       }) => {
         setPhase(data.phase)
       },
@@ -68,14 +68,6 @@ export function useSocketConnection(
           type: data.type,
           message: data.message,
         })
-      },
-      'room:playerDisconnected': ({
-        username,
-      }: {
-        playerId: string
-        username: string
-      }) => {
-        toast.warning(`${username} đã mất kết nối`)
       },
     } as const
 
@@ -109,9 +101,13 @@ export function useSocketConnection(
     socket.emit('rq_gm:nextPhase', { roomCode })
   }
 
-  const handleEliminatePlayer = (playerId: string, reason: string) => {
-    socket.emit('rq_gm:eliminatePlayer', { roomCode, playerId, reason })
-    toast.success(`Đã loại bỏ người chơi: ${reason}`)
+  const handleEliminatePlayer = (player: Player, reason: string) => {
+    socket.emit('rq_gm:eliminatePlayer', {
+      roomCode,
+      playerId: player.id,
+      reason,
+    })
+    toast.success(`Đã loại bỏ người chơi: ${player.username}`)
   }
 
   const handleRevivePlayer = (playerId: string) => {

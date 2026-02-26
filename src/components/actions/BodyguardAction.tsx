@@ -4,7 +4,7 @@ import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { PlayerGrid } from '../PlayerGrid'
-import Waiting from '../phase/Waiting'
+import NightPhase from '../phase/NightPhase'
 
 interface BodyguardActionProps {
   roomCode: string
@@ -21,9 +21,10 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
   const [sending, setSending] = useState(false)
 
   // Filter out last protected player from candidates
-  const availableCandidates = nightPrompt?.candidates?.filter(
-    candidate => candidate.id !== nightPrompt?.lastProtected
-  ) || []
+  const availableCandidates =
+    nightPrompt?.candidates?.filter(
+      (candidate) => candidate.id !== nightPrompt?.lastProtected,
+    ) || []
 
   useEffect(() => {
     const handler = (data: NightPrompt) => {
@@ -37,7 +38,7 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
   }, [])
 
   if (!nightPrompt || nightPrompt.type !== 'bodyguard' || sending) {
-    return <Waiting />
+    return <NightPhase roomCode={roomCode} />
   }
 
   const handleVote = async () => {
@@ -78,7 +79,10 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
           <p className="text-sm text-orange-300">
             ⚠️ Bạn không thể bảo vệ{' '}
             <span className="font-semibold">
-              {approvedPlayers.find(p => p.id === nightPrompt.lastProtected)?.username}
+              {
+                approvedPlayers.find((p) => p.id === nightPrompt.lastProtected)
+                  ?.username
+              }
             </span>{' '}
             hai đêm liên tiếp
           </p>

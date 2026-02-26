@@ -4,7 +4,7 @@ import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
-import Waiting from '../phase/Waiting'
+import NightPhase from '../phase/NightPhase'
 
 interface WitchActionProps {
   roomCode: string
@@ -12,7 +12,8 @@ interface WitchActionProps {
 
 const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
   const socket = getSocket()
-  const { nightPrompt, setNightPrompt, approvedPlayers, playerId } = useRoomStore()
+  const { nightPrompt, setNightPrompt, approvedPlayers, playerId } =
+    useRoomStore()
   console.log('⭐ useRoomStore', useRoomStore())
   const [heal, setHeal] = useState<boolean>(false)
   const [selectedTarget, setSelectedTarget] = useState<{
@@ -56,7 +57,7 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
   }
 
   if (!nightPrompt || nightPrompt.type !== 'witch' || sending) {
-    return <Waiting />
+    return <NightPhase roomCode={roomCode} />
   }
 
   return (

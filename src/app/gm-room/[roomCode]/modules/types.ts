@@ -22,3 +22,11 @@ export interface NightActionData {
   message: string
   timestamp: number
 }
+
+export interface GmLogEntry {
+  type: string
+  message: string
+  data?: unknown
+  timestamp: number
+  sensitive: boolean
+}
