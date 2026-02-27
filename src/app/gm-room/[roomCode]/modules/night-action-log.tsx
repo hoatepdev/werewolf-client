@@ -5,7 +5,7 @@ export const NightActionLog = ({
 }: {
   nightActions: NightActionData[]
 }) => (
-  <div className="rounded-lg bg-gray-800 p-6">
+  <div className="mt-6 rounded-lg p-6">
     <h2 className="mb-4 text-lg font-bold text-blue-400">
       🌙 Nhật ký hành động đêm
     </h2>

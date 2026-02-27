@@ -1,12 +1,8 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { getSocket } from '@/lib/socket'
 import { toast } from 'sonner'
-import {
-  getStateRoomStore,
-  NightResult,
-  useRoomStore,
-} from '@/hook/useRoomStore'
+import { NightResult, useRoomStore } from '@/hook/useRoomStore'
 import { Player } from '@/types/player'
 import NightPhase from '@/components/phase/NightPhase'
 import DayPhase from '@/components/phase/DayPhase'
@@ -24,7 +20,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const { roomCode } = React.use(params)
 
   const [nightResult, setNightResult] = useState<NightResult | null>(null)
-  const [gameWinner, setGameWinner] = useState<'villagers' | 'werewolves' | 'tanner' | null>(null)
+  const [gameWinner, setGameWinner] = useState<
+    'villagers' | 'werewolves' | 'tanner' | null
+  >(null)
   const [showReveal, setShowReveal] = useState(false)
 
   const {
@@ -42,7 +40,19 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     setHunterDeathShooting,
   } = useRoomStore()
 
-  console.log('⭐ store', getStateRoomStore())
+  // Refs to avoid stale closures in socket listeners
+  const approvedPlayersRef = useRef(approvedPlayers)
+  const playerIdRef = useRef(playerId)
+  const roleRef = useRef(role)
+  useEffect(() => {
+    approvedPlayersRef.current = approvedPlayers
+  }, [approvedPlayers])
+  useEffect(() => {
+    playerIdRef.current = playerId
+  }, [playerId])
+  useEffect(() => {
+    roleRef.current = role
+  }, [role])
 
   useEffect(() => {
     // Reconnect: re-register with server using persistent ID
@@ -55,7 +65,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     initAudio()
 
     socket.on('game:phaseChanged', (newPhase: { phase: string }) => {
-      setPhase(newPhase.phase as 'night' | 'day' | 'voting' | 'conclude' | 'ended')
+      setPhase(
+        newPhase.phase as 'night' | 'day' | 'voting' | 'conclude' | 'ended',
+      )
       setNightPrompt(null)
 
       if (newPhase.phase === 'night') {
@@ -65,29 +77,35 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       }
     })
 
-    socket.on('game:nightResult', ({ diedPlayerIds, cause, deaths }: NightResult) => {
-      setNightResult({ diedPlayerIds, cause, deaths })
+    socket.on(
+      'game:nightResult',
+      ({ diedPlayerIds, cause, deaths }: NightResult) => {
+        setNightResult({ diedPlayerIds, cause, deaths })
 
-      const newApprovedPlayers: Player[] = approvedPlayers.map((player) =>
-        diedPlayerIds.includes(player.id) ? { ...player, alive: false } : player,
-      )
+        const newApprovedPlayers: Player[] = approvedPlayersRef.current.map(
+          (player) =>
+            diedPlayerIds.includes(player.id)
+              ? { ...player, alive: false }
+              : player,
+        )
 
-      if (diedPlayerIds.includes(playerId)) {
-        setAlive(false)
-        playSound('player_die')
-        triggerHaptic([200, 100, 200, 100, 500]) // Heavy death vibration
-        // Hunter death shoot is triggered by game:hunterShoot, not here
-      } else if (diedPlayerIds.length > 0) {
-        // Someone else died
-        playSound('player_die')
-        triggerHaptic(50) // Small bump
-      }
+        if (diedPlayerIds.includes(playerIdRef.current)) {
+          setAlive(false)
+          playSound('player_die')
+          triggerHaptic([200, 100, 200, 100, 500]) // Heavy death vibration
+          // Hunter death shoot is triggered by game:hunterShoot, not here
+        } else if (diedPlayerIds.length > 0) {
+          // Someone else died
+          playSound('player_die')
+          triggerHaptic(50) // Small bump
+        }
 
-      setApprovedPlayers(newApprovedPlayers)
-    })
+        setApprovedPlayers(newApprovedPlayers)
+      },
+    )
 
     socket.on('game:hunterShoot', ({ hunterId }: { hunterId: string }) => {
-      if (hunterId === playerId && role === 'hunter') {
+      if (hunterId === playerIdRef.current && roleRef.current === 'hunter') {
         setHunterDeathShooting(true)
       } else {
         toast.info('Thợ săn đã bắn!')
@@ -96,7 +114,17 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
     socket.on(
       'game:gameEnded',
-      ({ winner }: { winner: 'villagers' | 'werewolves' | 'tanner' }) => {
+      ({
+        winner,
+        players,
+      }: {
+        winner: 'villagers' | 'werewolves' | 'tanner'
+        players?: Player[]
+      }) => {
+        // Update approvedPlayers with final player states
+        if (players) {
+          setApprovedPlayers(players)
+        }
         setGameWinner(winner)
         setShowReveal(true)
       },
@@ -109,7 +137,8 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       socket.off('game:hunterShoot')
       socket.off('game:gameEnded')
     }
-  }, [approvedPlayers, playerId, persistentPlayerId, role, roomCode])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistentPlayerId, roomCode])
 
   const renderPhase = () => {
     if (hunterDeathShooting && role === 'hunter') {
@@ -149,7 +178,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       case 'conclude':
         return <DayPhase nightResult={nightResult} />
       default:
-        return <div>null</div>
+        return <Waiting />
     }
   }
 

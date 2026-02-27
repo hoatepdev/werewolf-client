@@ -13,7 +13,6 @@ import { NightActionLog } from './night-action-log'
 import { GameLog } from './game-log'
 import { MockPlayersComponent } from './mock-player'
 import { HoldToConfirmButton } from './hold-to-confirm-button'
-import { useLongPress } from './use-long-press'
 
 interface PrivateOverlayProps {
   onClose: () => void
@@ -46,8 +45,6 @@ export function PrivateOverlay({
   setForceRender,
   handleSetMockPlayers,
 }: PrivateOverlayProps) {
-  const longPressHandlers = useLongPress(onClose, 800)
-
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-end justify-center"
@@ -76,11 +73,11 @@ export function PrivateOverlay({
           <div className="flex items-center gap-3">
             <HoldToConfirmButton
               onConfirm={onNextPhase}
-              className="text-sm py-2 px-4"
+              className="px-4 py-2 text-sm"
             />
             <button
               onClick={onClose}
-              className="rounded-full bg-zinc-800 p-2 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-colors"
+              className="rounded-full bg-zinc-800 p-2 text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-white"
               aria-label="Đóng"
             >
               <X className="h-5 w-5" />
@@ -88,18 +85,11 @@ export function PrivateOverlay({
           </div>
         </div>
 
-        {/* Close trigger area */}
-        <div
-          className="mt-4 flex items-center justify-center rounded-lg border border-dashed border-zinc-700 bg-zinc-800/50 px-4 py-2"
-          {...longPressHandlers}
-        >
-          <p className="text-xs text-zinc-500">
-            Nhấn giữ 800ms để đóng chế độ riêng tư
-          </p>
-        </div>
-
         {/* Scrollable content */}
-        <div className="mt-4 overflow-y-auto" style={{ maxHeight: 'calc(95vh - 180px)' }}>
+        <div
+          className="mt-4 overflow-y-auto"
+          style={{ maxHeight: 'calc(95vh - 180px)' }}
+        >
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Player list with full controls */}
             <PlayerList

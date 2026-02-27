@@ -72,7 +72,7 @@ const GmRoomPage = () => {
       socket.off('gm:votingAction')
       socket.off('gm:gameEnded')
     }
-  }, [socket, forceRender])
+  }, [socket])
 
   useEffect(() => {
     handleGetPlayers()

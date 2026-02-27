@@ -15,7 +15,7 @@ export const GameLog = memo(function GameLog({ logs, filtered }: GameLogProps) {
   }, [logs, filtered])
 
   return (
-    <div className="mt-6 max-h-96 overflow-y-auto rounded-lg bg-zinc-800 p-4">
+    <div className="mt-6 max-h-96 overflow-y-auto rounded-lg bg-zinc-800 p-6">
       <h3 className="mb-2 font-bold text-yellow-400">Lịch sử game (log)</h3>
       <ul className="space-y-1 text-sm">
         {visibleLogs.map((log, idx) => (
@@ -23,7 +23,9 @@ export const GameLog = memo(function GameLog({ logs, filtered }: GameLogProps) {
             <span className="text-zinc-400">
               [{new Date(log.timestamp).toLocaleTimeString()}]
             </span>
-            <span className="ml-2 font-semibold">{log.type.toUpperCase()}:</span>
+            <span className="ml-2 font-semibold">
+              {log.type.toUpperCase()}:
+            </span>
             <span className="ml-2">{log.message}</span>
           </li>
         ))}

@@ -4,7 +4,7 @@ import { Check, Loader2Icon, ScanQrCode, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import QRCode from 'react-qr-code'
-import { getStateRoomStore, useRoomStore } from '@/hook/useRoomStore'
+import { useRoomStore } from '@/hook/useRoomStore'
 import { getSocket } from '@/lib/socket'
 import {
   Dialog,
@@ -19,12 +19,12 @@ import { Player } from '@/types/player'
 import { RoleSelection } from '@/components/RoleSelection'
 import { renderAvatar } from '@/helpers'
 import { Button } from '@/components/ui/button'
-import { MIN_PLAYER } from '@/constants'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
 
 const initialApproved: Player[] = []
 const initialPending: Player[] = []
+const MIN_PLAYER = 1
 
 export default function ApprovePlayerPage({
   params,
@@ -43,17 +43,14 @@ export default function ApprovePlayerPage({
 
   const { setApprovedPlayers: setApprovedPlayersStore } = useRoomStore()
 
-  console.log('⭐ store', getStateRoomStore())
   const handleStartGameSuccess = () => {
-    toast.success('Bắt đầu game sau 2 giây ...')
+    toast.success('Bắt đầu game...')
     setTimeout(() => {
       router.push(`/gm-room/${roomCode}`)
     }, 2000)
   }
 
   const handleDataPlayers = (data: Player[]) => {
-    console.log('⭐ data', data)
-
     const approvedPlayers: Player[] = []
     const pendingPlayers: Player[] = []
 

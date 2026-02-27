@@ -13,7 +13,7 @@ interface UseLongPressReturn {
 
 export function useLongPress(
   callback: () => void,
-  duration = 800,
+  duration = 500,
 ): UseLongPressReturn {
   const [progress, setProgress] = useState(0)
   const [isPressed, setIsPressed] = useState(false)

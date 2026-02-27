@@ -102,7 +102,7 @@ export default function Footer() {
         )}
       </div>
       <div className="text-center text-xs text-zinc-400">
-        VERSION 1.0.1
+        VERSION 1.5.2
         <br />
         Powered by:{' '}
         <a
@@ -110,7 +110,7 @@ export default function Footer() {
           target="_blank"
           className="text-yellow-400"
         >
-          hoatep
+          hoatepdev
         </a>
       </div>
     </footer>

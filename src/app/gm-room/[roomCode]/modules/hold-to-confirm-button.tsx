@@ -16,7 +16,7 @@ export function HoldToConfirmButton({
   onConfirm,
   label = 'Giai đoạn tiếp theo',
   holdingLabel = 'Đang giữ...',
-  duration = 1500,
+  duration = 500,
   disabled = false,
   className = '',
 }: HoldToConfirmButtonProps) {
@@ -24,6 +24,12 @@ export function HoldToConfirmButton({
     onConfirm,
     duration,
   )
+
+  // Explicitly type touchHandlers to ensure isPressed is excluded
+  const buttonHandlers: Pick<
+    ReturnType<typeof useLongPress>,
+    'onTouchStart' | 'onTouchEnd' | 'onTouchCancel' | 'onMouseDown' | 'onMouseUp' | 'onMouseLeave'
+  > = touchHandlers
 
   const circumference = 2 * Math.PI * 20 // r=20, so circumference ≈ 125.66
   const strokeDashoffset = circumference * (1 - progress)
@@ -33,7 +39,7 @@ export function HoldToConfirmButton({
       variant="yellow"
       disabled={disabled}
       className={`relative ${className}`}
-      {...touchHandlers}
+      {...buttonHandlers}
     >
       <svg
         className="absolute inset-0 h-full w-full -rotate-90"

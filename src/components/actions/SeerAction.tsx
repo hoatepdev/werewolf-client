@@ -4,7 +4,7 @@ import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
-import NightPhase from '../phase/NightPhase'
+import Waiting from '../phase/Waiting'
 
 const SeerAction: React.FC<{
   roomCode: string
@@ -51,7 +51,7 @@ const SeerAction: React.FC<{
   }, [selectedTarget])
 
   if (!nightPrompt || nightPrompt.type !== 'seer') {
-    return <NightPhase roomCode={roomCode} />
+    return <Waiting />
   }
 
   const handleVote = () => {

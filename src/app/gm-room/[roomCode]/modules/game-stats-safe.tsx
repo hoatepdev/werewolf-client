@@ -9,7 +9,7 @@ export const SafeGameStats = memo(function SafeGameStats({
   gameStats,
 }: SafeGameStatsProps) {
   return (
-    <div className="rounded-lg bg-gray-800 p-6">
+    <div className="mt-6 rounded-lg bg-gray-800 p-6">
       <h2 className="mb-4 text-lg font-bold text-green-400">
         📊 Thống kê game
       </h2>

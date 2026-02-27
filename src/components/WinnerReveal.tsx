@@ -3,8 +3,19 @@
 import React, { useEffect, useState } from 'react'
 import confetti from 'canvas-confetti'
 import { playSound, triggerHaptic } from '@/lib/audio'
+import { useRoomStore } from '@/hook/useRoomStore'
 
 type WinnerType = 'villagers' | 'werewolves' | 'tanner'
+
+// Helper: Get player's team based on their role
+const getPlayerTeam = (role: string | null): WinnerType | null => {
+  if (!role) return null
+  const villagerRoles = ['villager', 'seer', 'witch', 'hunter', 'bodyguard']
+  if (villagerRoles.includes(role)) return 'villagers'
+  if (role === 'werewolf') return 'werewolves'
+  if (role === 'tanner') return 'tanner'
+  return null
+}
 
 interface WinnerRevealProps {
   winner: WinnerType
@@ -55,6 +66,11 @@ const WinnerReveal: React.FC<WinnerRevealProps> = ({ winner, onComplete }) => {
   const [showTeamName, setShowTeamName] = useState(false)
   const config = WINNER_CONFIG[winner]
 
+  // Get player's role to determine if they're on the winning team
+  const role = useRoomStore((state) => state.role)
+  const playerTeam = getPlayerTeam(role)
+  const isWinner = playerTeam === winner
+
   useEffect(() => {
     // Play victory sound
     playSound('victory' as keyof typeof import('@/lib/audio').SOUND_ENABLED)
@@ -103,6 +119,9 @@ const WinnerReveal: React.FC<WinnerRevealProps> = ({ winner, onComplete }) => {
   }, [winner, onComplete])
 
   const triggerConfetti = () => {
+    // Only show confetti for winning team
+    if (!isWinner) return
+
     // Multiple confetti bursts for cinematic effect
     const duration = 3000
     const end = Date.now() + duration

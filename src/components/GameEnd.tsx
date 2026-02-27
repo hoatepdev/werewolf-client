@@ -1,11 +1,15 @@
-import React, { useEffect } from 'react'
-import confetti from 'canvas-confetti'
+'use client'
+
+import React from 'react'
 import { Player } from '@/types/player'
 import { LIST_ROLE } from '@/constants/role'
 
 type WinnerType = 'villagers' | 'werewolves' | 'tanner'
 
-const WINNER_DISPLAY: Record<WinnerType, { name: string; emoji: string; color: string }> = {
+const WINNER_DISPLAY: Record<
+  WinnerType,
+  { name: string; emoji: string; color: string }
+> = {
   villagers: { name: 'Dân làng', emoji: '🏘️', color: 'text-blue-400' },
   werewolves: { name: 'Sói', emoji: '🐺', color: 'text-red-400' },
   tanner: { name: 'Chán đời', emoji: '😈', color: 'text-purple-400' },
@@ -25,16 +29,6 @@ const GameEnd: React.FC<GameEndProps> = ({
   onPlayAgain,
 }) => {
   const config = WINNER_DISPLAY[winningTeam]
-
-  useEffect(() => {
-    // Smaller confetti burst for the result screen
-    confetti({
-      particleCount: 60,
-      spread: 70,
-      origin: { y: 0.7 },
-      zIndex: 9999,
-    })
-  }, [])
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4">

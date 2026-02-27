@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { getSocket } from '@/lib/socket'
-import {
-  getStateRoomStore,
-  NightPrompt,
-  useRoomStore,
-} from '@/hook/useRoomStore'
+import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
-import NightPhase from '../phase/NightPhase'
+import Waiting from '../phase/Waiting'
 
 interface WerewolfActionProps {
   roomCode: string
@@ -25,13 +21,9 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
     username: string
   }>()
   const [sending, setSending] = useState(false)
-  console.log('⭐ nightPrompt', nightPrompt)
-
-  console.log('⭐ store', getStateRoomStore(), sending)
 
   useEffect(() => {
     const handler = (data: NightPrompt) => {
-      console.log('⭐ data', data)
       setNightPrompt(data)
     }
     socket.on('night:werewolf-action', handler)
@@ -56,7 +48,7 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
   }
 
   if (!nightPrompt || nightPrompt.type !== 'werewolf' || sending) {
-    return <NightPhase roomCode={roomCode} />
+    return <Waiting />
   }
 
   return (

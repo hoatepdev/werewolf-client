@@ -4,7 +4,7 @@ import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { PlayerGrid } from '../PlayerGrid'
-import NightPhase from '../phase/NightPhase'
+import Waiting from '../phase/Waiting'
 
 interface BodyguardActionProps {
   roomCode: string
@@ -28,7 +28,6 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
 
   useEffect(() => {
     const handler = (data: NightPrompt) => {
-      console.log('⭐ bodyguard data', data)
       setNightPrompt(data)
     }
     socket.on('night:bodyguard-action', handler)
@@ -38,7 +37,7 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
   }, [])
 
   if (!nightPrompt || nightPrompt.type !== 'bodyguard' || sending) {
-    return <NightPhase roomCode={roomCode} />
+    return <Waiting />
   }
 
   const handleVote = async () => {

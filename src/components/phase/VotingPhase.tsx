@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getSocket } from '@/lib/socket'
 import { useRoomStore } from '@/hook/useRoomStore'
 import { toast } from 'sonner'
@@ -25,6 +25,20 @@ const VotingPhase: React.FC = () => {
   } | null>(null)
   const [hasVoted, setHasVoted] = useState(false)
 
+  // Refs to avoid stale closures in socket listeners
+  const approvedPlayersRef = useRef(approvedPlayers)
+  const playerIdRef = useRef(playerId)
+  const roleRef = useRef(role)
+  useEffect(() => {
+    approvedPlayersRef.current = approvedPlayers
+  }, [approvedPlayers])
+  useEffect(() => {
+    playerIdRef.current = playerId
+  }, [playerId])
+  useEffect(() => {
+    roleRef.current = role
+  }, [role])
+
   useEffect(() => {
     const handleVotingResult = (data: {
       eliminatedPlayerId: string | null
@@ -41,23 +55,22 @@ const VotingPhase: React.FC = () => {
         return
       }
 
-      const newApprovedPlayers = [...approvedPlayers]
-      const foundPlayerIndex = approvedPlayers.findIndex(
-        (player) => player.id === data.eliminatedPlayerId,
+      const newApprovedPlayers = approvedPlayersRef.current.map((player) =>
+        player.id === data.eliminatedPlayerId
+          ? { ...player, alive: false }
+          : player,
       )
-      if (foundPlayerIndex !== -1) {
-        newApprovedPlayers[foundPlayerIndex].alive = false
-        setApprovedPlayers(newApprovedPlayers)
-      }
-      if (data.eliminatedPlayerId === playerId) {
+      setApprovedPlayers(newApprovedPlayers)
+
+      if (data.eliminatedPlayerId === playerIdRef.current) {
         setAlive(false)
         // Check if the eliminated player is a hunter
-        const eliminatedPlayer = approvedPlayers.find(
+        const eliminatedPlayer = approvedPlayersRef.current.find(
           (p) => p.id === data.eliminatedPlayerId,
         )
         if (
           eliminatedPlayer?.role === 'hunter' &&
-          data.eliminatedPlayerId === playerId
+          data.eliminatedPlayerId === playerIdRef.current
         ) {
           setHunterDeathShooting(true)
         }
@@ -69,7 +82,9 @@ const VotingPhase: React.FC = () => {
     return () => {
       socket.off('votingResult', handleVotingResult)
     }
-  }, [socket, approvedPlayers])
+    // setApprovedPlayers, setAlive, setHunterDeathShooting are stable - omit to prevent unnecessary re-registrations
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket])
 
   const handleVote = async () => {
     socket.emit('voting:done', {

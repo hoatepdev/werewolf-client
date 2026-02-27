@@ -154,12 +154,11 @@ export default function JoinRoomPage() {
       'rq_player:joinRoom',
       { roomCode, avatarKey, username, persistentPlayerId },
       (response: { success: boolean; playerId?: string; message?: string }) => {
-        console.log('⭐ response', response)
-
         if (response.success && response.playerId) {
           setPlayerId(response.playerId)
           setRoomCodeStore(roomCode)
           toast.success('Đã gửi yêu cầu! Đang chờ duyệt...')
+          setLoading(false)
         } else {
           setLoading(false)
           toast.error(response.message || 'Không thể tham gia phòng')

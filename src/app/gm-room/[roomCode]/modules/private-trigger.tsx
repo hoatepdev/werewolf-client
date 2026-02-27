@@ -8,12 +8,26 @@ interface PrivateTriggerProps {
 }
 
 export function PrivateTrigger({ onActivate }: PrivateTriggerProps) {
-  const { progress, isPressed, ...touchHandlers } = useLongPress(onActivate, 800)
+  const { progress, isPressed, ...touchHandlers } = useLongPress(
+    onActivate,
+    500,
+  )
+
+  // Explicitly type touchHandlers to ensure isPressed is excluded
+  const divHandlers: Pick<
+    ReturnType<typeof useLongPress>,
+    | 'onTouchStart'
+    | 'onTouchEnd'
+    | 'onTouchCancel'
+    | 'onMouseDown'
+    | 'onMouseUp'
+    | 'onMouseLeave'
+  > = touchHandlers
 
   return (
     <div
       className="relative mx-auto mt-6 flex w-full max-w-xs items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-800 px-6 py-3"
-      {...touchHandlers}
+      {...divHandlers}
     >
       {/* Radial fill effect */}
       <div
@@ -27,14 +41,22 @@ export function PrivateTrigger({ onActivate }: PrivateTriggerProps) {
 
       {/* Icon and text */}
       <div className="relative z-10 flex items-center gap-2">
-        <Lock className={`h-4 w-4 text-zinc-500 ${isPressed ? 'text-yellow-400' : ''}`} />
-        <span className={`text-xs ${isPressed ? 'text-yellow-400' : 'text-zinc-500'}`}>
+        <Lock
+          className={`h-4 w-4 text-zinc-500 ${isPressed ? 'text-yellow-400' : ''}`}
+        />
+        <span
+          className={`text-xs ${isPressed ? 'text-yellow-400' : 'text-zinc-500'}`}
+        >
           Chế độ riêng tư
         </span>
       </div>
 
       {/* Progress indicator ring */}
-      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 200 60" fill="none">
+      <svg
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 200 60"
+        fill="none"
+      >
         <rect
           x="2"
           y="2"

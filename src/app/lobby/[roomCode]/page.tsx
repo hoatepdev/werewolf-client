@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { getSocket } from '@/lib/socket'
-import { getStateRoomStore, useRoomStore } from '@/hook/useRoomStore'
+import { useRoomStore } from '@/hook/useRoomStore'
 import { PlayerGrid } from '@/components/PlayerGrid'
 import { Player } from '@/types/player'
 import { useRouter } from 'next/navigation'
@@ -21,7 +21,6 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const [assignedRole, setAssignedRole] = useState<RoleObject>(LIST_ROLE[0])
 
   const { roomCode } = React.use(params)
-  console.log('⭐ store', getStateRoomStore())
 
   const {
     playerId,
@@ -32,13 +31,6 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     setApprovedPlayers,
     setAlive,
   } = useRoomStore()
-
-  const handleStartGameSuccess = () => {
-    toast.success('Bắt đầu game sau 2 giây ...')
-    setTimeout(() => {
-      router.push(`/room/${roomCode}`)
-    }, 2000)
-  }
 
   useEffect(() => {
     if (!socket.connected) socket.connect()
@@ -57,7 +49,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         setShowRoleModal(true)
       }, 1000)
     })
-    socket.on('room:readySuccess', handleStartGameSuccess)
+    socket.on('room:readySuccess', () => {
+      setShowRoleModal(false)
+      toast.success('Bắt đầu game...')
+      setTimeout(() => {
+        router.push(`/room/${roomCode}`)
+      }, 2000)
+    })
     socket.on(
       'room:playerDisconnected',
       ({ username }: { playerId: string; username: string }) => {

@@ -69,7 +69,7 @@ export function TableLayer({
     <>
       {/* Game controls */}
       <div>
-        <h2 className="mb-2 text-lg font-bold text-purple-400">
+        <h2 className="mb-8 text-lg font-bold text-purple-400">
           🎮 Điều khiển game
         </h2>
         <div className="flex items-center gap-4">
@@ -78,7 +78,9 @@ export function TableLayer({
         </div>
         <div className="mt-4 flex items-center gap-2">
           <span className="text-sm text-gray-300">Giai đoạn hiện tại:</span>
-          <span className={`rounded px-2 py-1 text-sm font-medium ${phaseColor}`}>
+          <span
+            className={`rounded px-2 py-1 text-sm font-medium ${phaseColor}`}
+          >
             {phaseLabel}
           </span>
         </div>
