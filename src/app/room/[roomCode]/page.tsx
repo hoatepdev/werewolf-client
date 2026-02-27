@@ -12,6 +12,7 @@ import GameEnd from '@/components/GameEnd'
 import WinnerReveal from '@/components/WinnerReveal'
 import Waiting from '@/components/phase/Waiting'
 import HunterDeathShoot from '@/components/actions/HunterDeathShoot'
+import { TimerProvider } from '@/hook/useTimerContext'
 import { playSound, triggerHaptic, initAudio } from '@/lib/audio'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
@@ -182,7 +183,11 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     }
   }
 
-  return <PhaseTransition phase={phase}>{renderPhase()}</PhaseTransition>
+  return (
+    <TimerProvider>
+      <PhaseTransition phase={phase}>{renderPhase()}</PhaseTransition>
+    </TimerProvider>
+  )
 }
 
 export default RoomPage

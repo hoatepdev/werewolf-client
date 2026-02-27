@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getSocket } from '@/lib/socket'
 import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
+import { useTimer } from '@/hook/useTimerContext'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { PlayerGrid } from '../PlayerGrid'
 import Waiting from '../phase/Waiting'
+import CountdownTimer from '../CountdownTimer'
 
 interface BodyguardActionProps {
   roomCode: string
@@ -14,11 +16,19 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
   const socket = getSocket()
   const { nightPrompt, setNightPrompt, approvedPlayers, playerId } =
     useRoomStore()
+
+  const timer = useTimer()
+
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
     username: string
   }>()
   const [sending, setSending] = useState(false)
+  const sendingRef = useRef(false)
+
+  useEffect(() => {
+    sendingRef.current = sending
+  }, [sending])
 
   // Filter out last protected player from candidates
   const availableCandidates =
@@ -35,6 +45,18 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
       socket.off('night:bodyguard-action', handler)
     }
   }, [])
+
+  // Auto-submit when timer expires (server handles actual timeout with default response,
+  // we just update UI to disable controls)
+  useEffect(() => {
+    if (
+      timer.isExpired &&
+      !sendingRef.current &&
+      nightPrompt?.type === 'bodyguard'
+    ) {
+      setSending(true)
+    }
+  }, [timer.isExpired, nightPrompt])
 
   if (!nightPrompt || nightPrompt.type !== 'bodyguard' || sending) {
     return <Waiting />
@@ -57,9 +79,14 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
-      <div className="text-center">
-        <h3 className="text-xl font-bold text-green-400">🛡️ Lượt Bảo vệ</h3>
-        <p className="text-sm text-gray-300">{nightPrompt.message}</p>
+      <div className="flex items-center gap-4">
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-green-400">🛡️ Lượt Bảo vệ</h3>
+          <p className="text-sm text-gray-300">{nightPrompt.message}</p>
+        </div>
+        {timer.isActive && timer.timerContext === 'bodyguard' && (
+          <CountdownTimer countdown={timer} />
+        )}
       </div>
 
       <div className="w-full">

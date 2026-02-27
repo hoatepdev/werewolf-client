@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getSocket } from '@/lib/socket'
 import { NightPrompt, useRoomStore } from '@/hook/useRoomStore'
+import { useTimer } from '@/hook/useTimerContext'
 import { toast } from 'sonner'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
 import Waiting from '../phase/Waiting'
+import CountdownTimer from '../CountdownTimer'
 
 interface WitchActionProps {
   roomCode: string
@@ -14,12 +16,20 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
   const socket = getSocket()
   const { nightPrompt, setNightPrompt, approvedPlayers, playerId } =
     useRoomStore()
+
+  const timer = useTimer()
+
   const [heal, setHeal] = useState<boolean>(false)
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
     username: string
   } | null>(null)
   const [sending, setSending] = useState(false)
+  const sendingRef = useRef(false)
+
+  useEffect(() => {
+    sendingRef.current = sending
+  }, [sending])
 
   useEffect(() => {
     const handler = (data: NightPrompt) => {
@@ -30,6 +40,18 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
       socket.off('night:witch-action', handler)
     }
   }, [])
+
+  // Auto-submit when timer expires (server handles actual timeout with default response,
+  // we just update UI to disable controls)
+  useEffect(() => {
+    if (
+      timer.isExpired &&
+      !sendingRef.current &&
+      nightPrompt?.type === 'witch'
+    ) {
+      setSending(true)
+    }
+  }, [timer.isExpired, nightPrompt])
 
   const handleAction = async (isSkip: boolean = false) => {
     setSending(true)
@@ -60,9 +82,14 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
-      <div className="text-center">
-        <h3 className="text-xl font-bold text-purple-400">🧙‍♀️ Lượt Phù thủy</h3>
-        <p className="text-sm text-gray-300">{nightPrompt.message}</p>
+      <div className="flex items-center gap-4">
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-purple-400">🧙‍♀️ Lượt Phù thủy</h3>
+          <p className="text-sm text-gray-300">{nightPrompt.message}</p>
+        </div>
+        {timer.isActive && timer.timerContext === 'witch' && (
+          <CountdownTimer countdown={timer} />
+        )}
       </div>
       <div className="w-full">
         <PlayerGrid

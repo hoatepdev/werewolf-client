@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { getSocket } from '@/lib/socket'
 import { useRoomStore } from '@/hook/useRoomStore'
+import { useTimer } from '@/hook/useTimerContext'
 import { toast } from 'sonner'
 import PhaseTransitionImage from '../PhaseTransitionImage'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
 import { Loader2Icon } from 'lucide-react'
+import CountdownTimer from '../CountdownTimer'
 
 const VotingPhase: React.FC = () => {
   const socket = getSocket()
@@ -19,11 +21,29 @@ const VotingPhase: React.FC = () => {
     setHunterDeathShooting,
   } = useRoomStore()
 
+  const timer = useTimer()
+
   const [selectedTarget, setSelectedTarget] = useState<{
     id: string
     username: string
   } | null>(null)
   const [hasVoted, setHasVoted] = useState(false)
+  const hasVotedRef = useRef(false)
+
+  // Update ref when hasVoted changes
+  useEffect(() => {
+    hasVotedRef.current = hasVoted
+  }, [hasVoted])
+
+  // Auto-submit when timer expires (client-side auto-submit with abstain vote)
+  useEffect(() => {
+    if (timer.isExpired && !hasVotedRef.current && timer.timerContext === 'voting') {
+      socket.emit('voting:done', { roomCode, targetId: null })
+      setHasVoted(true)
+      hasVotedRef.current = true
+      toast.info('Hết thời gian! Tự động bỏ phiếu trắng.')
+    }
+  }, [timer.isExpired, timer.timerContext, roomCode, socket])
 
   // Refs to avoid stale closures in socket listeners
   const approvedPlayersRef = useRef(approvedPlayers)
@@ -104,13 +124,16 @@ const VotingPhase: React.FC = () => {
       />
 
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
-        <div className="text-center">
-          <h3 className="text-xl font-bold text-yellow-400">
-            👥 Giai đoạn bỏ phiếu
-          </h3>
-          <p className="text-sm text-gray-300">
-            Mời mọi người bỏ phiếu cho người mà bạn cho là người chết trong đêm
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-yellow-400">
+              👥 Giai đoạn bỏ phiếu
+            </h3>
+            <p className="text-sm text-gray-300">
+              Mời mọi người bỏ phiếu cho người mà bạn cho là người chết trong đêm
+            </p>
+          </div>
+          {timer.isActive && <CountdownTimer countdown={timer} />}
         </div>
 
         <div className="w-full">
