@@ -15,6 +15,7 @@ import HunterDeathShoot from '@/components/actions/HunterDeathShoot'
 import { TimerProvider } from '@/hook/useTimerContext'
 import { playSound, triggerHaptic, initAudio } from '@/lib/audio'
 import { useRouter } from 'next/navigation'
+import type { GameLogEntry } from '@/types/game-log'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
@@ -26,6 +27,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     'villagers' | 'werewolves' | 'tanner' | null
   >(null)
   const [showReveal, setShowReveal] = useState(false)
+  const [gameLog, setGameLog] = useState<GameLogEntry[]>([])
 
   const {
     playerId,
@@ -165,9 +167,11 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       ({
         winner,
         players,
+        gameLog: logData,
       }: {
         winner: 'villagers' | 'werewolves' | 'tanner'
         players?: Player[]
+        gameLog?: GameLogEntry[]
       }) => {
         // Set game-ended ref synchronously to guard against concurrent votingResult handler
         gameWinnerRef.current = winner
@@ -180,6 +184,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           if (me && !me.alive) {
             setAlive(false)
           }
+        }
+        if (logData) {
+          setGameLog(logData)
         }
         setGameWinner(winner)
         setShowReveal(true)
@@ -219,6 +226,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           winningTeam={gameWinner}
           players={approvedPlayers}
           currentPlayerId={playerId}
+          gameLog={gameLog}
           onReturn={() => router.push('/')}
           onPlayAgain={() => router.push(`/join-room`)}
         />
