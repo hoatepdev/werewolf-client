@@ -40,14 +40,14 @@ export function PrivateTrigger({ onActivate }: PrivateTriggerProps) {
       />
 
       {/* Icon and text */}
-      <div className="relative z-10 flex items-center gap-2">
+      <div className="relative z-10 flex cursor-pointer items-center gap-2">
         <Lock
           className={`h-4 w-4 text-zinc-500 ${isPressed ? 'text-yellow-400' : ''}`}
         />
         <span
           className={`text-xs ${isPressed ? 'text-yellow-400' : 'text-zinc-500'}`}
         >
-          Chế độ riêng tư
+          Chế độ game master
         </span>
       </div>
 

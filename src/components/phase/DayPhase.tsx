@@ -10,7 +10,7 @@ const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
 
   return (
     <div className="relative h-full w-full flex-1">
-      <PhaseTransitionImage image="/images/phase/day.jpg" bgColor="#66A3FF" />
+      {/* <PhaseTransitionImage image="/images/phase/day.jpg" bgColor="#66A3FF" /> */}
 
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
         <div className="text-center">

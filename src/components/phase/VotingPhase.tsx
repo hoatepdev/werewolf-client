@@ -49,10 +49,10 @@ const VotingPhase: React.FC = () => {
 
   return (
     <div className="relative h-full w-full flex-1">
-      <PhaseTransitionImage
+      {/* <PhaseTransitionImage
         image="/images/phase/voting.jpg"
         bgColor="#2E3A62"
-      />
+      /> */}
 
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
         <div className="flex items-center gap-4">

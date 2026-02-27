@@ -109,7 +109,7 @@ export default function RootLayout({
       <body>
         <ProgrammaticDialogProviderSingleton>
           <BackgroundEngine />
-          <div className="bg-transparent">{children}</div>
+          <div className="bg-zinc-900">{children}</div>
           <Toaster position="top-center" richColors duration={2000} />
           <PWAInstallPrompt />
           <PWAServiceWorker />

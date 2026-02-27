@@ -26,17 +26,18 @@ export const LIST_ROLE: RoleObject[] = [
     emoji: '🧪',
   },
   {
-    id: 'hunter',
-    name: 'Thợ săn',
-    description: 'Có thể giết một người khi họ chết',
-    emoji: '🎯',
-  },
-  {
     id: 'bodyguard',
     name: 'Bảo vệ',
     description: 'Bảo vệ 1 người mỗi đêm',
     emoji: '🛡️',
   },
+  {
+    id: 'hunter',
+    name: 'Thợ săn',
+    description: 'Có thể giết một người khi họ chết',
+    emoji: '🎯',
+  },
+
   {
     id: 'tanner',
     name: 'Chán đời',

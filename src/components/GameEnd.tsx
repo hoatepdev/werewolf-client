@@ -18,6 +18,7 @@ const WINNER_DISPLAY: Record<
 interface GameEndProps {
   winningTeam: WinnerType
   players: Player[]
+  currentPlayerId?: string | null
   onReturn: () => void
   onPlayAgain: () => void
 }
@@ -25,6 +26,7 @@ interface GameEndProps {
 const GameEnd: React.FC<GameEndProps> = ({
   winningTeam,
   players,
+  currentPlayerId,
   onReturn,
   onPlayAgain,
 }) => {
@@ -44,7 +46,9 @@ const GameEnd: React.FC<GameEndProps> = ({
           {players.map((p: Player) => (
             <li key={p.id} className="flex justify-between py-1">
               <span>
-                {p.username}{' '}
+                <span className={p.id === currentPlayerId ? 'font-bold text-yellow-400' : ''}>
+                  {p.username}
+                </span>{' '}
                 <span className="text-xs text-zinc-400">
                   ({LIST_ROLE.find((r) => r.id === p.role)?.name})
                 </span>

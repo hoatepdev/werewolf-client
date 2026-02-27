@@ -218,22 +218,20 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         <GameEnd
           winningTeam={gameWinner}
           players={approvedPlayers}
+          currentPlayerId={playerId}
           onReturn={() => router.push('/')}
-          onPlayAgain={() => router.push(`/join-room/${roomCode}`)}
+          onPlayAgain={() => router.push(`/join-room`)}
         />
       )
     }
 
     // Dead players can still see day results and conclude, but not act during night/voting
     if (!alive) {
-      switch (phase) {
-        case 'day':
-          return <DayPhase nightResult={nightResult} />
-        case 'conclude':
-          return <DayPhase nightResult={nightResult} />
-        default:
-          return <Waiting />
+      if (phase === 'day' || phase === 'conclude') {
+        return <DayPhase nightResult={nightResult} />
       }
+      // Stay on Waiting screen regardless of phase changes
+      return <Waiting />
     }
 
     switch (phase) {
@@ -252,7 +250,8 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
   return (
     <TimerProvider>
-      <PhaseTransition phase={phase}>{renderPhase()}</PhaseTransition>
+      {/* <PhaseTransition phase={phase}>{renderPhase()}</PhaseTransition> */}
+      {renderPhase()}
     </TimerProvider>
   )
 }
