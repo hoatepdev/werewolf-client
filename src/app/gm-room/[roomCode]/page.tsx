@@ -37,6 +37,7 @@ const GmRoomPage = () => {
     players,
     gameStats,
     nightActions,
+    winner,
     handleNextPhase,
     handleEliminatePlayer,
     handleRevivePlayer,
@@ -78,6 +79,12 @@ const GmRoomPage = () => {
   useEffect(() => {
     handleGetPlayers()
   }, [handleGetPlayers, forceRender])
+
+  useEffect(() => {
+    if (phase === 'ended') {
+      setIsPrivateMode(true)
+    }
+  }, [phase])
 
   const togglePrivateMode = () => setIsPrivateMode((prev) => !prev)
 
@@ -142,6 +149,7 @@ const GmRoomPage = () => {
             forceRender={forceRender}
             setForceRender={setForceRender}
             handleSetMockPlayers={handleSetMockPlayers}
+            winner={winner}
           />
         )}
       </AnimatePresence>

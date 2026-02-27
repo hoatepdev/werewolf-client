@@ -46,6 +46,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const approvedPlayersRef = useRef(approvedPlayers)
   const playerIdRef = useRef(playerId)
   const roleRef = useRef(role)
+  const gameWinnerRef = useRef<'villagers' | 'werewolves' | 'tanner' | null>(
+    null,
+  )
   useEffect(() => {
     approvedPlayersRef.current = approvedPlayers
   }, [approvedPlayers])
@@ -115,6 +118,49 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     })
 
     socket.on(
+      'votingResult',
+      (data: {
+        eliminatedPlayerId: string | null
+        cause: 'vote' | 'hunter' | 'tie' | 'no_votes'
+        tiedPlayerIds?: string[]
+      }) => {
+        // Skip player updates if game already ended — game:gameEnded has authoritative data
+        if (gameWinnerRef.current) return
+
+        // Tie or no votes — no one is eliminated
+        if (!data.eliminatedPlayerId) {
+          toast.info(
+            data.cause === 'tie'
+              ? 'Hòa phiếu! Không ai bị loại.'
+              : 'Không ai bỏ phiếu. Không ai bị loại.',
+          )
+          return
+        }
+
+        const newApprovedPlayers = approvedPlayersRef.current.map((player) =>
+          player.id === data.eliminatedPlayerId
+            ? { ...player, alive: false }
+            : player,
+        )
+        setApprovedPlayers(newApprovedPlayers)
+
+        if (data.eliminatedPlayerId === playerIdRef.current) {
+          setAlive(false)
+          // Check if the eliminated player is a hunter
+          const eliminatedPlayer = approvedPlayersRef.current.find(
+            (p) => p.id === data.eliminatedPlayerId,
+          )
+          if (
+            eliminatedPlayer?.role === 'hunter' &&
+            data.eliminatedPlayerId === playerIdRef.current
+          ) {
+            setHunterDeathShooting(true)
+          }
+        }
+      },
+    )
+
+    socket.on(
       'game:gameEnded',
       ({
         winner,
@@ -123,9 +169,12 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         winner: 'villagers' | 'werewolves' | 'tanner'
         players?: Player[]
       }) => {
+        // Set game-ended ref synchronously to guard against concurrent votingResult handler
+        gameWinnerRef.current = winner
         // Update approvedPlayers with final player states
         if (players) {
           setApprovedPlayers(players)
+          approvedPlayersRef.current = players
           // Update own alive status from final game state
           const me = players.find((p) => p.id === playerIdRef.current)
           if (me && !me.alive) {
@@ -142,6 +191,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       socket.off('game:phaseChanged')
       socket.off('game:nightResult')
       socket.off('game:hunterShoot')
+      socket.off('votingResult')
       socket.off('game:gameEnded')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -169,7 +219,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           winningTeam={gameWinner}
           players={approvedPlayers}
           onReturn={() => router.push('/')}
-          onPlayAgain={() => router.push(`join-room/${roomCode}`)}
+          onPlayAgain={() => router.push(`/join-room/${roomCode}`)}
         />
       )
     }

@@ -6,12 +6,14 @@ interface PlayerListProps {
   players: Player[]
   onEliminate: (player: Player, reason: string) => void
   onRevive: (playerId: string) => void
+  readOnly?: boolean
 }
 
 export const PlayerList = memo(function PlayerList({
   players,
   onEliminate,
   onRevive,
+  readOnly = false,
 }: PlayerListProps) {
   return (
     <div className="rounded-lg bg-gray-800 p-6">
@@ -65,23 +67,25 @@ export const PlayerList = memo(function PlayerList({
                   </span>
                 </div>
               </div>
-              <div className="flex gap-2">
-                {player.alive ? (
-                  <button
-                    onClick={() => onEliminate(player, 'GM loại bỏ')}
-                    className="rounded bg-red-600 px-2 py-1 text-xs font-medium hover:bg-red-700"
-                  >
-                    Loại bỏ
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => onRevive(player.id)}
-                    className="rounded bg-green-600 px-2 py-1 text-xs font-medium hover:bg-green-700"
-                  >
-                    Hồi sinh
-                  </button>
-                )}
-              </div>
+              {!readOnly && (
+                <div className="flex gap-2">
+                  {player.alive ? (
+                    <button
+                      onClick={() => onEliminate(player, 'GM loại bỏ')}
+                      className="rounded bg-red-600 px-2 py-1 text-xs font-medium hover:bg-red-700"
+                    >
+                      Loại bỏ
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onRevive(player.id)}
+                      className="rounded bg-green-600 px-2 py-1 text-xs font-medium hover:bg-green-700"
+                    >
+                      Hồi sinh
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))
         )}

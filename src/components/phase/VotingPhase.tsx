@@ -11,15 +11,7 @@ import CountdownTimer from '../CountdownTimer'
 
 const VotingPhase: React.FC = () => {
   const socket = getSocket()
-  const {
-    playerId,
-    approvedPlayers,
-    roomCode,
-    setApprovedPlayers,
-    setAlive,
-    role,
-    setHunterDeathShooting,
-  } = useRoomStore()
+  const { playerId, approvedPlayers, roomCode } = useRoomStore()
 
   const timer = useTimer()
 
@@ -44,67 +36,6 @@ const VotingPhase: React.FC = () => {
       toast.info('Hết thời gian! Tự động bỏ phiếu trắng.')
     }
   }, [timer.isExpired, timer.timerContext, roomCode, socket])
-
-  // Refs to avoid stale closures in socket listeners
-  const approvedPlayersRef = useRef(approvedPlayers)
-  const playerIdRef = useRef(playerId)
-  const roleRef = useRef(role)
-  useEffect(() => {
-    approvedPlayersRef.current = approvedPlayers
-  }, [approvedPlayers])
-  useEffect(() => {
-    playerIdRef.current = playerId
-  }, [playerId])
-  useEffect(() => {
-    roleRef.current = role
-  }, [role])
-
-  useEffect(() => {
-    const handleVotingResult = (data: {
-      eliminatedPlayerId: string | null
-      cause: 'vote' | 'hunter' | 'tie' | 'no_votes'
-      tiedPlayerIds?: string[]
-    }) => {
-      // Tie or no votes — no one is eliminated
-      if (!data.eliminatedPlayerId) {
-        toast.info(
-          data.cause === 'tie'
-            ? 'Hòa phiếu! Không ai bị loại.'
-            : 'Không ai bỏ phiếu. Không ai bị loại.',
-        )
-        return
-      }
-
-      const newApprovedPlayers = approvedPlayersRef.current.map((player) =>
-        player.id === data.eliminatedPlayerId
-          ? { ...player, alive: false }
-          : player,
-      )
-      setApprovedPlayers(newApprovedPlayers)
-
-      if (data.eliminatedPlayerId === playerIdRef.current) {
-        setAlive(false)
-        // Check if the eliminated player is a hunter
-        const eliminatedPlayer = approvedPlayersRef.current.find(
-          (p) => p.id === data.eliminatedPlayerId,
-        )
-        if (
-          eliminatedPlayer?.role === 'hunter' &&
-          data.eliminatedPlayerId === playerIdRef.current
-        ) {
-          setHunterDeathShooting(true)
-        }
-      }
-    }
-
-    socket.on('votingResult', handleVotingResult)
-
-    return () => {
-      socket.off('votingResult', handleVotingResult)
-    }
-    // setApprovedPlayers, setAlive, setHunterDeathShooting are stable - omit to prevent unnecessary re-registrations
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket])
 
   const handleVote = async () => {
     socket.emit('voting:done', {

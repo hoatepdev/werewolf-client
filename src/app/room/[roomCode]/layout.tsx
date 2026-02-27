@@ -183,7 +183,7 @@ export default function RoomLayout({
           </div>
         }
       />
-      <div className="flex h-[calc(100vh-80px)] w-full flex-1 flex-col items-center">
+      <div className="relative flex h-[calc(100vh-80px)] w-full flex-1 flex-col items-center overflow-hidden">
         {children}
       </div>
     </MainLayout>

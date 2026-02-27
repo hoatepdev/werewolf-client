@@ -25,6 +25,9 @@ export function useSocketConnection(
   const { phase, setPhase } = useRoomStore()
 
   const [nightActions, setNightActions] = useState<NightActionData[]>([])
+  const [winner, setWinner] = useState<
+    'villagers' | 'werewolves' | 'tanner' | null
+  >(null)
 
   useEffect(() => {
     socket.emit('rq_gm:connectGmRoom', { roomCode, gmRoomId: roomCode })
@@ -66,7 +69,15 @@ export function useSocketConnection(
           message: data.message,
         })
       },
-      'gm:gameEnded': (data: { type: 'gameEnded'; message: string }) => {
+      'gm:gameEnded': (
+        data: {
+          type: 'gameEnded'
+          message: string
+          winner: 'villagers' | 'werewolves' | 'tanner'
+        },
+      ) => {
+        setPhase('ended')
+        setWinner(data.winner)
         addToQueue({
           type: data.type,
           message: data.message,
@@ -133,6 +144,7 @@ export function useSocketConnection(
     players,
     gameStats,
     nightActions,
+    winner,
     handleNextPhase,
     handleEliminatePlayer,
     handleRevivePlayer,

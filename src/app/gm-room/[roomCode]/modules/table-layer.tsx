@@ -73,7 +73,13 @@ export function TableLayer({
           🎮 Điều khiển game
         </h2>
         <div className="flex items-center gap-4">
-          <HoldToConfirmButton onConfirm={onNextPhase} />
+          {phase === 'ended' ? (
+            <span className="rounded bg-gray-600 px-4 py-2 text-sm font-medium">
+              Game đã kết thúc
+            </span>
+          ) : (
+            <HoldToConfirmButton onConfirm={onNextPhase} />
+          )}
           <Button onClick={onRefresh}>Làm mới danh sách</Button>
         </div>
         <div className="mt-4 flex items-center gap-2">

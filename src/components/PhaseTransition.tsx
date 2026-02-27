@@ -11,14 +11,14 @@ const PhaseTransition: React.FC<PhaseTransitionProps> = ({
   phase,
   children,
 }) => (
-  <AnimatePresence mode="wait">
+  <AnimatePresence mode="sync">
     <motion.div
       key={phase}
       variants={phaseVariants}
       initial="initial"
       animate="animate"
       exit="exit"
-      className="flex h-full w-full flex-1 flex-col"
+      className="absolute inset-0 flex h-full w-full flex-1 flex-col"
     >
       {children}
     </motion.div>
