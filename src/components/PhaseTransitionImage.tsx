@@ -35,14 +35,13 @@ const PhaseTransitionImage = ({
             scale: 1.05,
             transition: { duration: 0.5, ease: [0.2, 0.8, 0.2, 1] },
           }}
-          className={`absolute inset-0 z-10 flex h-screen w-full flex-1 items-center justify-center rounded-lg ${bgColor} object-cover select-none`}
+          className={`fixed inset-0 z-50 flex h-screen w-full items-center justify-center ${bgColor} select-none`}
         >
           <Image
             src={image}
             alt={image}
-            className="h-auto w-full object-cover"
-            width={1000}
-            height={1000}
+            className="h-full w-full object-cover"
+            fill
             priority
           />
         </motion.div>

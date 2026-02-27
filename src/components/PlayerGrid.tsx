@@ -15,6 +15,7 @@ interface PlayerGridProps {
   selectedId?: string
   onSelect?: (player: Player | null) => void
   selectableList?: { id: string; username: string }[]
+  disabled?: boolean
 }
 
 export function PlayerGrid({
@@ -24,6 +25,7 @@ export function PlayerGrid({
   selectedId,
   onSelect,
   selectableList,
+  disabled = false,
 }: PlayerGridProps) {
   const maxPlayers = 9
   const emptySlots = maxPlayers - players.length
@@ -35,9 +37,9 @@ export function PlayerGrid({
   const listPlayer = useMemo(() => {
     return players.map((p) => ({
       ...p,
-      isSelectable: selectableList?.some((sp) => sp.id === p.id && p.alive),
+      isSelectable: !disabled && selectableList?.some((sp) => sp.id === p.id && p.alive),
     }))
-  }, [players, selectableList])
+  }, [players, selectableList, disabled])
 
   return (
     <div className="grid w-full max-w-sm grid-cols-3 gap-3">
@@ -115,7 +117,7 @@ export function PlayerGrid({
               ?
             </div>
             <div className="text-center">
-              <div className="text-sm text-zinc-500">Empty</div>
+              <div className="text-sm text-zinc-500">Trống</div>
             </div>
           </CardContent>
         </Card>

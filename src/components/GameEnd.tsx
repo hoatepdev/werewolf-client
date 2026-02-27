@@ -56,7 +56,7 @@ const GameEnd: React.FC<GameEndProps> = ({
           ))}
         </ul>
       </div>
-      <div className="mt-4 flex w-full gap-2">
+      <div className="mt-4 flex w-full gap-4">
         <button
           className="flex-1 rounded-xl bg-zinc-700 py-2 text-white"
           onClick={onReturn}

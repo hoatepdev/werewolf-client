@@ -14,8 +14,8 @@ interface CountdownTimerProps {
 
 const CountdownTimer: React.FC<CountdownTimerProps> = ({
   countdown,
-  size = 64,
-  showLabel = true,
+  size = 48,
+  showLabel = false,
 }) => {
   const { secondsLeft, progress, isActive, isExpired } = countdown
 
@@ -41,9 +41,7 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
         style={{ width: size, height: size }}
         animate={isUrgent && isActive ? { scale: [1, 1.05, 1] } : {}}
         transition={
-          isUrgent
-            ? { repeat: Infinity, duration: 0.8, ease: 'easeInOut' }
-            : {}
+          isUrgent ? { repeat: Infinity, duration: 0.8, ease: 'easeInOut' } : {}
         }
       >
         <svg width={size} height={size} className="-rotate-90">

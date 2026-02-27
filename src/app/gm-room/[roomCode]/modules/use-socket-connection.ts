@@ -52,10 +52,13 @@ export function useSocketConnection(
       },
       'gm:nightAction': (nightAction: NightActionData) => {
         setNightActions((prev) => [...prev, nightAction])
-        addToQueue({
-          type: 'nightAction',
-          message: nightAction.message,
-        })
+        // Don't add timeout messages to audio queue - they reveal role info
+        if (nightAction.action !== 'timeout') {
+          addToQueue({
+            type: 'nightAction',
+            message: nightAction.message,
+          })
+        }
       },
       'gm:votingAction': (data: { type: 'votingAction'; message: string }) => {
         addToQueue({

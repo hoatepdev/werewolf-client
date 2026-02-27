@@ -24,7 +24,7 @@ import MainLayout from '@/components/MainLayout'
 
 const initialApproved: Player[] = []
 const initialPending: Player[] = []
-const MIN_PLAYER = 1
+const MIN_PLAYER = 4
 
 export default function ApprovePlayerPage({
   params,

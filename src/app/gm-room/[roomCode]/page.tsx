@@ -9,6 +9,7 @@ import { useAudioQueue } from './modules/use-audio-queue'
 import { useSocketConnection } from './modules/use-socket-connection'
 import { TableLayer } from './modules/table-layer'
 import { PrivateOverlay } from './modules/private-overlay'
+import { confirmDialog } from '@/components/ui/alert-dialog'
 import type { GmLogEntry } from './modules/types'
 
 const GmRoomPage = () => {
@@ -80,11 +81,23 @@ const GmRoomPage = () => {
 
   const togglePrivateMode = () => setIsPrivateMode((prev) => !prev)
 
+  const handleLeaveRoom = async () => {
+    const confirmed = await confirmDialog({
+      title: 'Rời phòng',
+      description: 'Bạn có chắc chắn muốn rời phòng?',
+      confirmText: 'Rời đi',
+      cancelText: 'Hủy',
+    })
+    if (!confirmed) return
+
+    router.push('/create-room')
+  }
+
   return (
     <MainLayout maxWidth="max-w-6xl">
       <PageHeader
         title={roomCode}
-        onBack={() => router.push('/create-room')}
+        onBack={handleLeaveRoom}
         right={
           <div className="flex items-center gap-2">
             <div

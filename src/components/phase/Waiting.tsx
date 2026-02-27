@@ -12,7 +12,7 @@ const Waiting = () => {
     >
       <Image
         src="/images/logo/logo.png"
-        alt="Waiting"
+        alt="Đang chờ"
         width={200}
         height={200}
       />

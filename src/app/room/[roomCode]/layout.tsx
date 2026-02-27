@@ -54,10 +54,10 @@ export default function RoomLayout({
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
-      title: 'Leave Room',
-      description: 'Are you sure you want to leave the room?',
-      confirmText: 'Leave',
-      cancelText: 'Cancel',
+      title: 'Rời phòng',
+      description: 'Bạn có chắc chắn muốn rời phòng?',
+      confirmText: 'Rời đi',
+      cancelText: 'Hủy',
     })
     if (!confirmed) return
 
@@ -100,7 +100,7 @@ export default function RoomLayout({
                   <button
                     type="button"
                     className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700 font-bold"
-                    aria-label="User info"
+                    aria-label="Thông tin người dùng"
                   >
                     <span className="text-2xl">
                       {renderAvatar({ username, avatarKey })}
@@ -108,17 +108,17 @@ export default function RoomLayout({
                   </button>
                 </DialogTrigger>
                 <DialogContent className="w-[320px] p-5">
-                  <DialogTitle className="sr-only">User info</DialogTitle>
+                  <DialogTitle className="sr-only">Thông tin người dùng</DialogTitle>
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-700 text-2xl font-bold">
                       {renderAvatar({ username, avatarKey })}
                     </div>
                     <div className="min-w-0">
                       <div className="truncate text-base font-semibold">
-                        {username || 'Player'}
+                        {username || 'Người chơi'}
                       </div>
                       <div className="text-xs text-zinc-400">
-                        Room: {roomCode}
+                        Phòng: {roomCode}
                       </div>
                     </div>
                   </div>
@@ -130,17 +130,17 @@ export default function RoomLayout({
                       </div>
                     </div>
                     <div className="rounded-md bg-zinc-800 p-2">
-                      <div className="text-zinc-400">Role</div>
+                      <div className="text-zinc-400">Vai trò</div>
                       <div className="text-white">{role || '—'}</div>
                     </div>
                     <div className="rounded-md bg-zinc-800 p-2">
-                      <div className="text-zinc-400">Phase</div>
+                      <div className="text-zinc-400">Giai đoạn</div>
                       <div className="text-white">{phase}</div>
                     </div>
                     <div className="rounded-md bg-zinc-800 p-2">
-                      <div className="text-zinc-400">Alive</div>
+                      <div className="text-zinc-400">Còn sống</div>
                       <div className="text-white">
-                        {alive === null ? '—' : alive ? 'Yes' : 'No'}
+                        {alive === null ? '—' : alive ? 'Có' : 'Không'}
                       </div>
                     </div>
                   </div>
@@ -151,11 +151,11 @@ export default function RoomLayout({
                         onValueChange={setSelectedUser}
                       >
                         <SelectTrigger className="w-[180px] text-sm font-bold text-white">
-                          <SelectValue placeholder="Select a player" />
+                          <SelectValue placeholder="Chọn người chơi" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectLabel>Players</SelectLabel>
+                            <SelectLabel>Người chơi</SelectLabel>
                             {players.map((player) => (
                               <SelectItem
                                 key={player.id}
@@ -173,7 +173,7 @@ export default function RoomLayout({
                         disabled={!selectedUser}
                         onClick={seedMockGame}
                       >
-                        Mock
+                        Giả lập
                       </button>
                     </div>
                   </div>

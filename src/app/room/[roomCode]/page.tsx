@@ -14,10 +14,11 @@ import Waiting from '@/components/phase/Waiting'
 import HunterDeathShoot from '@/components/actions/HunterDeathShoot'
 import { TimerProvider } from '@/hook/useTimerContext'
 import { playSound, triggerHaptic, initAudio } from '@/lib/audio'
+import { useRouter } from 'next/navigation'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
-
+  const router = useRouter()
   const { roomCode } = React.use(params)
 
   const [nightResult, setNightResult] = useState<NightResult | null>(null)
@@ -125,6 +126,11 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         // Update approvedPlayers with final player states
         if (players) {
           setApprovedPlayers(players)
+          // Update own alive status from final game state
+          const me = players.find((p) => p.id === playerIdRef.current)
+          if (me && !me.alive) {
+            setAlive(false)
+          }
         }
         setGameWinner(winner)
         setShowReveal(true)
@@ -145,9 +151,8 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     if (hunterDeathShooting && role === 'hunter') {
       return <HunterDeathShoot roomCode={roomCode} />
     }
-    if (!alive) return <Waiting />
 
-    // Winner reveal animation first
+    // Game end screens should render for ALL players (alive or dead)
     if (gameWinner && showReveal) {
       return (
         <WinnerReveal
@@ -163,10 +168,22 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         <GameEnd
           winningTeam={gameWinner}
           players={approvedPlayers}
-          onReturn={() => (window.location.href = '/')}
-          onPlayAgain={() => window.location.reload()}
+          onReturn={() => router.push('/')}
+          onPlayAgain={() => router.push(`join-room/${roomCode}`)}
         />
       )
+    }
+
+    // Dead players can still see day results and conclude, but not act during night/voting
+    if (!alive) {
+      switch (phase) {
+        case 'day':
+          return <DayPhase nightResult={nightResult} />
+        case 'conclude':
+          return <DayPhase nightResult={nightResult} />
+        default:
+          return <Waiting />
+      }
     }
 
     switch (phase) {

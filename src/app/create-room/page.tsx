@@ -80,7 +80,7 @@ const CreateRoomPage = () => {
           </span>
           <button
             className="ml-2 text-xl text-yellow-400 hover:text-yellow-500"
-            aria-label="Copy room code"
+            aria-label="Sao chép mã phòng"
           >
             <Clipboard
               className="h-6 w-6 cursor-pointer"

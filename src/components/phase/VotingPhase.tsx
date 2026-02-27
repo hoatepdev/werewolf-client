@@ -144,6 +144,7 @@ const VotingPhase: React.FC = () => {
             selectedId={selectedTarget?.id}
             onSelect={(player) => setSelectedTarget(player)}
             selectableList={approvedPlayers.filter((p) => p.alive)}
+            disabled={hasVoted}
           />
         </div>
 

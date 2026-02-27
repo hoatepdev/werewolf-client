@@ -46,7 +46,7 @@ export const MockPlayersComponent = ({
         <button
           type="button"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700 font-bold"
-          aria-label="User info"
+          aria-label="Thông tin người dùng"
         >
           <span className="text-2xl">
             {renderAvatar({ username: 'GM', avatarKey: 1 })}
@@ -54,20 +54,20 @@ export const MockPlayersComponent = ({
         </button>
       </DialogTrigger>
       <DialogContent className="w-[320px] p-5">
-        <DialogTitle className="sr-only">Mock players</DialogTitle>
+        <DialogTitle className="sr-only">Giả lập người chơi</DialogTitle>
         <div className="mt-4 space-y-3">
           <div className="flex items-center gap-2">
             <Input
               type="text"
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value)}
-              placeholder="Room code"
+              placeholder="Mã phòng"
             />
             <button
               className="rounded-md bg-zinc-800 px-4 py-2 text-sm font-bold text-white"
               onClick={handleMockPlayers}
             >
-              Mock
+              Giả lập
             </button>
           </div>
         </div>
