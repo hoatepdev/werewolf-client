@@ -114,10 +114,22 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     socket.on('game:hunterShoot', ({ hunterId }: { hunterId: string }) => {
       if (hunterId === playerIdRef.current && roleRef.current === 'hunter') {
         setHunterDeathShooting(true)
-      } else {
-        toast.info('Thợ săn đã bắn!')
       }
+      // No toast here — game:hunterShot (past tense) is emitted after the actual shot
     })
+
+    socket.on(
+      'game:hunterShot',
+      ({ hunterId, targetId }: { hunterId: string; targetId: string }) => {
+        const target = approvedPlayersRef.current.find(
+          (p) => p.id === targetId,
+        )
+        if (hunterId !== playerIdRef.current) {
+          toast.info(`Thợ săn đã bắn ${target?.username ?? 'một người'}!`)
+        }
+        setHunterDeathShooting(false)
+      },
+    )
 
     socket.on(
       'votingResult',
@@ -148,6 +160,8 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
         if (data.eliminatedPlayerId === playerIdRef.current) {
           setAlive(false)
+          playSound('player_die')
+          triggerHaptic([200, 100, 200, 100, 500])
           // Check if the eliminated player is a hunter
           const eliminatedPlayer = approvedPlayersRef.current.find(
             (p) => p.id === data.eliminatedPlayerId,
@@ -158,6 +172,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           ) {
             setHunterDeathShooting(true)
           }
+        } else {
+          playSound('player_die')
+          triggerHaptic(50)
         }
       },
     )
@@ -198,6 +215,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       socket.off('game:phaseChanged')
       socket.off('game:nightResult')
       socket.off('game:hunterShoot')
+      socket.off('game:hunterShot')
       socket.off('votingResult')
       socket.off('game:gameEnded')
     }

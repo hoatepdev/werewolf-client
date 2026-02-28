@@ -69,6 +69,15 @@ export function useSocketConnection(
           message: data.message,
         })
       },
+      'gm:hunterAction': (data: {
+        type: 'hunterDied' | 'hunterShot' | 'hunterSkipped'
+        message: string
+      }) => {
+        addToQueue({
+          type: 'hunterAction',
+          message: data.message,
+        })
+      },
       'gm:gameEnded': (
         data: {
           type: 'gameEnded'

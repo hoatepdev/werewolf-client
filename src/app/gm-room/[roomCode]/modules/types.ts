@@ -10,6 +10,7 @@ export interface AudioEvent {
     | 'nightAction'
     | 'phaseChanged'
     | 'votingAction'
+    | 'hunterAction'
   role?: 'werewolf' | 'seer' | 'witch' | 'bodyguard'
   message: string
   timestamp?: number
