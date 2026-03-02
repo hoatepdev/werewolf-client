@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -9,6 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function Footer() {
+  const router = useRouter()
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalled, setIsInstalled] = useState(false)
@@ -80,10 +82,7 @@ export default function Footer() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            // router.push('/guide')
-            alert('Hướng dẫn sẽ được cập nhật trong thời gian sớm nhất')
-          }}
+          onClick={() => router.push('/guide')}
           className="flex items-center gap-2 text-center text-sm text-zinc-200 transition-colors hover:text-yellow-400"
         >
           <span className="text-xl">📖</span>
@@ -106,9 +105,9 @@ export default function Footer() {
         <br />
         Powered by:{' '}
         <a
-          href="https://www.p.hoatepdev.site"
+          href="https://p.hoatepdev.site/"
           target="_blank"
-          className="text-yellow-400"
+          className="text-yellow-400 hover:text-yellow-500 transition-colors"
         >
           hoatepdev
         </a>

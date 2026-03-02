@@ -113,7 +113,7 @@ export function PWAInstallPrompt() {
         <div className="mb-6 flex items-start gap-4">
           <div className="min-w-0 flex-1">
             <h3 className="mb-2 text-lg font-bold text-white">
-              Cài đặt 5Star Werewolf Offline
+              Cài đặt Lunar Verdict Offline
             </h3>
             <p className="text-sm leading-relaxed text-zinc-300">
               Cài đặt ứng dụng để có trải nghiệm tốt hơn và chơi offline với mọi

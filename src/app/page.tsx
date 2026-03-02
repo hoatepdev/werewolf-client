@@ -41,13 +41,12 @@ export default function Home() {
         <div className="flex flex-col items-center gap-2 text-center text-4xl font-extrabold tracking-tight text-white">
           <Image
             src="/images/logo/logo.png"
-            alt="5Star Werewolf"
+            alt="Lunar Verdict"
             width={80}
             height={80}
           />
           <div>
-            <span className="text-yellow-400">5S</span>tar Were
-            <span className="text-yellow-400">wolf</span>
+            <span className="text-yellow-500">Lunar</span> Verdict
           </div>
         </div>
         <motion.div

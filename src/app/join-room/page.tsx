@@ -93,7 +93,7 @@ export default function JoinRoomPage() {
       html5QrCodeRef.current = qrCode
       qrCode
         .start(
-          { facingMode: 'user' },
+          { facingMode: 'environment' },
           {
             fps: 10,
             aspectRatio: 1.0,
@@ -158,7 +158,6 @@ export default function JoinRoomPage() {
           setPlayerId(response.playerId)
           setRoomCodeStore(roomCode)
           toast.success('Đã gửi yêu cầu! Đang chờ duyệt...')
-          setLoading(false)
         } else {
           setLoading(false)
           toast.error(response.message || 'Không thể tham gia phòng')

@@ -152,3 +152,25 @@
   background: oklch(60% 0.25 65); /* cam đậm */
   color: white;
 }
+/* Scrollbar width */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Track (background) */
+::-webkit-scrollbar-track {
+  background: #111;
+}
+
+/* Thumb (cục kéo) */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #444, #222);
+  border-radius: 10px;
+  border: 2px solid #111;
+}
+
+/* Hover effect */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #fde68a, #facc15);
+  opacity: 0.85;
+}

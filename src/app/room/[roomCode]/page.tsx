@@ -71,6 +71,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     // Ensure audio constraints are initialized
     initAudio()
 
+    socket.on('night:action-timeout', () => {
+      setNightPrompt(null)
+    })
+
     socket.on('game:phaseChanged', (newPhase: { phase: string }) => {
       setPhase(
         newPhase.phase as 'night' | 'day' | 'voting' | 'conclude' | 'ended',
@@ -212,6 +216,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
     return () => {
       socket.off('connect', handleReconnect)
+      socket.off('night:action-timeout')
       socket.off('game:phaseChanged')
       socket.off('game:nightResult')
       socket.off('game:hunterShoot')

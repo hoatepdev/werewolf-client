@@ -1,16 +1,17 @@
 # Masoi Client
 
-A modern, responsive web PWA client for the 5Star Werewolf (Ma Sói) game, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
+A modern, responsive web PWA client for the Lunar Verdict (Ma Sói) game, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
 
 ## Features
 
-- Join or create game rooms for 5Star Werewolf
+- Join or create game rooms for Lunar Verdict
 - Real-time gameplay via WebSocket (Socket.IO)
 - Avatar selection and player management
 - Progressive Web App (PWA) with offline support
 - Modern UI/UX with Tailwind CSS and Radix UI
 - Vietnamese language support
 - Persisted game state with Zustand
+- Reconnect support via persistent player ID
 
 ## Environment Variables
 
@@ -25,41 +26,104 @@ NEXT_PUBLIC_SOCKET_URL=http://localhost:4001
 ## Architecture
 
 ### State Management (Zustand)
-- `src/hook/useRoomStore.ts` — Persisted store holding:
-  - `roomCode`, `playerId`, `role`
-  - `phase`, `players`, `isAlive`
-  - GM-specific state
+
+Two stores are used:
+
+#### `useRoomStore` (`src/hook/useRoomStore.ts`) — Persisted to `localStorage`
+
+Holds all game state for the current player:
+
+| Field | Type | Persisted | Description |
+|-------|------|-----------|-------------|
+| `roomCode` | `string` | ✅ | Current room code |
+| `playerId` | `string` | ✅ | Current socket ID |
+| `persistentPlayerId` | `string` | ✅ | UUID across reconnects |
+| `role` | `Role \| null` | ✅ | Assigned role |
+| `phase` | `Phase` | ✅ | Current game phase |
+| `username` | `string` | ✅ | Player display name |
+| `avatarKey` | `number` | ✅ | Avatar index |
+| `approvedPlayers` | `Player[]` | ✅ | All players in room |
+| `alive` | `boolean \| null` | ✅ | Player alive status |
+| `rehydrated` | `boolean` | ❌ | `localStorage` load complete flag |
+| `socket` | `Socket \| null` | ❌ | Socket.IO instance |
+| `nightPrompt` | `NightPrompt \| null` | ❌ | Current night action prompt |
+| `nightResult` | `NightResult \| null` | ❌ | Night resolution result |
+| `hunterDeathShooting` | `boolean` | ❌ | Hunter targeting after death |
+
+#### `useGameStore` (`src/store/game/gameStore.ts`) — Non-persisted
+
+Client-only UI phase state:
+
+| Field | Description |
+|-------|-------------|
+| `currentPhase` | `'IDLE' \| 'day' \| 'night' \| 'voting' \| 'conclude' \| 'ended'` |
+| `isTransitioning` | Animation transition in progress |
+| `setPhase()` | Debounced 100ms to prevent race conditions |
+| `startDay()`, `startNight()`, `startVoting()` | Shortcut setters |
+
+`'IDLE'` is a client-only initial state before the game starts, does not exist on the server.
 
 ### Socket.IO Integration
-- `src/lib/socket.ts` — Singleton Socket.IO client
-- Auto-reconnect on connection loss
-- Event listeners for real-time game updates
+
+- `src/lib/socket.ts` — Singleton Socket.IO client, `autoConnect: false`
+- Connects manually when entering a room
+- Reconnect via `rq_player:rejoinRoom` using `persistentPlayerId`
 
 ### Component Structure
+
 ```
 src/components/
-├── ui/              # Base components (shadcn/ui pattern)
-├── actions/         # Role-specific action components
-├── phase/           # Phase-specific UI components
-└── game/            # Game-related shared components
+├── ui/              # Base components (shadcn/ui pattern: Radix UI + cn())
+├── actions/         # Role-specific night action components
+├── phase/           # Phase-specific UI (Night, Day, Voting, results)
+└── game/            # Shared game components
 ```
 
 ### Socket Events (Client → Server)
-- `rq_gm:createRoom` — Create new game room
-- `rq_gm:joinRoom` — GM joins room
-- `rq_player:joinRoom` — Player joins room
-- `rq_player:ready` — Player marks ready
-- `night:werewolf-action:done` — Werewolf target selection
-- `night:seer-action:done` — Seer investigation
-- `night:witch-action:done` — Witch heal/poison
-- `game:vote` — Day voting
+
+| Event | Description |
+|-------|-------------|
+| `rq_gm:createRoom` | Create new game room |
+| `rq_gm:connectGmRoom` | GM connects to private GM room for notifications |
+| `rq_gm:approvePlayer` | Approve waiting player |
+| `rq_gm:rejectPlayer` | Reject waiting player |
+| `rq_gm:getPlayers` | Fetch current player list |
+| `rq_gm:randomizeRole` | Randomize and assign roles |
+| `rq_player:joinRoom` | Player joins by room code |
+| `rq_player:rejoinRoom` | Reconnect using persistentPlayerId |
+| `rq_player:ready` | Toggle ready status |
+| `rq_player:updateInfo` | Update name/avatar |
+| `game:vote` | Cast vote during voting phase |
+| `night:werewolf-action:done` | Werewolf target selection |
+| `night:seer-action:done` | Seer investigation result |
+| `night:witch-action:done` | Witch heal/poison choice |
+| `night:bodyguard-action:done` | Bodyguard protection target |
 
 ### Socket Events (Server → Client)
-- `game:stateUpdated` — Game state change
-- `game:phaseChanged` — Phase transition
-- `game:playerJoined` — New player joined
-- `game:playerLeft` — Player disconnected
-- `game:roleRevealed` — Role assignment (night only)
+
+| Event | Description |
+|-------|-------------|
+| `room:updatePlayers` | Player list updated |
+| `room:playerDisconnected` | A player lost connection |
+| `player:approved` | This player was approved by GM |
+| `player:rejected` | This player was rejected by GM |
+| `player:rejoined` | Reconnect successful (new socket ID) |
+| `game:phaseChanged` | Phase transition (`phase: string`) |
+| `game:nightResult` | Night resolution (`diedPlayerIds`, `deaths`) |
+| `game:hunterShoot` | Hunter must choose a target |
+| `game:hunterShot` | Hunter fired (target announced) |
+| `game:gameEnded` | Game over (`winner`, `players`, `gameLog`) |
+| `game:timerStart` | Countdown started (`context`, `durationMs`, `deadline`) |
+| `game:timerStop` | Countdown stopped |
+| `game:timerSync` | Timer sync on reconnect |
+| `night:seer-result` | Seer result — private, only to seer socket |
+| `night:action-timeout` | Player timed out on night action |
+| `votingResult` | Voting resolved (`eliminatedPlayerId`, `cause`) |
+| `gm:nightAction` | GM-only: night step updates |
+| `gm:votingAction` | GM-only: voting updates |
+| `gm:gameEnded` | GM-only: game ended summary |
+| `gm:hunterAction` | GM-only: hunter triggered |
+| `gm:connected` | GM successfully joined GM room |
 
 ## Project Structure
 
@@ -68,7 +132,12 @@ src/components/
   - `layout.tsx` - App layout
   - `create-room/`, `join-room/`, `approve-room/`, `gm-room/`, `lobby/`, `room/` - Game flows
 - `src/components/` - Reusable UI components
-- `src/lib/`, `src/hook/`, `src/types/`, `src/constants/`, `src/helpers/` - Utilities and logic
+- `src/lib/` - Socket.IO singleton
+- `src/hook/` - Zustand stores
+- `src/store/game/` - Non-persisted game UI store
+- `src/types/` - TypeScript types
+- `src/constants/` - Role definitions, constants
+- `src/helpers/` - Utility functions
 - `public/` - Static assets (images, icons)
 
 ## Getting Started
@@ -83,11 +152,9 @@ npm install
 
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:4000](http://localhost:4000) in your browser.
 
 ### Build for production
 
@@ -107,6 +174,7 @@ npm start
 ## PWA Configuration
 
 Service worker is configured via `next-pwa` in `next.config.js`. For production:
+
 - Service worker is automatically generated during build
 - Caches static assets for offline access
 - Requires HTTPS (or localhost) to work properly
@@ -124,15 +192,19 @@ Service worker is configured via `next-pwa` in `next.config.js`. For production:
 ## Troubleshooting
 
 ### Socket connection issues
+
 - Verify `NEXT_PUBLIC_SOCKET_URL` is correct
 - Check that server is running on expected port
 - Browser console will show connection errors
 
 ### State persistence issues
+
 - Zustand state is persisted in localStorage
 - Clear browser data to reset stored state
+- `rehydrated` flag gates rendering until localStorage is loaded
 
 ### PWA not updating
+
 - Service worker may cache old content
 - Use "Update on reload" in DevTools Application tab during development
 

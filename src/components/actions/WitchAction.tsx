@@ -91,16 +91,22 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
           <CountdownTimer countdown={timer} />
         )}
       </div>
-      <div className="w-full">
-        <PlayerGrid
-          players={approvedPlayers}
-          mode="room"
-          currentPlayerId={playerId}
-          selectedId={selectedTarget?.id}
-          onSelect={handleSelectPlayer}
-          selectableList={nightPrompt.candidates}
-        />
-      </div>
+      {nightPrompt.canPoison ? (
+        <div className="w-full">
+          <PlayerGrid
+            players={approvedPlayers}
+            mode="room"
+            currentPlayerId={playerId}
+            selectedId={selectedTarget?.id}
+            onSelect={handleSelectPlayer}
+            selectableList={nightPrompt.candidates}
+          />
+        </div>
+      ) : (
+        <div className="w-full rounded-lg bg-gray-800/50 p-3 text-center text-sm text-gray-500">
+          Bạn đã dùng hết lượt giết
+        </div>
+      )}
       {nightPrompt?.killedPlayerId && (
         <div className="flex w-full items-center justify-between rounded-lg bg-red-900/20 p-3">
           <p className="text-sm text-red-300">
@@ -113,7 +119,7 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
               }
             </span>
           </p>
-          {nightPrompt.canHeal && (
+          {nightPrompt.canHeal ? (
             <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
               <input
                 type="checkbox"
@@ -123,6 +129,8 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
               />
               Cứu
             </label>
+          ) : (
+            <span className="text-sm text-gray-500">Đã dùng hết lượt cứu</span>
           )}
         </div>
       )}
@@ -149,7 +157,7 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
         </Button>
         <Button
           onClick={() => handleAction(false)}
-          disabled={!selectedTarget?.id && !heal}
+          disabled={(!selectedTarget?.id || !nightPrompt.canPoison) && !heal}
           variant="yellow"
           className="w-2/3"
         >
