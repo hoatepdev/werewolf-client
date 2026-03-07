@@ -1,4 +1,4 @@
-# Masoi Client
+# Werewolf Client
 
 A modern, responsive web PWA client for the Lunar Verdict (Ma Sói) game, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
 
@@ -33,33 +33,33 @@ Two stores are used:
 
 Holds all game state for the current player:
 
-| Field | Type | Persisted | Description |
-|-------|------|-----------|-------------|
-| `roomCode` | `string` | ✅ | Current room code |
-| `playerId` | `string` | ✅ | Current socket ID |
-| `persistentPlayerId` | `string` | ✅ | UUID across reconnects |
-| `role` | `Role \| null` | ✅ | Assigned role |
-| `phase` | `Phase` | ✅ | Current game phase |
-| `username` | `string` | ✅ | Player display name |
-| `avatarKey` | `number` | ✅ | Avatar index |
-| `approvedPlayers` | `Player[]` | ✅ | All players in room |
-| `alive` | `boolean \| null` | ✅ | Player alive status |
-| `rehydrated` | `boolean` | ❌ | `localStorage` load complete flag |
-| `socket` | `Socket \| null` | ❌ | Socket.IO instance |
-| `nightPrompt` | `NightPrompt \| null` | ❌ | Current night action prompt |
-| `nightResult` | `NightResult \| null` | ❌ | Night resolution result |
-| `hunterDeathShooting` | `boolean` | ❌ | Hunter targeting after death |
+| Field                 | Type                  | Persisted | Description                       |
+| --------------------- | --------------------- | --------- | --------------------------------- |
+| `roomCode`            | `string`              | ✅        | Current room code                 |
+| `playerId`            | `string`              | ✅        | Current socket ID                 |
+| `persistentPlayerId`  | `string`              | ✅        | UUID across reconnects            |
+| `role`                | `Role \| null`        | ✅        | Assigned role                     |
+| `phase`               | `Phase`               | ✅        | Current game phase                |
+| `username`            | `string`              | ✅        | Player display name               |
+| `avatarKey`           | `number`              | ✅        | Avatar index                      |
+| `approvedPlayers`     | `Player[]`            | ✅        | All players in room               |
+| `alive`               | `boolean \| null`     | ✅        | Player alive status               |
+| `rehydrated`          | `boolean`             | ❌        | `localStorage` load complete flag |
+| `socket`              | `Socket \| null`      | ❌        | Socket.IO instance                |
+| `nightPrompt`         | `NightPrompt \| null` | ❌        | Current night action prompt       |
+| `nightResult`         | `NightResult \| null` | ❌        | Night resolution result           |
+| `hunterDeathShooting` | `boolean`             | ❌        | Hunter targeting after death      |
 
 #### `useGameStore` (`src/store/game/gameStore.ts`) — Non-persisted
 
 Client-only UI phase state:
 
-| Field | Description |
-|-------|-------------|
-| `currentPhase` | `'IDLE' \| 'day' \| 'night' \| 'voting' \| 'conclude' \| 'ended'` |
-| `isTransitioning` | Animation transition in progress |
-| `setPhase()` | Debounced 100ms to prevent race conditions |
-| `startDay()`, `startNight()`, `startVoting()` | Shortcut setters |
+| Field                                         | Description                                                       |
+| --------------------------------------------- | ----------------------------------------------------------------- |
+| `currentPhase`                                | `'IDLE' \| 'day' \| 'night' \| 'voting' \| 'conclude' \| 'ended'` |
+| `isTransitioning`                             | Animation transition in progress                                  |
+| `setPhase()`                                  | Debounced 100ms to prevent race conditions                        |
+| `startDay()`, `startNight()`, `startVoting()` | Shortcut setters                                                  |
 
 `'IDLE'` is a client-only initial state before the game starts, does not exist on the server.
 
@@ -81,49 +81,49 @@ src/components/
 
 ### Socket Events (Client → Server)
 
-| Event | Description |
-|-------|-------------|
-| `rq_gm:createRoom` | Create new game room |
-| `rq_gm:connectGmRoom` | GM connects to private GM room for notifications |
-| `rq_gm:approvePlayer` | Approve waiting player |
-| `rq_gm:rejectPlayer` | Reject waiting player |
-| `rq_gm:getPlayers` | Fetch current player list |
-| `rq_gm:randomizeRole` | Randomize and assign roles |
-| `rq_player:joinRoom` | Player joins by room code |
-| `rq_player:rejoinRoom` | Reconnect using persistentPlayerId |
-| `rq_player:ready` | Toggle ready status |
-| `rq_player:updateInfo` | Update name/avatar |
-| `game:vote` | Cast vote during voting phase |
-| `night:werewolf-action:done` | Werewolf target selection |
-| `night:seer-action:done` | Seer investigation result |
-| `night:witch-action:done` | Witch heal/poison choice |
-| `night:bodyguard-action:done` | Bodyguard protection target |
+| Event                         | Description                                      |
+| ----------------------------- | ------------------------------------------------ |
+| `rq_gm:createRoom`            | Create new game room                             |
+| `rq_gm:connectGmRoom`         | GM connects to private GM room for notifications |
+| `rq_gm:approvePlayer`         | Approve waiting player                           |
+| `rq_gm:rejectPlayer`          | Reject waiting player                            |
+| `rq_gm:getPlayers`            | Fetch current player list                        |
+| `rq_gm:randomizeRole`         | Randomize and assign roles                       |
+| `rq_player:joinRoom`          | Player joins by room code                        |
+| `rq_player:rejoinRoom`        | Reconnect using persistentPlayerId               |
+| `rq_player:ready`             | Toggle ready status                              |
+| `rq_player:updateInfo`        | Update name/avatar                               |
+| `game:vote`                   | Cast vote during voting phase                    |
+| `night:werewolf-action:done`  | Werewolf target selection                        |
+| `night:seer-action:done`      | Seer investigation result                        |
+| `night:witch-action:done`     | Witch heal/poison choice                         |
+| `night:bodyguard-action:done` | Bodyguard protection target                      |
 
 ### Socket Events (Server → Client)
 
-| Event | Description |
-|-------|-------------|
-| `room:updatePlayers` | Player list updated |
-| `room:playerDisconnected` | A player lost connection |
-| `player:approved` | This player was approved by GM |
-| `player:rejected` | This player was rejected by GM |
-| `player:rejoined` | Reconnect successful (new socket ID) |
-| `game:phaseChanged` | Phase transition (`phase: string`) |
-| `game:nightResult` | Night resolution (`diedPlayerIds`, `deaths`) |
-| `game:hunterShoot` | Hunter must choose a target |
-| `game:hunterShot` | Hunter fired (target announced) |
-| `game:gameEnded` | Game over (`winner`, `players`, `gameLog`) |
-| `game:timerStart` | Countdown started (`context`, `durationMs`, `deadline`) |
-| `game:timerStop` | Countdown stopped |
-| `game:timerSync` | Timer sync on reconnect |
-| `night:seer-result` | Seer result — private, only to seer socket |
-| `night:action-timeout` | Player timed out on night action |
-| `votingResult` | Voting resolved (`eliminatedPlayerId`, `cause`) |
-| `gm:nightAction` | GM-only: night step updates |
-| `gm:votingAction` | GM-only: voting updates |
-| `gm:gameEnded` | GM-only: game ended summary |
-| `gm:hunterAction` | GM-only: hunter triggered |
-| `gm:connected` | GM successfully joined GM room |
+| Event                     | Description                                             |
+| ------------------------- | ------------------------------------------------------- |
+| `room:updatePlayers`      | Player list updated                                     |
+| `room:playerDisconnected` | A player lost connection                                |
+| `player:approved`         | This player was approved by GM                          |
+| `player:rejected`         | This player was rejected by GM                          |
+| `player:rejoined`         | Reconnect successful (new socket ID)                    |
+| `game:phaseChanged`       | Phase transition (`phase: string`)                      |
+| `game:nightResult`        | Night resolution (`diedPlayerIds`, `deaths`)            |
+| `game:hunterShoot`        | Hunter must choose a target                             |
+| `game:hunterShot`         | Hunter fired (target announced)                         |
+| `game:gameEnded`          | Game over (`winner`, `players`, `gameLog`)              |
+| `game:timerStart`         | Countdown started (`context`, `durationMs`, `deadline`) |
+| `game:timerStop`          | Countdown stopped                                       |
+| `game:timerSync`          | Timer sync on reconnect                                 |
+| `night:seer-result`       | Seer result — private, only to seer socket              |
+| `night:action-timeout`    | Player timed out on night action                        |
+| `votingResult`            | Voting resolved (`eliminatedPlayerId`, `cause`)         |
+| `gm:nightAction`          | GM-only: night step updates                             |
+| `gm:votingAction`         | GM-only: voting updates                                 |
+| `gm:gameEnded`            | GM-only: game ended summary                             |
+| `gm:hunterAction`         | GM-only: hunter triggered                               |
+| `gm:connected`            | GM successfully joined GM room                          |
 
 ## Project Structure
 
