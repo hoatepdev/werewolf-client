@@ -5,7 +5,7 @@ importScripts(
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js',
 )
 
-const CACHE_NAME = 'masoi-v1'
+const CACHE_NAME = 'werewolf-v1'
 const urlsToCache = [
   '/',
   '/manifest.json',
