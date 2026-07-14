@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, use } from 'react'
+import React, { useCallback, useState, useEffect, use, useMemo } from 'react'
 import { Check, Loader2Icon, ScanQrCode, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -21,6 +21,7 @@ import { renderAvatar } from '@/helpers'
 import { Button } from '@/components/ui/button'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
+import { buildJoinRoomUrl } from '@/lib/room-code'
 
 const initialApproved: Player[] = []
 const initialPending: Player[] = []
@@ -40,17 +41,22 @@ export default function ApprovePlayerPage({
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [textButton, setTextButton] = useState('Phân vai ngẫu nhiên')
+  const [origin, setOrigin] = useState('')
+  const joinRoomUrl = useMemo(
+    () => (roomCode ? buildJoinRoomUrl(roomCode, origin) : ''),
+    [origin, roomCode],
+  )
 
   const { setApprovedPlayers: setApprovedPlayersStore } = useRoomStore()
 
-  const handleStartGameSuccess = () => {
+  const handleStartGameSuccess = useCallback(() => {
     toast.success('Bắt đầu game...')
     setTimeout(() => {
       router.push(`/gm-room/${roomCode}`)
     }, 2000)
-  }
+  }, [roomCode, router])
 
-  const handleDataPlayers = (data: Player[]) => {
+  const handleDataPlayers = useCallback((data: Player[]) => {
     const approvedPlayers: Player[] = []
     const pendingPlayers: Player[] = []
 
@@ -65,9 +71,10 @@ export default function ApprovePlayerPage({
     setPendingPlayers(pendingPlayers)
     setApprovedPlayers(approvedPlayers)
     setApprovedPlayersStore(approvedPlayers)
-  }
+  }, [setApprovedPlayersStore])
 
   useEffect(() => {
+    setOrigin(window.location.origin)
     if (!socket.connected) socket.connect()
 
     socket.emit('rq_gm:getPlayers', { roomCode })
@@ -75,10 +82,10 @@ export default function ApprovePlayerPage({
     socket.on('room:updatePlayers', handleDataPlayers)
     socket.on('room:readySuccess', handleStartGameSuccess)
     return () => {
-      socket.off('room:updatePlayers')
-      socket.off('room:readySuccess')
+      socket.off('room:updatePlayers', handleDataPlayers)
+      socket.off('room:readySuccess', handleStartGameSuccess)
     }
-  }, [roomCode])
+  }, [handleDataPlayers, handleStartGameSuccess, roomCode, socket])
 
   const handleApprove = (player: Player) => {
     setApprovedPlayers((prev) => [...prev, player])
@@ -131,7 +138,7 @@ export default function ApprovePlayerPage({
             <DialogTrigger asChild>
               <button
                 className="text-2xl text-yellow-400 hover:text-yellow-500"
-                aria-label="Quét mã QR"
+                aria-label="Hiển thị mã QR"
               >
                 <ScanQrCode className="h-6 w-6" />
               </button>
@@ -140,14 +147,14 @@ export default function ApprovePlayerPage({
               <DialogHeader>
                 <DialogTitle>Mã QR tham gia game</DialogTitle>
                 <DialogDescription>
-                  Quét mã QR này để tham gia game
+                  Người chơi quét mã này để mở trang tham gia phòng
                 </DialogDescription>
               </DialogHeader>
               <div className="flex flex-col items-center">
                 <div className="mb-4 rounded-xl bg-white p-2">
                   {roomCode ? (
                     <QRCode
-                      value={roomCode}
+                      value={joinRoomUrl}
                       size={180}
                       bgColor="#fff"
                       fgColor="#000"

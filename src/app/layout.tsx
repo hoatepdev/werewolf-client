@@ -90,7 +90,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi" className={`${tiktokSans.variable} antialiased`}>
+    <html
+      lang="vi"
+      className={`${tiktokSans.variable} antialiased`}
+      suppressHydrationWarning
+    >
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />

@@ -4,14 +4,27 @@ import { firebaseConfig } from './firebase-config'
 
 const app = initializeApp(firebaseConfig)
 
-let messaging: Messaging | null = null
+let messagingPromise: Promise<Messaging | null> | null = null
 
-if (typeof window !== 'undefined') {
-  isSupported().then((supported) => {
-    if (supported) {
-      messaging = getMessaging(app)
-    }
-  })
+export function getMessagingInstance() {
+  if (typeof window === 'undefined') {
+    return Promise.resolve(null)
+  }
+
+  if (!messagingPromise) {
+    messagingPromise = isSupported()
+      .then((supported) => {
+        if (!supported) {
+          return null
+        }
+
+        return getMessaging(app)
+      })
+      .catch((error) => {
+        console.error('Firebase messaging is not available:', error)
+        return null
+      })
+  }
+
+  return messagingPromise
 }
-
-export { messaging }

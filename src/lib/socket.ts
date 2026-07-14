@@ -1,17 +1,14 @@
 import { io, Socket } from 'socket.io-client'
-import { useRoomStore } from '@/hook/useRoomStore'
+
+let socketSingleton: Socket | null = null
 
 export function getSocket(): Socket {
-  const store = useRoomStore.getState()
-  let socket = store.socket
-  if (!socket) {
-    socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
+  if (!socketSingleton) {
+    socketSingleton = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
       autoConnect: false,
       transports: ['websocket'],
     })
-    setTimeout(() => {
-      store.setSocket(socket as Socket)
-    }, 0)
   }
-  return socket
+
+  return socketSingleton
 }

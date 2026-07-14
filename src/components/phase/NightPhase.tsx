@@ -4,7 +4,6 @@ import WerewolfAction from '../actions/WerewolfAction'
 import SeerAction from '../actions/SeerAction'
 import WitchAction from '../actions/WitchAction'
 import BodyguardAction from '../actions/BodyguardAction'
-import PhaseTransitionImage from '../PhaseTransitionImage'
 import Waiting from './Waiting'
 import { Player } from '@/types/player'
 
@@ -36,7 +35,6 @@ const NightPhase: React.FC<NightPhaseProps> = ({ roomCode }) => {
 
   return (
     <div className="relative h-full w-full flex-1 overflow-hidden">
-      {/* <PhaseTransitionImage image="/images/phase/night.jpg" bgColor="" /> */}
       {renderRoleAction(role, roomCode)}
     </div>
   )

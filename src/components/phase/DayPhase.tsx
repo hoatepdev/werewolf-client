@@ -1,6 +1,5 @@
 import React from 'react'
 import { NightResult, useRoomStore } from '@/hook/useRoomStore'
-import PhaseTransitionImage from '../PhaseTransitionImage'
 import { PlayerGrid } from '../PlayerGrid'
 
 const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
@@ -10,8 +9,6 @@ const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
 
   return (
     <div className="relative h-full w-full flex-1">
-      {/* <PhaseTransitionImage image="/images/phase/day.jpg" bgColor="#66A3FF" /> */}
-
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
         <div className="text-center">
           <h3 className="text-xl font-bold text-yellow-400">
@@ -23,7 +20,11 @@ const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
         </div>
 
         <div className="w-full">
-          <PlayerGrid players={approvedPlayers} mode="room" currentPlayerId={playerId} />
+          <PlayerGrid
+            players={approvedPlayers}
+            mode="room"
+            currentPlayerId={playerId}
+          />
         </div>
       </div>
 

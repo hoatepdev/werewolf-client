@@ -155,8 +155,8 @@ export function PrivateOverlay({
           {/* Full game log */}
           <GameLog logs={gmLogs} filtered={false} />
 
-          {/* Mock players (dev tool) - hide when game ended */}
-          {!isGameEnded && (
+          {/* Mock players (dev tool) - local development only */}
+          {process.env.NODE_ENV !== 'production' && !isGameEnded && (
             <MockPlayersComponent
               socket={socket}
               forceRender={forceRender}

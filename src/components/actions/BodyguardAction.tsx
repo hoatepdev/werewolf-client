@@ -44,7 +44,7 @@ const BodyguardAction: React.FC<BodyguardActionProps> = ({ roomCode }) => {
     return () => {
       socket.off('night:bodyguard-action', handler)
     }
-  }, [])
+  }, [setNightPrompt, socket])
 
   // Auto-submit when timer expires (server handles actual timeout with default response,
   // we just update UI to disable controls)

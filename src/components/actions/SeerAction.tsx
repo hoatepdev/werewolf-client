@@ -39,7 +39,7 @@ const SeerAction: React.FC<{
     return () => {
       socket.off('night:seer-action', handler)
     }
-  }, [])
+  }, [setNightPrompt, socket])
 
   // Use ref to track selected target for result listener, avoiding re-subscription
   const selectedTargetRef = useRef(selectedTarget)
@@ -63,7 +63,7 @@ const SeerAction: React.FC<{
     return () => {
       socket.off('night:seer-result', handler)
     }
-  }, []) // Empty deps - only subscribe once
+  }, [socket]) // Subscribe once per socket instance
 
   // Auto-submit when timer expires (server handles actual timeout with default response,
   // we just update UI to disable controls)

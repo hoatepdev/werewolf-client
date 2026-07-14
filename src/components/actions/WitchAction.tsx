@@ -39,7 +39,7 @@ const WitchAction: React.FC<WitchActionProps> = ({ roomCode }) => {
     return () => {
       socket.off('night:witch-action', handler)
     }
-  }, [])
+  }, [setNightPrompt, socket])
 
   // Auto-submit when timer expires (server handles actual timeout with default response,
   // we just update UI to disable controls)

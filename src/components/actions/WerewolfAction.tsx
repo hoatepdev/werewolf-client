@@ -39,7 +39,7 @@ const WerewolfAction: React.FC<WerewolfActionProps> = ({ roomCode }) => {
     return () => {
       socket.off('night:werewolf-action', handler)
     }
-  }, [])
+  }, [setNightPrompt, socket])
 
   // Auto-submit when timer expires (server handles actual timeout with default response,
   // we just update UI to disable controls)

@@ -30,7 +30,19 @@ export function useSocketConnection(
   >(null)
 
   useEffect(() => {
-    socket.emit('rq_gm:connectGmRoom', { roomCode, gmRoomId: roomCode })
+    const connectGmRoom = () => {
+      socket.emit('rq_gm:connectGmRoom', {
+        roomCode,
+        gmRoomId: `gm:${roomCode}:${socket.id}`,
+      })
+    }
+
+    if (!socket.connected) {
+      socket.connect()
+      socket.once('connect', connectGmRoom)
+    } else {
+      connectGmRoom()
+    }
 
     const handlers = {
       'gm:connected': (data: {
@@ -99,7 +111,10 @@ export function useSocketConnection(
     })
 
     return () => {
-      Object.keys(handlers).forEach((event) => socket.off(event))
+      socket.off('connect', connectGmRoom)
+      Object.entries(handlers).forEach(([event, handler]) => {
+        socket.off(event, handler as (...args: unknown[]) => void)
+      })
     }
   }, [roomCode, socket, setPhase, addToQueue, forceRender])
 

@@ -66,13 +66,17 @@ const GmRoomPage = () => {
           },
         ])
       }
-    socket.on('gm:nightAction', handleLog('night', true))
-    socket.on('gm:votingAction', handleLog('voting', false))
-    socket.on('gm:gameEnded', handleLog('end', false))
+    const handleNightLog = handleLog('night', true)
+    const handleVotingLog = handleLog('voting', false)
+    const handleEndLog = handleLog('end', false)
+
+    socket.on('gm:nightAction', handleNightLog)
+    socket.on('gm:votingAction', handleVotingLog)
+    socket.on('gm:gameEnded', handleEndLog)
     return () => {
-      socket.off('gm:nightAction')
-      socket.off('gm:votingAction')
-      socket.off('gm:gameEnded')
+      socket.off('gm:nightAction', handleNightLog)
+      socket.off('gm:votingAction', handleVotingLog)
+      socket.off('gm:gameEnded', handleEndLog)
     }
   }, [socket])
 

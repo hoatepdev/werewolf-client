@@ -1,80 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
+import { usePWAInstallPrompt } from '@/hook/usePWAInstallPrompt'
 
 export default function Footer() {
   const router = useRouter()
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null)
-  const [isInstalled, setIsInstalled] = useState(false)
-
-  useEffect(() => {
-    const checkInstallation = () => {
-      const isStandalone = window.matchMedia(
-        '(display-mode: standalone)',
-      ).matches
-      const isInstalled = localStorage.getItem('pwa-installed') === 'true'
-
-      if (isStandalone || isInstalled) {
-        setIsInstalled(true)
-      }
-    }
-
-    const handler = (e: Event) => {
-      e.preventDefault()
-      setDeferredPrompt(e as BeforeInstallPromptEvent)
-    }
-
-    window.addEventListener('beforeinstallprompt', handler)
-    checkInstallation()
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler)
-    }
-  }, [])
-
-  const handleInstall = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
-
-      if (outcome === 'accepted') {
-        setIsInstalled(true)
-        localStorage.setItem('pwa-installed', 'true')
-      }
-
-      setDeferredPrompt(null)
-    } else {
-      const isMobile =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent,
-        )
-
-      if (isMobile) {
-        const installInstructions = `
-          Để cài đặt ứng dụng:
-          
-          iOS (Safari):
-          1. Nhấn vào biểu tượng chia sẻ (□↑)
-          2. Chọn "Thêm vào Màn hình chính"
-          
-          Android (Chrome):
-          1. Nhấn vào menu (⋮)
-          2. Chọn "Cài đặt ứng dụng"
-        `
-        alert(installInstructions)
-      } else {
-        alert('Trình duyệt của bạn không hỗ trợ cài đặt PWA')
-      }
-    }
-  }
+  const { isInstalled, promptInstall } = usePWAInstallPrompt()
 
   return (
     <footer className="flex w-full flex-col items-center gap-3">
@@ -92,7 +25,7 @@ export default function Footer() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={handleInstall}
+            onClick={promptInstall}
             className="flex items-center gap-2 text-center text-sm text-zinc-200 transition-colors hover:text-yellow-400"
           >
             <span className="text-xl">📱</span>
@@ -107,7 +40,7 @@ export default function Footer() {
         <a
           href="https://p.hoatepdev.site/"
           target="_blank"
-          className="text-yellow-400 hover:text-yellow-500 transition-colors"
+          className="text-yellow-400 transition-colors hover:text-yellow-500"
         >
           hoatepdev
         </a>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import confetti from 'canvas-confetti'
 import { playSound, triggerHaptic } from '@/lib/audio'
 import { useRoomStore } from '@/hook/useRoomStore'
@@ -71,6 +71,46 @@ const WinnerReveal: React.FC<WinnerRevealProps> = ({ winner, onComplete }) => {
   const playerTeam = getPlayerTeam(role)
   const isWinner = playerTeam === winner
 
+  const triggerConfetti = useCallback(() => {
+    // Only show confetti for winning team
+    if (!isWinner) return
+
+    // Multiple confetti bursts for cinematic effect
+    const duration = 3000
+    const end = Date.now() + duration
+
+    const colors = config.confettiColors
+
+    // Initial burst
+    confetti({
+      particleCount: 100,
+      spread: 100,
+      origin: { y: 0.6, x: 0.5 },
+      colors,
+      zIndex: 9999,
+      scalar: 1.5,
+    })
+
+    // Follow-up bursts
+    const interval = setInterval(() => {
+      if (Date.now() > end) {
+        clearInterval(interval)
+        return
+      }
+
+      // Random bursts from different angles
+      confetti({
+        particleCount: 30,
+        angle: Math.random() * 360,
+        spread: 55,
+        origin: { x: Math.random(), y: Math.random() * 0.5 + 0.3 },
+        colors,
+        zIndex: 9999,
+        scalar: 1.2,
+      })
+    }, 200)
+  }, [config.confettiColors, isWinner])
+
   useEffect(() => {
     // Play victory sound
     playSound('victory' as keyof typeof import('@/lib/audio').SOUND_ENABLED)
@@ -116,47 +156,7 @@ const WinnerReveal: React.FC<WinnerRevealProps> = ({ winner, onComplete }) => {
       clearTimeout(timer5)
       clearTimeout(timer6)
     }
-  }, [winner, onComplete])
-
-  const triggerConfetti = () => {
-    // Only show confetti for winning team
-    if (!isWinner) return
-
-    // Multiple confetti bursts for cinematic effect
-    const duration = 3000
-    const end = Date.now() + duration
-
-    const colors = config.confettiColors
-
-    // Initial burst
-    confetti({
-      particleCount: 100,
-      spread: 100,
-      origin: { y: 0.6, x: 0.5 },
-      colors,
-      zIndex: 9999,
-      scalar: 1.5,
-    })
-
-    // Follow-up bursts
-    const interval = setInterval(() => {
-      if (Date.now() > end) {
-        clearInterval(interval)
-        return
-      }
-
-      // Random bursts from different angles
-      confetti({
-        particleCount: 30,
-        angle: Math.random() * 360,
-        spread: 55,
-        origin: { x: Math.random(), y: Math.random() * 0.5 + 0.3 },
-        colors,
-        zIndex: 9999,
-        scalar: 1.2,
-      })
-    }, 200)
-  }
+  }, [winner, onComplete, triggerConfetti])
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center ${config.bgGradient} transition-opacity duration-500 ${

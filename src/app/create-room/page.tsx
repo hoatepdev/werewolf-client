@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { getSocket } from '@/lib/socket'
 import { useRoomStore } from '@/hook/useRoomStore'
 import QRCode from 'react-qr-code'
@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
+import { buildJoinRoomUrl } from '@/lib/room-code'
 
 const CreateRoomPage = () => {
   const socket = getSocket()
@@ -17,9 +18,15 @@ const CreateRoomPage = () => {
 
   const { username, roomCode, avatarKey, setRoomCode, setResetGame } =
     useRoomStore()
+  const [origin, setOrigin] = useState('')
+  const joinRoomUrl = useMemo(
+    () => (roomCode ? buildJoinRoomUrl(roomCode, origin) : ''),
+    [origin, roomCode],
+  )
 
   useEffect(() => {
     setResetGame()
+    setOrigin(window.location.origin)
   }, [setResetGame])
 
   useEffect(() => {
@@ -31,7 +38,7 @@ const CreateRoomPage = () => {
         setRoomCode(data.roomCode)
       },
     )
-  }, [avatarKey, username, socket])
+  }, [avatarKey, username, socket, setRoomCode])
 
   const handleCreateRoom = () => {
     router.push(`/approve-room/${roomCode}`)
@@ -42,17 +49,16 @@ const CreateRoomPage = () => {
       <PageHeader title="Tạo phòng mới" />
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center">
         <h1 className="mb-2 text-center text-3xl font-extrabold text-white">
-          Tham gia game
+          Mời người chơi tham gia
         </h1>
         <p className="mb-6 text-center text-base text-gray-400">
-          Người chơi cần quét mã QR này bằng thiết bị của họ để yêu cầu tham gia
-          game
+          Người chơi quét mã QR này để mở trang tham gia và gửi yêu cầu vào phòng
         </p>
         <div className="mb-20 rounded-2xl border-4 border-yellow-400 bg-white p-2">
           <div className="flex h-48 w-48 items-center justify-center rounded-xl bg-gray-200">
             {roomCode ? (
               <QRCode
-                value={roomCode}
+                value={joinRoomUrl}
                 // size={180}
                 bgColor="#fff"
                 fgColor="#000"
@@ -66,13 +72,12 @@ const CreateRoomPage = () => {
         <div className="mb-2 flex w-full items-center">
           <div className="h-px flex-1 bg-gray-600" />
           <span className="mx-3 text-sm font-semibold tracking-widest text-gray-400">
-            YÊU CẦU THỦ CÔNG
+            MÃ PHÒNG THỦ CÔNG
           </span>
           <div className="h-px flex-1 bg-gray-600" />
         </div>
         <p className="mb-4 text-center text-sm text-gray-400">
-          Người chơi cũng có thể sao chép và dán mã game sau đây vào hộp yêu cầu
-          tham gia game trong ứng dụng của họ
+          Nếu không quét được QR, người chơi có thể nhập mã phòng này trong ứng dụng
         </p>
         <div className="mb-8 flex w-full items-center rounded-xl border-2 border-yellow-400 bg-[#23232a] px-4 py-3">
           <span className="flex-1 truncate font-mono text-lg text-white">
@@ -86,7 +91,7 @@ const CreateRoomPage = () => {
               className="h-6 w-6 cursor-pointer"
               onClick={() => {
                 navigator.clipboard.writeText(roomCode || '')
-                toast.success('Đã sao chép vào clipboard')
+                toast.success('Đã sao chép mã phòng')
               }}
             />
           </button>

@@ -1,6 +1,15 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import { Player } from '@/types/player'
+
+const serverStorage: Storage = {
+  getItem: () => null,
+  setItem: () => undefined,
+  removeItem: () => undefined,
+  clear: () => undefined,
+  key: () => null,
+  length: 0,
+}
 
 export type Phase = 'night' | 'day' | 'voting' | 'conclude' | 'ended'
 
@@ -29,6 +38,7 @@ export type RoomState = {
   roomCode: string
   playerId: string
   persistentPlayerId: string
+  reconnectToken: string
   role: Player['role'] | null
   phase: Phase
   username: string
@@ -48,6 +58,7 @@ export type RoomState = {
   setSocket: (socket: import('socket.io-client').Socket) => void
   setRoomCode: (roomCode: string) => void
   setPlayerId: (playerId: string) => void
+  setReconnectToken: (reconnectToken: string) => void
   setRole: (role: Player['role'] | null) => void
   setPhase: (phase: Phase) => void
   setUsername: (username: string) => void
@@ -71,6 +82,7 @@ export const useRoomStore = create<RoomState>()(
       roomCode: '',
       playerId: '',
       persistentPlayerId: crypto.randomUUID(),
+      reconnectToken: '',
       role: null,
       phase: 'night',
       username: '',
@@ -85,6 +97,7 @@ export const useRoomStore = create<RoomState>()(
       setSocket: (socket) => set({ socket }),
       setRoomCode: (roomCode: string) => set({ roomCode }),
       setPlayerId: (playerId: string) => set({ playerId }),
+      setReconnectToken: (reconnectToken: string) => set({ reconnectToken }),
       setRole: (role: Player['role'] | null) => set({ role }),
       setPhase: (phase: Phase) => set({ phase }),
       setUsername: (username: string) => set({ username }),
@@ -98,6 +111,7 @@ export const useRoomStore = create<RoomState>()(
         set({
           roomCode: '',
           playerId: '',
+          reconnectToken: '',
           role: null,
           phase: 'night',
           approvedPlayers: [],
@@ -116,16 +130,16 @@ export const useRoomStore = create<RoomState>()(
     }),
     {
       name: 'room-store',
+      storage: createJSONStorage(() =>
+        typeof window === 'undefined' ? serverStorage : localStorage,
+      ),
       partialize: (state) => ({
         roomCode: state.roomCode,
         playerId: state.playerId,
         persistentPlayerId: state.persistentPlayerId,
-        role: state.role,
-        phase: state.phase,
+        reconnectToken: state.reconnectToken,
         username: state.username,
         avatarKey: state.avatarKey,
-        approvedPlayers: state.approvedPlayers,
-        alive: state.alive,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -142,6 +156,7 @@ export const getStateRoomStore = () => {
     roomCode,
     playerId,
     persistentPlayerId,
+    reconnectToken,
     role,
     phase,
     username,
@@ -158,6 +173,7 @@ export const getStateRoomStore = () => {
     roomCode,
     playerId,
     persistentPlayerId,
+    reconnectToken,
     role,
     phase,
     username,

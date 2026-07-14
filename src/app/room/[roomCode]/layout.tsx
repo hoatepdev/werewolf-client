@@ -2,7 +2,7 @@
 import { renderAvatar } from '@/helpers'
 import { useRouter } from 'next/navigation'
 import { useRoomStore } from '@/hook/useRoomStore'
-import React, { useState } from 'react'
+import React from 'react'
 import { confirmDialog } from '@/components/ui/alert-dialog'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
@@ -12,18 +12,6 @@ import {
   DialogTrigger,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Player } from '@/types/player'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { getSocket } from '@/lib/socket'
-import { players } from '@/mock/init-player'
 
 export default function RoomLayout({
   children,
@@ -34,7 +22,6 @@ export default function RoomLayout({
 }) {
   const router = useRouter()
   const { roomCode } = React.use(params)
-  const socket = getSocket()
   const {
     username,
     avatarKey,
@@ -42,15 +29,7 @@ export default function RoomLayout({
     role,
     phase,
     alive,
-    setApprovedPlayers,
-    setPlayerId,
-    setRole,
-    setPhase,
-    setAlive,
-    setStateRoomStore,
   } = useRoomStore()
-
-  const [selectedUser, setSelectedUser] = useState('')
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
@@ -62,26 +41,6 @@ export default function RoomLayout({
     if (!confirmed) return
 
     router.push('/join-room')
-  }
-  const seedMockGame = () => {
-    const { id, username, avatarKey, role } =
-      players.find((player) => player.id === selectedUser) || players[0]
-
-    setStateRoomStore({
-      alive: true,
-      approvedPlayers: players,
-      avatarKey: avatarKey,
-      hunterDeathShooting: false,
-      nightPrompt: null,
-      nightResult: null,
-      phase: 'night',
-      playerId: id,
-      rehydrated: true,
-      role: role,
-      roomCode: roomCode,
-      socket: getSocket(),
-      username: username,
-    })
   }
 
   return (
@@ -142,39 +101,6 @@ export default function RoomLayout({
                       <div className="text-white">
                         {alive === null ? '—' : alive ? 'Có' : 'Không'}
                       </div>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={selectedUser}
-                        onValueChange={setSelectedUser}
-                      >
-                        <SelectTrigger className="w-[180px] text-sm font-bold text-white">
-                          <SelectValue placeholder="Chọn người chơi" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Người chơi</SelectLabel>
-                            {players.map((player) => (
-                              <SelectItem
-                                key={player.id}
-                                value={player.id}
-                                className="text-sm font-bold"
-                              >
-                                {player.username}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                      <button
-                        className="rounded-md bg-zinc-800 px-4 py-2 text-sm font-bold text-white"
-                        disabled={!selectedUser}
-                        onClick={seedMockGame}
-                      >
-                        Giả lập
-                      </button>
                     </div>
                   </div>
                 </DialogContent>

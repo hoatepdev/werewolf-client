@@ -35,40 +35,48 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   useEffect(() => {
     if (!socket.connected) socket.connect()
     socket.emit('rq_player:getPlayers', { roomCode })
-    socket.on('room:updatePlayers', (data: Player[]) => {
+
+    const handleUpdatePlayers = (data: Player[]) => {
       const approvedPlayers = data.filter(
         (player) => player.status === 'approved',
       )
       setApprovedPlayers(approvedPlayers)
-    })
-    socket.on('player:assignedRole', ({ role }: { role: Player['role'] }) => {
+    }
+    const handleAssignedRole = ({ role }: { role: Player['role'] }) => {
       setTimeout(() => {
         const roleData = LIST_ROLE.find((r) => r.id === role) || LIST_ROLE[0]
         setAssignedRole(roleData)
         setRole(roleData.id)
         setShowRoleModal(true)
       }, 1000)
-    })
-    socket.on('room:readySuccess', () => {
+    }
+    const handleReadySuccess = () => {
       setShowRoleModal(false)
       toast.success('Bắt đầu game...')
       setTimeout(() => {
         router.push(`/room/${roomCode}`)
       }, 2000)
-    })
-    socket.on(
-      'room:playerDisconnected',
-      ({ username }: { playerId: string; username: string }) => {
-        toast.warning(`${username} đã mất kết nối`)
-      },
-    )
-    return () => {
-      socket.off('room:updatePlayers')
-      socket.off('player:assignedRole')
-      socket.off('room:readySuccess')
-      socket.off('room:playerDisconnected')
     }
-  }, [roomCode, playerId, socket])
+    const handlePlayerDisconnected = ({
+      username,
+    }: {
+      playerId: string
+      username: string
+    }) => {
+      toast.warning(`${username} đã mất kết nối`)
+    }
+
+    socket.on('room:updatePlayers', handleUpdatePlayers)
+    socket.on('player:assignedRole', handleAssignedRole)
+    socket.on('room:readySuccess', handleReadySuccess)
+    socket.on('room:playerDisconnected', handlePlayerDisconnected)
+    return () => {
+      socket.off('room:updatePlayers', handleUpdatePlayers)
+      socket.off('player:assignedRole', handleAssignedRole)
+      socket.off('room:readySuccess', handleReadySuccess)
+      socket.off('room:playerDisconnected', handlePlayerDisconnected)
+    }
+  }, [roomCode, router, setApprovedPlayers, setRole, socket])
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({

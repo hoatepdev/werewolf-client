@@ -6,7 +6,6 @@ import { NightResult, useRoomStore } from '@/hook/useRoomStore'
 import { Player } from '@/types/player'
 import NightPhase from '@/components/phase/NightPhase'
 import DayPhase from '@/components/phase/DayPhase'
-import PhaseTransition from '@/components/PhaseTransition'
 import VotingPhase from '@/components/phase/VotingPhase'
 import GameEnd from '@/components/GameEnd'
 import WinnerReveal from '@/components/WinnerReveal'
@@ -32,8 +31,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const {
     playerId,
     persistentPlayerId,
+    reconnectToken,
     phase,
     setPhase,
+    setRole,
     approvedPlayers,
     setApprovedPlayers,
     setAlive,
@@ -64,9 +65,33 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   useEffect(() => {
     // Reconnect: re-register with server using persistent ID
     const handleReconnect = () => {
-      socket.emit('rq_player:rejoinRoom', { roomCode, persistentPlayerId })
+      if (!reconnectToken) return
+      socket.emit('rq_player:rejoinRoom', {
+        roomCode,
+        persistentPlayerId,
+        reconnectToken,
+      })
     }
+    const handlePlayerRejoined = (data: {
+      role?: Player['role']
+      phase?: 'night' | 'day' | 'voting' | 'conclude' | 'ended' | null
+      players?: Player[]
+      alive?: boolean | null
+    }) => {
+      if (data.role) setRole(data.role)
+      if (data.phase) setPhase(data.phase)
+      if (data.players) {
+        const approved = data.players.filter(
+          (player) => player.status === 'approved',
+        )
+        setApprovedPlayers(approved)
+        approvedPlayersRef.current = approved
+      }
+      if (typeof data.alive === 'boolean') setAlive(data.alive)
+    }
+
     socket.on('connect', handleReconnect)
+    socket.on('player:rejoined', handlePlayerRejoined)
 
     // Ensure audio constraints are initialized
     initAudio()
@@ -125,9 +150,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     socket.on(
       'game:hunterShot',
       ({ hunterId, targetId }: { hunterId: string; targetId: string }) => {
-        const target = approvedPlayersRef.current.find(
-          (p) => p.id === targetId,
-        )
+        const target = approvedPlayersRef.current.find((p) => p.id === targetId)
         if (hunterId !== playerIdRef.current) {
           toast.info(`Thợ săn đã bắn ${target?.username ?? 'một người'}!`)
         }
@@ -216,6 +239,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
     return () => {
       socket.off('connect', handleReconnect)
+      socket.off('player:rejoined', handlePlayerRejoined)
       socket.off('night:action-timeout')
       socket.off('game:phaseChanged')
       socket.off('game:nightResult')
@@ -225,7 +249,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       socket.off('game:gameEnded')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [persistentPlayerId, roomCode])
+  }, [persistentPlayerId, reconnectToken, roomCode])
 
   const renderPhase = () => {
     if (hunterDeathShooting && role === 'hunter') {
@@ -279,12 +303,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     }
   }
 
-  return (
-    <TimerProvider>
-      {/* <PhaseTransition phase={phase}>{renderPhase()}</PhaseTransition> */}
-      {renderPhase()}
-    </TimerProvider>
-  )
+  return <TimerProvider>{renderPhase()}</TimerProvider>
 }
 
 export default RoomPage

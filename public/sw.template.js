@@ -15,12 +15,12 @@ const urlsToCache = [
 ]
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyDZ6OWSedu0jEBY_I5806HSyHskCdneVHo',
-  authDomain: 'masoi-client.firebaseapp.com',
-  projectId: 'masoi-client',
-  storageBucket: 'masoi-client.firebasestorage.app',
-  messagingSenderId: '877786809157',
-  appId: '1:877786809157:web:d69490a8d6543f786ef42c',
+  apiKey: '__FIREBASE_API_KEY__',
+  authDomain: '__FIREBASE_AUTH_DOMAIN__',
+  projectId: '__FIREBASE_PROJECT_ID__',
+  storageBucket: '__FIREBASE_STORAGE_BUCKET__',
+  messagingSenderId: '__FIREBASE_MESSAGING_SENDER_ID__',
+  appId: '__FIREBASE_APP_ID__',
 }
 
 const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean)

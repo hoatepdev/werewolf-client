@@ -3,7 +3,6 @@ import { getSocket } from '@/lib/socket'
 import { useRoomStore } from '@/hook/useRoomStore'
 import { useTimer } from '@/hook/useTimerContext'
 import { toast } from 'sonner'
-import PhaseTransitionImage from '../PhaseTransitionImage'
 import { PlayerGrid } from '../PlayerGrid'
 import { Button } from '../ui/button'
 import { Loader2Icon } from 'lucide-react'
@@ -29,7 +28,11 @@ const VotingPhase: React.FC = () => {
 
   // Auto-submit when timer expires (client-side auto-submit with abstain vote)
   useEffect(() => {
-    if (timer.isExpired && !hasVotedRef.current && timer.timerContext === 'voting') {
+    if (
+      timer.isExpired &&
+      !hasVotedRef.current &&
+      timer.timerContext === 'voting'
+    ) {
       socket.emit('voting:done', { roomCode, targetId: null })
       setHasVoted(true)
       hasVotedRef.current = true
@@ -49,11 +52,6 @@ const VotingPhase: React.FC = () => {
 
   return (
     <div className="relative h-full w-full flex-1">
-      {/* <PhaseTransitionImage
-        image="/images/phase/voting.jpg"
-        bgColor="#2E3A62"
-      /> */}
-
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6">
         <div className="flex items-center gap-4">
           <div className="text-center">
@@ -61,7 +59,8 @@ const VotingPhase: React.FC = () => {
               👥 Giai đoạn bỏ phiếu
             </h3>
             <p className="text-sm text-gray-300">
-              Mời mọi người bỏ phiếu cho người mà bạn cho là người chết trong đêm
+              Hãy bỏ phiếu cho người bạn nghi là Sói để cả làng quyết định loại
+              khỏi ván
             </p>
           </div>
           {timer.isActive && <CountdownTimer countdown={timer} />}
