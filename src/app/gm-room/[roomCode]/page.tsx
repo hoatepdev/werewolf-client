@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { getSocket } from '@/lib/socket'
 import { useParams, useRouter } from 'next/navigation'
@@ -11,6 +11,8 @@ import { TableLayer } from './modules/table-layer'
 import { PrivateOverlay } from './modules/private-overlay'
 import { confirmDialog } from '@/components/ui/alert-dialog'
 import type { GmLogEntry } from './modules/types'
+import { useRoomStore } from '@/hook/useRoomStore'
+import { FCMNotification } from '@/components/FCMNotification'
 
 const GmRoomPage = () => {
   const socket = getSocket()
@@ -21,6 +23,16 @@ const GmRoomPage = () => {
   const [isPrivateMode, setIsPrivateMode] = useState(false)
   const [gmLogs, setGmLogs] = useState<GmLogEntry[]>([])
   const [forceRender, setForceRender] = useState(false)
+  const clearSavedSession = useRoomStore((state) => state.clearSavedSession)
+
+  const handleReconnectFailed = useCallback(() => {
+    clearSavedSession()
+    router.replace('/')
+  }, [clearSavedSession, router])
+
+  const handleSnapshotLogs = useCallback((logs: GmLogEntry[]) => {
+    setGmLogs(logs)
+  }, [])
 
   const {
     isPlayingRef,
@@ -42,6 +54,7 @@ const GmRoomPage = () => {
     handleEliminatePlayer,
     handleRevivePlayer,
     handleGetPlayers,
+    handleResetRoom: resetRoom,
     handleSetMockPlayers,
   } = useSocketConnection(
     roomCode,
@@ -49,6 +62,8 @@ const GmRoomPage = () => {
     addToQueue,
     setCurrentAudio,
     forceRender,
+    handleReconnectFailed,
+    handleSnapshotLogs,
   )
 
   useEffect(() => {
@@ -92,6 +107,23 @@ const GmRoomPage = () => {
 
   const togglePrivateMode = () => setIsPrivateMode((prev) => !prev)
 
+  const handleResetRoom = async () => {
+    const confirmed = await confirmDialog({
+      title: 'Chơi lại phòng này',
+      description:
+        'Reset ván hiện tại và đưa tất cả người chơi về sảnh chờ trong cùng mã phòng?',
+      confirmText: 'Chơi lại',
+      cancelText: 'Hủy',
+    })
+    if (!confirmed) return
+
+    resetRoom(() => {
+      setIsPrivateMode(false)
+      setGmLogs([])
+      router.push(`/approve-room/${roomCode}`)
+    })
+  }
+
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
       title: 'Rời phòng',
@@ -121,6 +153,10 @@ const GmRoomPage = () => {
         }
       />
 
+      <div className="fixed top-20 right-4 z-40 w-72 max-w-[calc(100vw-2rem)]">
+        <FCMNotification roomCode={roomCode} participantKind="gm" />
+      </div>
+
       <TableLayer
         phase={phase}
         onNextPhase={handleNextPhase}
@@ -143,6 +179,7 @@ const GmRoomPage = () => {
             onClose={togglePrivateMode}
             phase={phase}
             onNextPhase={handleNextPhase}
+            onResetRoom={handleResetRoom}
             players={players}
             onEliminate={handleEliminatePlayer}
             onRevive={handleRevivePlayer}

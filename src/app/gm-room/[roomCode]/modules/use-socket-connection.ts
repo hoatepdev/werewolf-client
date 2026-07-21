@@ -3,7 +3,23 @@ import type { Socket } from 'socket.io-client'
 import { toast } from 'sonner'
 import { useRoomStore } from '@/hook/useRoomStore'
 import type { Player, GameStats } from '@/types/player'
-import type { AudioEvent, NightActionData } from './types'
+import type { AudioEvent, GmLogEntry, NightActionData } from './types'
+
+type GmActionLogSnapshotEntry = {
+  type: 'nightAction' | 'votingAction' | 'hunterAction' | 'gameEnded'
+  message: string
+  timestamp: number
+  step?: string
+  action?: string
+  winner?: 'villagers' | 'werewolves' | 'tanner'
+}
+
+type GmStateSnapshot = {
+  phase?: 'night' | 'day' | 'voting' | 'conclude' | 'ended' | null
+  players?: Player[]
+  gmActionLog?: GmActionLogSnapshotEntry[]
+  winner?: 'villagers' | 'werewolves' | 'tanner'
+}
 
 export function useSocketConnection(
   roomCode: string,
@@ -11,6 +27,8 @@ export function useSocketConnection(
   addToQueue: (audioEvent: AudioEvent) => void,
   setCurrentAudio: (audioEvent: AudioEvent | null) => void,
   forceRender: boolean,
+  onReconnectFailed?: (message?: string) => void,
+  onSnapshotLogs?: (logs: GmLogEntry[]) => void,
 ) {
   const [isConnected, setIsConnected] = useState(false)
   const [players, setPlayers] = useState<Player[]>([])
@@ -22,7 +40,13 @@ export function useSocketConnection(
     villagers: 0,
   })
 
-  const { phase, setPhase } = useRoomStore()
+  const {
+    phase,
+    setPhase,
+    gmPersistentId,
+    gmReconnectToken,
+    clearGameRuntimeState,
+  } = useRoomStore()
 
   const [nightActions, setNightActions] = useState<NightActionData[]>([])
   const [winner, setWinner] = useState<
@@ -30,10 +54,46 @@ export function useSocketConnection(
   >(null)
 
   useEffect(() => {
+    const requestGmStateSync = () => {
+      if (!gmPersistentId || !gmReconnectToken) return
+      socket.emit('rq_gm:syncState', {
+        roomCode,
+        gmPersistentId,
+        gmReconnectToken,
+      })
+    }
+
+    let lastSyncAt = 0
+    const requestGmStateSyncThrottled = () => {
+      const now = Date.now()
+      if (now - lastSyncAt < 2000) return
+      lastSyncAt = now
+      requestGmStateSync()
+    }
+
+    const handleVisibilitySync = () => {
+      if (document.visibilityState === 'visible') requestGmStateSyncThrottled()
+    }
+
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'WEREWOLF_NOTIFICATION_CLICK') {
+        requestGmStateSyncThrottled()
+      }
+    }
+
     const connectGmRoom = () => {
+      if (!gmPersistentId || !gmReconnectToken) {
+        const message = 'Không tìm thấy phiên quản trò đã lưu.'
+        toast.error(message)
+        onReconnectFailed?.(message)
+        return
+      }
+
       socket.emit('rq_gm:connectGmRoom', {
         roomCode,
         gmRoomId: `gm:${roomCode}:${socket.id}`,
+        gmPersistentId,
+        gmReconnectToken,
       })
     }
 
@@ -44,6 +104,46 @@ export function useSocketConnection(
       connectGmRoom()
     }
 
+    const applyGmSnapshot = (snapshot: GmStateSnapshot) => {
+      if (snapshot.phase) setPhase(snapshot.phase)
+      if (snapshot.players) {
+        const approvedPlayers = snapshot.players.filter(
+          (player) => player.status === 'approved',
+        )
+        setPlayers(approvedPlayers)
+        updateGameStats(approvedPlayers)
+      }
+      if (snapshot.winner) {
+        setWinner(snapshot.winner)
+      }
+      if (snapshot.gmActionLog) {
+        const logTypeBySnapshotType: Record<GmActionLogSnapshotEntry['type'], string> = {
+          nightAction: 'night',
+          votingAction: 'voting',
+          hunterAction: 'hunter',
+          gameEnded: 'end',
+        }
+        const logs = snapshot.gmActionLog.map((entry) => ({
+          type: logTypeBySnapshotType[entry.type],
+          message: entry.message,
+          data: entry,
+          timestamp: entry.timestamp,
+          sensitive: entry.type === 'nightAction',
+        }))
+        onSnapshotLogs?.(logs)
+        setNightActions(
+          snapshot.gmActionLog
+            .filter((entry) => entry.type === 'nightAction')
+            .map((entry) => ({
+              step: entry.step ?? '',
+              action: entry.action ?? '',
+              message: entry.message,
+              timestamp: entry.timestamp,
+            })),
+        )
+      }
+    }
+
     const handlers = {
       'gm:connected': (data: {
         roomCode: string
@@ -52,7 +152,18 @@ export function useSocketConnection(
       }) => {
         setIsConnected(true)
         toast.success('GM đã kết nối thành công')
+        requestGmStateSync()
       },
+      'gm:connectRoomError': (data: { message?: string }) => {
+        setIsConnected(false)
+        const message =
+          data.message && data.message !== 'Not authorized.'
+            ? data.message
+            : 'Không thể tiếp tục phòng quản trò. Phòng có thể đã hết hạn hoặc phiên không còn hợp lệ.'
+        toast.error(message)
+        onReconnectFailed?.(message)
+      },
+      'gm:stateSnapshot': applyGmSnapshot,
       'game:phaseChanged': (data: {
         phase: 'night' | 'day' | 'voting' | 'ended'
       }) => {
@@ -64,6 +175,14 @@ export function useSocketConnection(
         )
         setPlayers(approvedPlayers)
         updateGameStats(approvedPlayers)
+      },
+      'room:reset': () => {
+        clearGameRuntimeState()
+        setPhase('night')
+        setWinner(null)
+        setNightActions([])
+        setCurrentAudio(null)
+        toast.success('Phòng đã được reset')
       },
       'gm:nightAction': (nightAction: NightActionData) => {
         setNightActions((prev) => [...prev, nightAction])
@@ -90,13 +209,11 @@ export function useSocketConnection(
           message: data.message,
         })
       },
-      'gm:gameEnded': (
-        data: {
-          type: 'gameEnded'
-          message: string
-          winner: 'villagers' | 'werewolves' | 'tanner'
-        },
-      ) => {
+      'gm:gameEnded': (data: {
+        type: 'gameEnded'
+        message: string
+        winner: 'villagers' | 'werewolves' | 'tanner'
+      }) => {
         setPhase('ended')
         setWinner(data.winner)
         addToQueue({
@@ -109,14 +226,35 @@ export function useSocketConnection(
     Object.entries(handlers).forEach(([event, handler]) => {
       socket.on(event, handler as (...args: unknown[]) => void)
     })
+    document.addEventListener('visibilitychange', handleVisibilitySync)
+    window.addEventListener('focus', requestGmStateSyncThrottled)
+    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage)
 
     return () => {
       socket.off('connect', connectGmRoom)
       Object.entries(handlers).forEach(([event, handler]) => {
         socket.off(event, handler as (...args: unknown[]) => void)
       })
+      document.removeEventListener('visibilitychange', handleVisibilitySync)
+      window.removeEventListener('focus', requestGmStateSyncThrottled)
+      navigator.serviceWorker?.removeEventListener(
+        'message',
+        handleServiceWorkerMessage,
+      )
     }
-  }, [roomCode, socket, setPhase, addToQueue, forceRender])
+  }, [
+    roomCode,
+    socket,
+    setPhase,
+    setCurrentAudio,
+    clearGameRuntimeState,
+    addToQueue,
+    forceRender,
+    gmPersistentId,
+    gmReconnectToken,
+    onReconnectFailed,
+    onSnapshotLogs,
+  ])
 
   const updateGameStats = (playerList: Player[]) => {
     const alivePlayers = playerList.filter((p) => p.alive)
@@ -157,6 +295,26 @@ export function useSocketConnection(
     socket.emit('rq_gm:getPlayers', { roomCode })
   }
 
+  const handleResetRoom = (onSuccess?: () => void) => {
+    socket.emit(
+      'rq_gm:resetRoom',
+      { roomCode },
+      (ack?: { success: boolean; message?: string }) => {
+        if (!ack?.success) {
+          toast.error(ack?.message || 'Không thể reset phòng')
+          return
+        }
+        clearGameRuntimeState()
+        setPhase('night')
+        setWinner(null)
+        setNightActions([])
+        setCurrentAudio(null)
+        toast.success(ack.message || 'Đã reset phòng')
+        onSuccess?.()
+      },
+    )
+  }
+
   const handleSetMockPlayers = (list: Player[]) => {
     setPlayers(list)
     updateGameStats(list)
@@ -173,6 +331,7 @@ export function useSocketConnection(
     handleEliminatePlayer,
     handleRevivePlayer,
     handleGetPlayers,
+    handleResetRoom,
     handleSetMockPlayers,
     setCurrentAudio,
   }

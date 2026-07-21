@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion'
 import { X, Trophy } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import type { Socket } from 'socket.io-client'
 import type { Player, GameStats } from '@/types/player'
 import type { NightActionData } from './types'
@@ -41,6 +40,7 @@ interface PrivateOverlayProps {
   onClose: () => void
   phase: string
   onNextPhase: () => void
+  onResetRoom: () => void
   players: Player[]
   onEliminate: (player: Player, reason: string) => void
   onRevive: (playerId: string) => void
@@ -58,6 +58,7 @@ export function PrivateOverlay({
   onClose,
   phase,
   onNextPhase,
+  onResetRoom,
   players,
   onEliminate,
   onRevive,
@@ -70,7 +71,6 @@ export function PrivateOverlay({
   handleSetMockPlayers,
   winner,
 }: PrivateOverlayProps) {
-  const router = useRouter()
   const isGameEnded = phase === 'ended'
   const winnerInfo = winner ? WINNER_DISPLAY[winner] : null
   return (
@@ -109,11 +109,8 @@ export function PrivateOverlay({
           )}
           <div className="flex items-center gap-3">
             {isGameEnded ? (
-              <Button
-                onClick={() => router.push('/create-room')}
-                className="px-4 py-2 text-sm"
-              >
-                Tạo game mới
+              <Button onClick={onResetRoom} className="px-4 py-2 text-sm">
+                Chơi lại phòng này
               </Button>
             ) : (
               <HoldToConfirmButton
