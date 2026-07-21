@@ -7,8 +7,8 @@ export type Player = {
   avatarKey: number
   username: string
   status: StatusPlayer
-  alive: boolean
-  role: Role
+  alive?: boolean
+  role?: Role
 }
 export interface GameStats {
   totalPlayers: number
