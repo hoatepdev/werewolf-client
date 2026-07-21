@@ -30,6 +30,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     setRole,
     setApprovedPlayers,
     setAlive,
+    setUsername,
+    setAvatarKey,
+    clearPlayerRoomSession,
   } = useRoomStore()
 
   useEffect(() => {
@@ -41,6 +44,18 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         (player) => player.status === 'approved',
       )
       setApprovedPlayers(approvedPlayers)
+    }
+    const handleInfoUpdated = (data: {
+      playerId: string
+      username: string
+      avatarKey: number
+    }) => {
+      if (data.playerId !== playerId) return
+      setUsername(data.username)
+      setAvatarKey(data.avatarKey)
+    }
+    const handlePlayerLeft = (data: { username: string; activeGame: boolean }) => {
+      if (data.username) toast.info(`${data.username} đã rời phòng`)
     }
     const handleAssignedRole = ({ role }: { role: Player['role'] }) => {
       setTimeout(() => {
@@ -70,13 +85,26 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     socket.on('player:assignedRole', handleAssignedRole)
     socket.on('room:readySuccess', handleReadySuccess)
     socket.on('room:playerDisconnected', handlePlayerDisconnected)
+    socket.on('player:infoUpdated', handleInfoUpdated)
+    socket.on('room:playerLeft', handlePlayerLeft)
     return () => {
       socket.off('room:updatePlayers', handleUpdatePlayers)
       socket.off('player:assignedRole', handleAssignedRole)
       socket.off('room:readySuccess', handleReadySuccess)
       socket.off('room:playerDisconnected', handlePlayerDisconnected)
+      socket.off('player:infoUpdated', handleInfoUpdated)
+      socket.off('room:playerLeft', handlePlayerLeft)
     }
-  }, [roomCode, router, setApprovedPlayers, setRole, socket])
+  }, [
+    playerId,
+    roomCode,
+    router,
+    setApprovedPlayers,
+    setAvatarKey,
+    setRole,
+    setUsername,
+    socket,
+  ])
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
@@ -86,7 +114,42 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       cancelText: 'Hủy',
     })
     if (!confirmed) return
-    router.push('/join-room')
+
+    socket.emit(
+      'rq_player:leaveRoom',
+      { roomCode },
+      (ack?: { success: boolean; message?: string }) => {
+        if (!ack?.success) {
+          toast.error(ack?.message || 'Không thể rời phòng')
+          return
+        }
+        clearPlayerRoomSession()
+        toast.success(ack.message || 'Bạn đã rời phòng')
+        router.push('/join-room')
+      },
+    )
+  }
+
+  const handleUpdateProfile = async () => {
+    const confirmed = await confirmDialog({
+      title: 'Cập nhật thông tin',
+      description: 'Đồng bộ tên và avatar hiện tại của bạn với phòng này?',
+      confirmText: 'Cập nhật',
+      cancelText: 'Hủy',
+    })
+    if (!confirmed) return
+
+    socket.emit(
+      'rq_player:updateInfo',
+      { roomCode, username, avatarKey },
+      (ack?: { success: boolean; message?: string }) => {
+        if (!ack?.success) {
+          toast.error(ack?.message || 'Không thể cập nhật thông tin')
+          return
+        }
+        toast.success(ack.message || 'Đã cập nhật thông tin')
+      },
+    )
   }
 
   const handleContinueRole = () => {
@@ -100,18 +163,20 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         title={roomCode}
         onBack={handleLeaveRoom}
         right={
-          <div className="flex min-w-[120px] items-center justify-end gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="max-w-[80px] truncate text-sm font-semibold">
-                {username}
+          <button
+            className="flex min-w-[120px] items-center justify-end gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-zinc-800"
+            onClick={handleUpdateProfile}
+            aria-label="Cập nhật thông tin trong phòng"
+          >
+            <span className="max-w-[80px] truncate text-sm font-semibold">
+              {username}
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700 font-bold">
+              <span className="text-2xl">
+                {renderAvatar({ username, avatarKey })}
               </span>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-700 font-bold">
-                <span className="text-2xl">
-                  {renderAvatar({ username, avatarKey })}
-                </span>
-              </div>
             </div>
-          </div>
+          </button>
         }
       />
 

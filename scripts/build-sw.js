@@ -1,29 +1,27 @@
 const fs = require('fs')
 const path = require('path')
 
-const swPath = path.join(process.cwd(), 'public', 'sw.js')
-const swContent = fs.readFileSync(swPath, 'utf8')
+const publicDir = path.join(process.cwd(), 'public')
+const templatePath = path.join(publicDir, 'sw.template.js')
+const swPath = path.join(publicDir, 'sw.js')
+const swTemplate = fs.readFileSync(templatePath, 'utf8')
 
-const envVars = {
-  FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  FIREBASE_MESSAGING_SENDER_ID:
-    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+const replacements = {
+  __FIREBASE_API_KEY__: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '',
+  __FIREBASE_AUTH_DOMAIN__: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+  __FIREBASE_PROJECT_ID__: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '',
+  __FIREBASE_STORAGE_BUCKET__:
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+  __FIREBASE_MESSAGING_SENDER_ID__:
+    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
+  __FIREBASE_APP_ID__: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? '',
 }
 
-let updatedContent = swContent
+const swContent = Object.entries(replacements).reduce(
+  (content, [placeholder, value]) =>
+    content.replaceAll(placeholder, value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")),
+  swTemplate,
+)
 
-Object.entries(envVars).forEach(([key, value]) => {
-  if (value) {
-    updatedContent = updatedContent.replace(
-      new RegExp(`'${key}'`, 'g'),
-      `'${value}'`,
-    )
-  }
-})
-
-fs.writeFileSync(swPath, updatedContent)
-console.log('Service worker updated with environment variables')
+fs.writeFileSync(swPath, swContent)
+console.log('Service worker generated from template')

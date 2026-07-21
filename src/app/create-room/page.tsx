@@ -16,8 +16,15 @@ const CreateRoomPage = () => {
   const socket = getSocket()
   const router = useRouter()
 
-  const { username, roomCode, avatarKey, setRoomCode, setResetGame } =
-    useRoomStore()
+  const {
+    username,
+    roomCode,
+    avatarKey,
+    gmPersistentId,
+    setRoomCode,
+    setGmReconnectToken,
+    setResetGame,
+  } = useRoomStore()
   const [origin, setOrigin] = useState('')
   const joinRoomUrl = useMemo(
     () => (roomCode ? buildJoinRoomUrl(roomCode, origin) : ''),
@@ -33,12 +40,20 @@ const CreateRoomPage = () => {
     if (!socket.connected) socket.connect()
     socket.emit(
       'rq_gm:createRoom',
-      { avatarKey, username },
-      (data: { roomCode: string }) => {
+      { avatarKey, username, gmPersistentId },
+      (data: { roomCode: string; gmReconnectToken?: string }) => {
         setRoomCode(data.roomCode)
+        if (data.gmReconnectToken) setGmReconnectToken(data.gmReconnectToken)
       },
     )
-  }, [avatarKey, username, socket, setRoomCode])
+  }, [
+    avatarKey,
+    username,
+    gmPersistentId,
+    socket,
+    setRoomCode,
+    setGmReconnectToken,
+  ])
 
   const handleCreateRoom = () => {
     router.push(`/approve-room/${roomCode}`)
@@ -52,7 +67,8 @@ const CreateRoomPage = () => {
           Mời người chơi tham gia
         </h1>
         <p className="mb-6 text-center text-base text-gray-400">
-          Người chơi quét mã QR này để mở trang tham gia và gửi yêu cầu vào phòng
+          Người chơi quét mã QR này để mở trang tham gia và gửi yêu cầu vào
+          phòng
         </p>
         <div className="mb-20 rounded-2xl border-4 border-yellow-400 bg-white p-2">
           <div className="flex h-48 w-48 items-center justify-center rounded-xl bg-gray-200">
@@ -77,7 +93,8 @@ const CreateRoomPage = () => {
           <div className="h-px flex-1 bg-gray-600" />
         </div>
         <p className="mb-4 text-center text-sm text-gray-400">
-          Nếu không quét được QR, người chơi có thể nhập mã phòng này trong ứng dụng
+          Nếu không quét được QR, người chơi có thể nhập mã phòng này trong ứng
+          dụng
         </p>
         <div className="mb-8 flex w-full items-center rounded-xl border-2 border-yellow-400 bg-[#23232a] px-4 py-3">
           <span className="flex-1 truncate font-mono text-lg text-white">

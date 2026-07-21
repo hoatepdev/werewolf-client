@@ -82,19 +82,43 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
 
-  const targetUrl = event.notification.data?.url || '/'
+  const notificationData = event.notification.data || {}
+  const targetUrl = notificationData.url || '/'
   const destination = new URL(targetUrl, self.location.origin).href
+  const clickMessage = {
+    type: 'WEREWOLF_NOTIFICATION_CLICK',
+    url: targetUrl,
+    roomCode: notificationData.roomCode,
+    participantKind: notificationData.participantKind,
+    snapshotHint: notificationData.snapshotHint,
+  }
 
   event.waitUntil(
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
+      .then(async (clientList) => {
         const matchingClient = clientList.find((client) => {
           return client.url === destination && 'focus' in client
         })
 
         if (matchingClient) {
+          matchingClient.postMessage(clickMessage)
           return matchingClient.focus()
+        }
+
+        const sameOriginClient = clientList.find(
+          (client) =>
+            new URL(client.url).origin === self.location.origin &&
+            'focus' in client,
+        )
+
+        if (sameOriginClient) {
+          sameOriginClient.postMessage(clickMessage)
+          if ('navigate' in sameOriginClient) {
+            const navigatedClient = await sameOriginClient.navigate(destination)
+            return navigatedClient?.focus()
+          }
+          return sameOriginClient.focus()
         }
 
         if (clients.openWindow) {
