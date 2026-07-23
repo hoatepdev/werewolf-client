@@ -13,6 +13,7 @@ interface PlayerGridProps {
   currentPlayerId?: string
   mode?: 'lobby' | 'room'
   selectedId?: string
+  selectedIds?: string[]
   onSelect?: (player: Player | null) => void
   selectableList?: { id: string; username: string }[]
   disabled?: boolean
@@ -23,6 +24,7 @@ export function PlayerGrid({
   currentPlayerId,
   mode,
   selectedId,
+  selectedIds,
   onSelect,
   selectableList,
   disabled = false,
@@ -43,8 +45,12 @@ export function PlayerGrid({
 
   return (
     <div className="grid w-full max-w-sm grid-cols-3 gap-3">
-      {listPlayer.map((player) => (
-        <motion.div
+      {listPlayer.map((player) => {
+        const isSelected =
+          player.id === selectedId || selectedIds?.includes(player.id)
+
+        return (
+          <motion.div
           layout
           key={player.id}
           variants={hoverTapVariants}
@@ -61,7 +67,7 @@ export function PlayerGrid({
         >
           <Card
             className={`relative h-full w-full overflow-hidden transition-all duration-200 ${
-              player.id === selectedId ||
+              isSelected ||
               (currentPlayerId &&
                 mode === 'lobby' &&
                 player.id === currentPlayerId)
@@ -74,7 +80,7 @@ export function PlayerGrid({
             }`}
             onClick={() => {
               if (player.isSelectable) {
-                if (player.id === selectedId) {
+                if (isSelected) {
                   onSelect?.(null)
                 } else {
                   onSelect?.(player)
@@ -85,7 +91,7 @@ export function PlayerGrid({
             <CardContent className="flex flex-col items-center p-3">
               <div
                 className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold transition-transform ${
-                  player.id === selectedId
+                  isSelected
                     ? 'bg-yellow-400 text-black'
                     : 'bg-zinc-600 text-white'
                 }`}
@@ -104,8 +110,9 @@ export function PlayerGrid({
               </div>
             </CardContent>
           </Card>
-        </motion.div>
-      ))}
+          </motion.div>
+        )
+      })}
 
       {Array.from({ length: emptySlots }).map((_, index) => (
         <Card

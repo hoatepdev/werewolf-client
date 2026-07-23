@@ -44,4 +44,11 @@ export const LIST_ROLE: RoleObject[] = [
     description: 'Thắng khi bị vote chết',
     emoji: '😵',
   },
+  {
+    id: 'cupid',
+    name: 'Thần tình yêu',
+    description:
+      'Đêm đầu tiên chọn hai người để ghép đôi. Một người chết thì người kia chết theo.',
+    emoji: '💘',
+  },
 ]
