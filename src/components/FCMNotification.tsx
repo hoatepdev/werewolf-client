@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { Bell, BellOff, CheckCircle2 } from 'lucide-react'
 import { useFCM } from '../hook/useFCM'
 import { Button } from './ui/button'
 import {
@@ -9,82 +11,163 @@ import {
   CardHeader,
   CardTitle,
 } from './ui/card'
-import { Bell, Copy, Check } from 'lucide-react'
-import { useState } from 'react'
+import { toast } from 'sonner'
 
-export const FCMNotification = () => {
-  const { token, permission, requestPermission } = useFCM()
-  const [copied, setCopied] = useState(false)
+interface FCMNotificationProps {
+  roomCode: string
+  participantKind: 'player' | 'gm'
+}
 
-  const handleRequestPermission = async () => {
-    const granted = await requestPermission()
-    if (granted) {
-      console.log('Notification permission granted')
-    } else {
-      console.log('Notification permission denied')
+export const FCMNotification = ({
+  roomCode,
+  participantKind,
+}: FCMNotificationProps) => {
+  const {
+    permission,
+    isSupported,
+    requestPermission,
+    registerForRoom,
+    unregisterForRoom,
+    isRegisteredForRoom,
+  } = useFCM()
+  const [isRegistering, setIsRegistering] = useState(false)
+  const [registered, setRegistered] = useState(false)
+
+  useEffect(() => {
+    setRegistered(isRegisteredForRoom(roomCode, participantKind))
+  }, [isRegisteredForRoom, participantKind, roomCode])
+
+  useEffect(() => {
+    if (permission !== 'granted' || registered || isRegistering) return
+
+    let cancelled = false
+    setIsRegistering(true)
+    registerForRoom(roomCode, participantKind)
+      .then((success) => {
+        if (!cancelled) setRegistered(success)
+      })
+      .finally(() => {
+        if (!cancelled) setIsRegistering(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    isRegistering,
+    participantKind,
+    permission,
+    registerForRoom,
+    registered,
+    roomCode,
+  ])
+
+  const handleEnable = async () => {
+    setIsRegistering(true)
+    try {
+      const granted =
+        permission === 'granted' ? true : await requestPermission()
+      if (!granted) return
+
+      const success = await registerForRoom(roomCode, participantKind)
+      setRegistered(success)
+    } finally {
+      setIsRegistering(false)
     }
   }
 
-  const copyToken = async () => {
-    if (token) {
-      await navigator.clipboard.writeText(token)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+  const handleDisable = async () => {
+    setIsRegistering(true)
+    try {
+      const success = await unregisterForRoom(roomCode, participantKind)
+      if (!success) return
+      setRegistered(false)
+      toast.success('Đã tắt thông báo cho phòng này')
+    } finally {
+      setIsRegistering(false)
     }
   }
 
-  if (permission === 'denied') {
+  if (isSupported === false) {
     return (
-      <Card className="w-full max-w-md">
+      <Card className="border-zinc-700/70 bg-zinc-900/80">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notifications Disabled
+          <CardTitle className="flex items-center gap-2 text-sm text-zinc-200">
+            <BellOff className="h-4 w-4" />
+            Thiết bị không hỗ trợ thông báo
           </CardTitle>
           <CardDescription>
-            Please enable notifications in your browser settings to receive
-            updates.
+            Trình duyệt này chưa hỗ trợ thông báo đẩy cho PWA.
           </CardDescription>
         </CardHeader>
       </Card>
     )
   }
 
+  if (permission === 'denied') {
+    return (
+      <Card className="border-red-500/30 bg-red-950/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm text-red-200">
+            <BellOff className="h-4 w-4" />
+            Thông báo đang bị chặn
+          </CardTitle>
+          <CardDescription className="text-red-100/80">
+            Hãy mở cài đặt trình duyệt và cho phép thông báo để không bỏ lỡ lượt
+            chơi.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  if (permission === 'granted' && registered) {
+    return (
+      <Card className="border-green-500/30 bg-green-950/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm text-green-200">
+            <CheckCircle2 className="h-4 w-4" />
+            Đã bật thông báo
+          </CardTitle>
+          <CardDescription className="text-green-100/80">
+            Game sẽ nhắc bạn khi đến lượt quan trọng trong phòng này.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            onClick={handleDisable}
+            disabled={isRegistering}
+            variant="default"
+            className="border border-green-400/40 bg-green-950/40 py-2 text-sm text-green-100 hover:bg-green-900/50"
+          >
+            {isRegistering ? 'Đang tắt...' : 'Tắt thông báo'}
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
-    <Card className="w-full max-w-md">
+    <Card className="border-yellow-400/30 bg-zinc-900/85">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5" />
-          Push Notifications
+        <CardTitle className="flex items-center gap-2 text-sm text-yellow-300">
+          <Bell className="h-4 w-4" />
+          Bật thông báo lượt chơi
         </CardTitle>
         <CardDescription>
-          Enable notifications to receive real-time updates about your game.
+          Bật thông báo để không bỏ lỡ lượt chơi khi chuyển app hoặc tắt màn
+          hình.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {permission === 'default' && (
-          <Button onClick={handleRequestPermission} className="w-full">
-            Enable Notifications
-          </Button>
-        )}
-
-        {permission === 'granted' && token && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">FCM Token:</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 rounded bg-gray-100 p-2 text-xs break-all">
-                {token}
-              </code>
-              <Button variant="black" onClick={copyToken} className="shrink-0">
-                {copied ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
+      <CardContent>
+        <Button
+          onClick={handleEnable}
+          disabled={isRegistering}
+          variant="yellow"
+          className="py-2 text-sm"
+        >
+          {isRegistering ? 'Đang bật...' : 'Bật thông báo'}
+        </Button>
       </CardContent>
     </Card>
   )
