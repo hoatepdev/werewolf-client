@@ -11,7 +11,7 @@ export interface AudioEvent {
     | 'phaseChanged'
     | 'votingAction'
     | 'hunterAction'
-  role?: 'werewolf' | 'seer' | 'witch' | 'bodyguard'
+  role?: 'werewolf' | 'seer' | 'witch' | 'bodyguard' | 'cupid'
   message: string
   timestamp?: number
   data?: NightActionData | { phase: string }
@@ -30,4 +30,23 @@ export interface GmLogEntry {
   data?: unknown
   timestamp: number
   sensitive: boolean
+}
+
+export interface VotingProgress {
+  votedCount: number
+  respondedCount: number
+  totalVoters: number
+}
+
+export interface GmCommandAck {
+  success: boolean
+  status?:
+    | 'ok'
+    | 'invalid_data'
+    | 'not_authorized'
+    | 'room_not_found'
+    | 'player_not_found'
+    | 'invalid_state'
+    | 'requires_force'
+  message?: string
 }
