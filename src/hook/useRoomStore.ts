@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { Player } from '@/types/player'
+import type { GameLogEntry } from '@/types/game-log'
 
 const serverStorage: Storage = {
   getItem: () => null,
@@ -14,7 +15,7 @@ const serverStorage: Storage = {
 export type Phase = 'night' | 'day' | 'voting' | 'conclude' | 'ended'
 
 export interface NightPrompt {
-  type: 'werewolf' | 'seer' | 'witch' | 'bodyguard' | 'hunter'
+  type: 'werewolf' | 'seer' | 'witch' | 'bodyguard' | 'hunter' | 'cupid'
   message: string
   candidates?: Array<{
     id: string
@@ -26,12 +27,56 @@ export interface NightPrompt {
   canPoison?: boolean
   alivePlayerIds?: Array<{ id: string; username: string }>
   lastProtected?: string
+  minSelections?: number
+  maxSelections?: number
 }
 
 export interface NightResult {
   diedPlayerIds: string[]
   deaths?: Array<{ playerId: string; cause: string }>
-  cause: 'werewolf' | 'witch' | 'protected' | 'hunter'
+  cause: 'werewolf' | 'witch' | 'protected' | 'hunter' | 'lover'
+  gameLog?: GameLogEntry[]
+}
+
+export type VotingChoice = 'target' | 'abstain'
+export type VotingResponseKind = 'target' | 'abstain' | 'timeout'
+
+export interface PlayerVotingState {
+  hasResponded: boolean
+  choice: VotingChoice | null
+  targetId: string | null
+  targetName: string | null
+}
+
+export interface VotingProgress {
+  votedCount: number
+  respondedCount?: number
+  totalVoters: number
+}
+
+export interface VotingResultSummary {
+  gameLog?: GameLogEntry[]
+  round: number
+  eliminatedPlayerId: string | null
+  eliminatedPlayerName: string | null
+  cause: 'vote' | 'hunter' | 'tie' | 'no_votes'
+  tiedPlayerIds?: string[]
+  tiedPlayers?: Array<{ id: string; username: string }>
+  additionalDeaths?: Array<{ playerId: string; playerName: string; cause: 'lover' }>
+  votes: Array<{
+    voterId: string
+    voterName: string
+    targetId: string | null
+    targetName: string | null
+    kind?: VotingResponseKind
+  }>
+  totals: Array<{ targetId: string; targetName: string; count: number }>
+  abstainCount: number
+  timeoutCount?: number
+  targetVoteCount?: number
+  votedCount: number
+  respondedCount?: number
+  totalVoters: number
 }
 
 export type RoomState = {
@@ -39,6 +84,8 @@ export type RoomState = {
   playerId: string
   persistentPlayerId: string
   reconnectToken: string
+  gmPersistentId: string
+  gmReconnectToken: string
   role: Player['role'] | null
   phase: Phase
   username: string
@@ -55,10 +102,17 @@ export type RoomState = {
   // Hunter death shooting state
   hunterDeathShooting: boolean
 
+  // Voting phase state
+  votingProgress: VotingProgress | null
+  votingResult: VotingResultSummary | null
+  playerVotingState: PlayerVotingState | null
+  loverPartner: { id: string; username: string } | null
+
   setSocket: (socket: import('socket.io-client').Socket) => void
   setRoomCode: (roomCode: string) => void
   setPlayerId: (playerId: string) => void
   setReconnectToken: (reconnectToken: string) => void
+  setGmReconnectToken: (gmReconnectToken: string) => void
   setRole: (role: Player['role'] | null) => void
   setPhase: (phase: Phase) => void
   setUsername: (username: string) => void
@@ -66,10 +120,18 @@ export type RoomState = {
   setRehydrated: (done: boolean) => void
   setApprovedPlayers: (players: Player[]) => void
   setResetGame: () => void
-  setAlive: (alive: boolean) => void
+  clearSavedSession: () => void
+  clearGameRuntimeState: () => void
+  clearPlayerRoomSession: () => void
+  clearGmRoomSession: () => void
+  setAlive: (alive: boolean | null) => void
   setNightPrompt: (prompt: NightPrompt | null) => void
   setNightResult: (result: NightResult | null) => void
   setHunterDeathShooting: (shooting: boolean) => void
+  setVotingProgress: (progress: VotingProgress | null) => void
+  setVotingResult: (result: VotingResultSummary | null) => void
+  setPlayerVotingState: (state: PlayerVotingState | null) => void
+  setLoverPartner: (partner: { id: string; username: string } | null) => void
   setStateRoomStore: (state: Partial<RoomState>) => void
 }
 
@@ -83,6 +145,8 @@ export const useRoomStore = create<RoomState>()(
       playerId: '',
       persistentPlayerId: crypto.randomUUID(),
       reconnectToken: '',
+      gmPersistentId: crypto.randomUUID(),
+      gmReconnectToken: '',
       role: null,
       phase: 'night',
       username: '',
@@ -93,11 +157,17 @@ export const useRoomStore = create<RoomState>()(
       nightPrompt: null,
       nightResult: null,
       hunterDeathShooting: false,
+      votingProgress: null,
+      votingResult: null,
+      playerVotingState: null,
+      loverPartner: null,
 
       setSocket: (socket) => set({ socket }),
       setRoomCode: (roomCode: string) => set({ roomCode }),
       setPlayerId: (playerId: string) => set({ playerId }),
       setReconnectToken: (reconnectToken: string) => set({ reconnectToken }),
+      setGmReconnectToken: (gmReconnectToken: string) =>
+        set({ gmReconnectToken }),
       setRole: (role: Player['role'] | null) => set({ role }),
       setPhase: (phase: Phase) => set({ phase }),
       setUsername: (username: string) => set({ username }),
@@ -112,20 +182,95 @@ export const useRoomStore = create<RoomState>()(
           roomCode: '',
           playerId: '',
           reconnectToken: '',
+          gmReconnectToken: '',
           role: null,
           phase: 'night',
           approvedPlayers: [],
+          alive: null,
           nightPrompt: null,
           nightResult: null,
           hunterDeathShooting: false,
+          votingProgress: null,
+          votingResult: null,
+          playerVotingState: null,
+          loverPartner: null,
         }),
-      setAlive: (alive: boolean) => set({ alive }),
+      clearSavedSession: () =>
+        set({
+          roomCode: '',
+          playerId: '',
+          reconnectToken: '',
+          gmReconnectToken: '',
+          role: null,
+          phase: 'night',
+          approvedPlayers: [],
+          alive: null,
+          nightPrompt: null,
+          nightResult: null,
+          hunterDeathShooting: false,
+          votingProgress: null,
+          votingResult: null,
+          playerVotingState: null,
+          loverPartner: null,
+        }),
+      clearGameRuntimeState: () =>
+        set({
+          role: null,
+          phase: 'night',
+          approvedPlayers: [],
+          alive: null,
+          nightPrompt: null,
+          nightResult: null,
+          hunterDeathShooting: false,
+          votingProgress: null,
+          votingResult: null,
+          playerVotingState: null,
+          loverPartner: null,
+        }),
+      clearPlayerRoomSession: () =>
+        set({
+          roomCode: '',
+          playerId: '',
+          reconnectToken: '',
+          role: null,
+          phase: 'night',
+          approvedPlayers: [],
+          alive: null,
+          nightPrompt: null,
+          nightResult: null,
+          hunterDeathShooting: false,
+          votingProgress: null,
+          votingResult: null,
+          playerVotingState: null,
+          loverPartner: null,
+        }),
+      clearGmRoomSession: () =>
+        set({
+          roomCode: '',
+          gmReconnectToken: '',
+          role: null,
+          phase: 'night',
+          approvedPlayers: [],
+          alive: null,
+          nightPrompt: null,
+          nightResult: null,
+          hunterDeathShooting: false,
+          votingProgress: null,
+          votingResult: null,
+          playerVotingState: null,
+          loverPartner: null,
+        }),
+      setAlive: (alive) => set({ alive }),
       // Night phase setters
       setNightPrompt: (prompt) => set({ nightPrompt: prompt }),
       setNightResult: (result) => set({ nightResult: result }),
       // Hunter death shooting setter
       setHunterDeathShooting: (shooting: boolean) =>
         set({ hunterDeathShooting: shooting }),
+      setVotingProgress: (progress) => set({ votingProgress: progress }),
+      setVotingResult: (result) => set({ votingResult: result }),
+      setPlayerVotingState: (playerVotingState) => set({ playerVotingState }),
+      setLoverPartner: (loverPartner) => set({ loverPartner }),
       setStateRoomStore: (state: Partial<RoomState>) => set(state),
     }),
     {
@@ -138,6 +283,8 @@ export const useRoomStore = create<RoomState>()(
         playerId: state.playerId,
         persistentPlayerId: state.persistentPlayerId,
         reconnectToken: state.reconnectToken,
+        gmPersistentId: state.gmPersistentId,
+        gmReconnectToken: state.gmReconnectToken,
         username: state.username,
         avatarKey: state.avatarKey,
       }),
@@ -157,6 +304,8 @@ export const getStateRoomStore = () => {
     playerId,
     persistentPlayerId,
     reconnectToken,
+    gmPersistentId,
+    gmReconnectToken,
     role,
     phase,
     username,
@@ -168,12 +317,22 @@ export const getStateRoomStore = () => {
     nightResult,
     alive,
     hunterDeathShooting,
+    votingProgress,
+    votingResult,
+    playerVotingState,
+    loverPartner,
+    clearSavedSession,
+    clearGameRuntimeState,
+    clearPlayerRoomSession,
+    clearGmRoomSession,
   } = useRoomStore.getState()
   return {
     roomCode,
     playerId,
     persistentPlayerId,
     reconnectToken,
+    gmPersistentId,
+    gmReconnectToken,
     role,
     phase,
     username,
@@ -185,5 +344,13 @@ export const getStateRoomStore = () => {
     nightResult,
     alive,
     hunterDeathShooting,
+    votingProgress,
+    votingResult,
+    playerVotingState,
+    loverPartner,
+    clearSavedSession,
+    clearGameRuntimeState,
+    clearPlayerRoomSession,
+    clearGmRoomSession,
   }
 }
