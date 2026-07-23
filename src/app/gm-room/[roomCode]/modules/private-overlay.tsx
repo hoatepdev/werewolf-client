@@ -1,12 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { X, Trophy } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { X } from 'lucide-react'
 import type { Socket } from 'socket.io-client'
 import type { Player, GameStats } from '@/types/player'
-import type { NightActionData } from './types'
-import type { GmLogEntry } from './types'
+import type { GmLogEntry, NightActionData, VotingProgress } from './types'
 import { backdropVariants, overlayVariants } from '@/lib/motion'
 import { PlayerList } from './player-list'
 import { GameStatsCard } from './game-stats'
@@ -15,6 +13,8 @@ import { GameLog } from './game-log'
 import { MockPlayersComponent } from './mock-player'
 import { HoldToConfirmButton } from './hold-to-confirm-button'
 import { Button } from '@/components/ui/button'
+import { GmGameHudContainer } from '@/components/game-hud'
+import { GmToolsCard } from './gm-tools-card'
 
 const WINNER_DISPLAY = {
   villagers: {
@@ -39,11 +39,15 @@ const WINNER_DISPLAY = {
 
 interface PrivateOverlayProps {
   onClose: () => void
+  roomCode: string
+  isConnected: boolean
   phase: string
   onNextPhase: () => void
+  onRefresh: () => void
+  onResetRoom: () => void
   players: Player[]
-  onEliminate: (player: Player, reason: string) => void
-  onRevive: (playerId: string) => void
+  onEliminate: (player: Player, reason: string) => Promise<boolean>
+  onRevive: (playerId: string) => Promise<boolean>
   gameStats: GameStats
   nightActions: NightActionData[]
   gmLogs: GmLogEntry[]
@@ -52,12 +56,19 @@ interface PrivateOverlayProps {
   setForceRender: (v: boolean) => void
   handleSetMockPlayers: (players: Player[]) => void
   winner: 'villagers' | 'werewolves' | 'tanner' | null
+  gmCommandError?: string | null
+  pendingGmCommand?: string | null
+  votingProgress?: VotingProgress | null
 }
 
 export function PrivateOverlay({
   onClose,
+  roomCode,
+  isConnected,
   phase,
   onNextPhase,
+  onRefresh,
+  onResetRoom,
   players,
   onEliminate,
   onRevive,
@@ -69,8 +80,10 @@ export function PrivateOverlay({
   setForceRender,
   handleSetMockPlayers,
   winner,
+  gmCommandError,
+  pendingGmCommand,
+  votingProgress,
 }: PrivateOverlayProps) {
-  const router = useRouter()
   const isGameEnded = phase === 'ended'
   const winnerInfo = winner ? WINNER_DISPLAY[winner] : null
   return (
@@ -109,11 +122,8 @@ export function PrivateOverlay({
           )}
           <div className="flex items-center gap-3">
             {isGameEnded ? (
-              <Button
-                onClick={() => router.push('/create-room')}
-                className="px-4 py-2 text-sm"
-              >
-                Tạo game mới
+              <Button onClick={onResetRoom} className="px-4 py-2 text-sm">
+                Chơi lại phòng này
               </Button>
             ) : (
               <HoldToConfirmButton
@@ -131,18 +141,43 @@ export function PrivateOverlay({
           </div>
         </div>
 
+        <GmGameHudContainer
+          roomCode={roomCode}
+          isConnected={isConnected}
+          phase={phase as Parameters<typeof GmGameHudContainer>[0]['phase']}
+          players={players}
+          gameStats={gameStats}
+          winner={winner}
+          isPrivateMode
+          mode="gm-private"
+          compact
+          className="mt-4"
+        />
+
         {/* Scrollable content */}
         <div
           className="mt-4 overflow-y-auto"
           style={{ maxHeight: 'calc(95vh - 180px)' }}
         >
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <GmToolsCard
+            phase={phase}
+            isConnected={isConnected}
+            commandError={gmCommandError}
+            pendingGmCommand={pendingGmCommand}
+            votingProgress={votingProgress}
+            onNextPhase={onNextPhase}
+            onRefresh={onRefresh}
+            onResetRoom={onResetRoom}
+          />
+
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Player list with full controls */}
             <PlayerList
               players={players}
               onEliminate={onEliminate}
               onRevive={onRevive}
               readOnly={isGameEnded}
+              pendingGmCommand={pendingGmCommand}
             />
 
             {/* Game stats with faction info */}
