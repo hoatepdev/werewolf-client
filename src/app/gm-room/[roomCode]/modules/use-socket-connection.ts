@@ -1,9 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Socket } from 'socket.io-client'
 import { toast } from 'sonner'
 import { useRoomStore } from '@/hook/useRoomStore'
 import type { Player, GameStats } from '@/types/player'
-import type { AudioEvent, GmLogEntry, NightActionData } from './types'
+import type {
+  AudioEvent,
+  GmCommandAck,
+  GmLogEntry,
+  NightActionData,
+  VotingProgress,
+} from './types'
+
+type GmPlayerCommandAck = GmCommandAck & {
+  playerId?: string
+  players?: Player[]
+}
 
 type GmActionLogSnapshotEntry = {
   type: 'nightAction' | 'votingAction' | 'hunterAction' | 'gameEnded'
@@ -39,6 +50,11 @@ export function useSocketConnection(
     werewolves: 0,
     villagers: 0,
   })
+  const [gmCommandError, setGmCommandError] = useState<string | null>(null)
+  const [pendingGmCommand, setPendingGmCommand] = useState<string | null>(null)
+  const [votingProgress, setVotingProgress] = useState<VotingProgress | null>(
+    null,
+  )
 
   const {
     phase,
@@ -52,6 +68,40 @@ export function useSocketConnection(
   const [winner, setWinner] = useState<
     'villagers' | 'werewolves' | 'tanner' | null
   >(null)
+
+  const updateGameStats = useCallback((playerList: Player[]) => {
+    const alivePlayers = playerList.filter((p) => p.alive)
+    const deadPlayers = playerList.filter((p) => !p.alive)
+    const werewolves = alivePlayers.filter((p) => p.role === 'werewolf')
+    const villagers = alivePlayers.filter(
+      (p) => p.role !== 'werewolf' && p.role !== 'tanner',
+    )
+
+    setGameStats({
+      totalPlayers: playerList.length,
+      alivePlayers: alivePlayers.length,
+      deadPlayers: deadPlayers.length,
+      werewolves: werewolves.length,
+      villagers: villagers.length,
+    })
+  }, [])
+
+  const applyPlayerList = useCallback(
+    (playerList: Player[]) => {
+      const approvedPlayers = playerList.filter(
+        (player) => player.status === 'approved',
+      )
+      setPlayers(approvedPlayers)
+      updateGameStats(approvedPlayers)
+    },
+    [updateGameStats],
+  )
+
+  const setCommandError = useCallback((message?: string) => {
+    const normalized = message || 'Không thể thực hiện lệnh GM.'
+    setGmCommandError(normalized)
+    toast.error(normalized)
+  }, [])
 
   useEffect(() => {
     const requestGmStateSync = () => {
@@ -105,19 +155,21 @@ export function useSocketConnection(
     }
 
     const applyGmSnapshot = (snapshot: GmStateSnapshot) => {
-      if (snapshot.phase) setPhase(snapshot.phase)
+      if (snapshot.phase) {
+        setPhase(snapshot.phase)
+        if (snapshot.phase !== 'voting') setVotingProgress(null)
+      }
       if (snapshot.players) {
-        const approvedPlayers = snapshot.players.filter(
-          (player) => player.status === 'approved',
-        )
-        setPlayers(approvedPlayers)
-        updateGameStats(approvedPlayers)
+        applyPlayerList(snapshot.players)
       }
       if (snapshot.winner) {
         setWinner(snapshot.winner)
       }
       if (snapshot.gmActionLog) {
-        const logTypeBySnapshotType: Record<GmActionLogSnapshotEntry['type'], string> = {
+        const logTypeBySnapshotType: Record<
+          GmActionLogSnapshotEntry['type'],
+          string
+        > = {
           nightAction: 'night',
           votingAction: 'voting',
           hunterAction: 'hunter',
@@ -151,6 +203,7 @@ export function useSocketConnection(
         message: string
       }) => {
         setIsConnected(true)
+        setGmCommandError(null)
         toast.success('GM đã kết nối thành công')
         requestGmStateSync()
       },
@@ -164,23 +217,44 @@ export function useSocketConnection(
         onReconnectFailed?.(message)
       },
       'gm:stateSnapshot': applyGmSnapshot,
+      'gm:stateSnapshotError': (data: { message?: string }) => {
+        setCommandError(data.message || 'Không thể đồng bộ trạng thái GM.')
+      },
       'game:phaseChanged': (data: {
-        phase: 'night' | 'day' | 'voting' | 'ended'
+        phase: 'night' | 'day' | 'voting' | 'conclude' | 'ended'
       }) => {
         setPhase(data.phase)
+        if (data.phase !== 'voting') setVotingProgress(null)
       },
       'room:updatePlayers': (players: Player[]) => {
-        const approvedPlayers = players.filter(
-          (player) => player.status === 'approved',
+        applyPlayerList(players)
+      },
+      'room:updatePlayersError': (data: { message?: string }) => {
+        setCommandError(
+          data.message || 'Không thể làm mới danh sách người chơi.',
         )
-        setPlayers(approvedPlayers)
-        updateGameStats(approvedPlayers)
+      },
+      'room:phaseError': (data: { message?: string }) => {
+        setCommandError(data.message || 'Không thể chuyển giai đoạn.')
+      },
+      'room:resetError': (data: { message?: string }) => {
+        setCommandError(data.message || 'Không thể reset phòng.')
+      },
+      'gm:eliminatePlayerError': (data: { message?: string }) => {
+        setCommandError(data.message || 'Không thể loại bỏ người chơi.')
+      },
+      'gm:revivePlayerError': (data: { message?: string }) => {
+        setCommandError(data.message || 'Không thể hồi sinh người chơi.')
+      },
+      'voting:progress': (progress: VotingProgress) => {
+        setVotingProgress(progress)
       },
       'room:reset': () => {
         clearGameRuntimeState()
         setPhase('night')
         setWinner(null)
         setNightActions([])
+        setVotingProgress(null)
         setCurrentAudio(null)
         toast.success('Phòng đã được reset')
       },
@@ -216,6 +290,7 @@ export function useSocketConnection(
       }) => {
         setPhase('ended')
         setWinner(data.winner)
+        setVotingProgress(null)
         addToQueue({
           type: data.type,
           message: data.message,
@@ -228,7 +303,10 @@ export function useSocketConnection(
     })
     document.addEventListener('visibilitychange', handleVisibilitySync)
     window.addEventListener('focus', requestGmStateSyncThrottled)
-    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage)
+    navigator.serviceWorker?.addEventListener(
+      'message',
+      handleServiceWorkerMessage,
+    )
 
     return () => {
       socket.off('connect', connectGmRoom)
@@ -254,71 +332,116 @@ export function useSocketConnection(
     gmReconnectToken,
     onReconnectFailed,
     onSnapshotLogs,
+    applyPlayerList,
+    setCommandError,
   ])
 
-  const updateGameStats = (playerList: Player[]) => {
-    const alivePlayers = playerList.filter((p) => p.alive)
-    const deadPlayers = playerList.filter((p) => !p.alive)
-    const werewolves = alivePlayers.filter((p) => p.role === 'werewolf')
-    const villagers = alivePlayers.filter(
-      (p) => p.role !== 'werewolf' && p.role !== 'tanner',
-    )
-
-    setGameStats({
-      totalPlayers: playerList.length,
-      alivePlayers: alivePlayers.length,
-      deadPlayers: deadPlayers.length,
-      werewolves: werewolves.length,
-      villagers: villagers.length,
-    })
-  }
-
-  const handleNextPhase = () => {
+  const handleNextPhase = useCallback(() => {
+    setGmCommandError(null)
     socket.emit('rq_gm:nextPhase', { roomCode })
-  }
+  }, [roomCode, socket])
 
-  const handleEliminatePlayer = (player: Player, reason: string) => {
-    socket.emit('rq_gm:eliminatePlayer', {
-      roomCode,
-      playerId: player.id,
-      reason,
-    })
-    toast.success(`Đã loại bỏ người chơi: ${player.username}`)
-  }
+  const handleEliminatePlayer = useCallback(
+    (player: Player, reason: string) => {
+      setGmCommandError(null)
+      setPendingGmCommand(`eliminate:${player.id}`)
+      return new Promise<boolean>((resolve) => {
+        socket.emit(
+          'rq_gm:eliminatePlayer',
+          {
+            roomCode,
+            playerId: player.id,
+            reason,
+          },
+          (ack?: GmPlayerCommandAck) => {
+            setPendingGmCommand(null)
+            if (!ack?.success) {
+              setCommandError(ack?.message || 'Không thể loại bỏ người chơi.')
+              resolve(false)
+              return
+            }
+            if (ack.players) applyPlayerList(ack.players)
+            toast.success(
+              ack.message || `Đã loại bỏ người chơi: ${player.username}`,
+            )
+            resolve(true)
+          },
+        )
+      })
+    },
+    [applyPlayerList, roomCode, setCommandError, socket],
+  )
 
-  const handleRevivePlayer = (playerId: string) => {
-    socket.emit('rq_gm:revivePlayer', { roomCode, playerId })
-    toast.success('Đã hồi sinh người chơi')
-  }
+  const handleRevivePlayer = useCallback(
+    (playerId: string) => {
+      setGmCommandError(null)
+      setPendingGmCommand(`revive:${playerId}`)
+      return new Promise<boolean>((resolve) => {
+        socket.emit(
+          'rq_gm:revivePlayer',
+          { roomCode, playerId },
+          (ack?: GmPlayerCommandAck) => {
+            setPendingGmCommand(null)
+            if (!ack?.success) {
+              setCommandError(ack?.message || 'Không thể hồi sinh người chơi.')
+              resolve(false)
+              return
+            }
+            if (ack.players) applyPlayerList(ack.players)
+            toast.success(ack.message || 'Đã hồi sinh người chơi')
+            resolve(true)
+          },
+        )
+      })
+    },
+    [applyPlayerList, roomCode, setCommandError, socket],
+  )
 
-  const handleGetPlayers = () => {
+  const handleGetPlayers = useCallback(() => {
+    setGmCommandError(null)
     socket.emit('rq_gm:getPlayers', { roomCode })
-  }
+  }, [roomCode, socket])
 
-  const handleResetRoom = (onSuccess?: () => void) => {
-    socket.emit(
-      'rq_gm:resetRoom',
-      { roomCode },
-      (ack?: { success: boolean; message?: string }) => {
-        if (!ack?.success) {
-          toast.error(ack?.message || 'Không thể reset phòng')
-          return
-        }
-        clearGameRuntimeState()
-        setPhase('night')
-        setWinner(null)
-        setNightActions([])
-        setCurrentAudio(null)
-        toast.success(ack.message || 'Đã reset phòng')
-        onSuccess?.()
-      },
-    )
-  }
+  const handleResetRoom = useCallback(
+    (options?: { force?: boolean; onSuccess?: () => void }) => {
+      setGmCommandError(null)
+      setPendingGmCommand('reset')
+      socket.emit(
+        'rq_gm:resetRoom',
+        { roomCode, force: options?.force },
+        (ack?: GmCommandAck) => {
+          setPendingGmCommand(null)
+          if (!ack?.success) {
+            setCommandError(ack?.message || 'Không thể reset phòng')
+            return
+          }
+          clearGameRuntimeState()
+          setPhase('night')
+          setWinner(null)
+          setNightActions([])
+          setVotingProgress(null)
+          setCurrentAudio(null)
+          toast.success(ack.message || 'Đã reset phòng')
+          options?.onSuccess?.()
+        },
+      )
+    },
+    [
+      clearGameRuntimeState,
+      roomCode,
+      setCommandError,
+      setCurrentAudio,
+      setPhase,
+      socket,
+    ],
+  )
 
-  const handleSetMockPlayers = (list: Player[]) => {
-    setPlayers(list)
-    updateGameStats(list)
-  }
+  const handleSetMockPlayers = useCallback(
+    (list: Player[]) => {
+      applyPlayerList(list)
+    },
+    [applyPlayerList],
+  )
 
   return {
     isConnected,
@@ -327,6 +450,10 @@ export function useSocketConnection(
     gameStats,
     nightActions,
     winner,
+    gmCommandError,
+    pendingGmCommand,
+    votingProgress,
+    clearGmCommandError: () => setGmCommandError(null),
     handleNextPhase,
     handleEliminatePlayer,
     handleRevivePlayer,

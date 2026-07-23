@@ -11,6 +11,7 @@ import Image from 'next/image'
 import Footer from '@/components/Footer'
 import { confirmDialog } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
+import { formatRoomCode } from '@/lib/room-code'
 
 export default function Home() {
   const router = useRouter()
@@ -73,12 +74,12 @@ export default function Home() {
         <div className="flex flex-col items-center gap-2 text-center text-4xl font-extrabold tracking-tight text-white">
           <Image
             src="/images/logo/logo.png"
-            alt="Lunar Verdict"
+            alt="Ma Sói"
             width={80}
             height={80}
           />
           <div>
-            <span className="text-yellow-500">Lunar</span> Verdict
+            <span className="text-yellow-500">Ma Sói</span>
           </div>
         </div>
         <motion.div
@@ -105,13 +106,14 @@ export default function Home() {
               <div className="mt-2 space-y-1 text-sm text-zinc-300">
                 <p>
                   Phòng:{' '}
-                  <span className="font-semibold tracking-widest text-white">
-                    {roomCode}
+                  <span className="font-semibold tracking-[0.35em] text-white">
+                    {formatRoomCode(roomCode)}
                   </span>
                 </p>
                 {username && (
                   <p>
-                    Tên: <span className="font-semibold text-white">{username}</span>
+                    Tên:{' '}
+                    <span className="font-semibold text-white">{username}</span>
                   </p>
                 )}
                 <p className="text-xs text-zinc-500">
@@ -127,7 +129,8 @@ export default function Home() {
                     Tiếp tục với vai trò người chơi
                   </p>
                   <p className="mt-1 text-xs text-zinc-400">
-                    Kết nối lại vào phòng cũ bằng phiên đã lưu trên thiết bị này.
+                    Kết nối lại vào phòng cũ bằng phiên đã lưu trên thiết bị
+                    này.
                   </p>
                   <Button
                     variant="yellow"

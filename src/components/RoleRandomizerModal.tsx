@@ -41,12 +41,16 @@ export const RoleRandomizerModal = ({
   const [isReady, setIsReady] = useState(false)
   const [rotation, setRotation] = useState(0)
   const wheelRef = useRef<HTMLDivElement>(null)
-  const [textButton, setTextButton] = useState('Sẵn sàng')
+  const [textButton, setTextButton] = useState('Tôi đã xem vai và sẵn sàng')
   const [isRevealed, setIsRevealed] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
     if (open) {
       setIsSpinning(true)
+      setIsReady(false)
+      setTextButton('Tôi đã xem vai và sẵn sàng')
+      setImageError(false)
       setRotation(0)
 
       // Start spin after a short delay for effect
@@ -62,7 +66,7 @@ export const RoleRandomizerModal = ({
 
   const handleReady = () => {
     setIsReady(true)
-    setTextButton('Đang chờ...')
+    setTextButton('Đang chờ người chơi khác...')
     onContinue()
   }
 
@@ -214,15 +218,22 @@ export const RoleRandomizerModal = ({
                       isRevealed ? 'opacity-100 blur-none' : 'opacity-0 blur-md translate-y-2'
                     }`}
                   >
-                    <Image
-                      width={192}
-                      height={258}
-                      src={`/images/role/${assignedRole.id}.png`}
-                      alt={assignedRole.name}
-                      autoFocus={false}
-                      className="rounded-xl border-4 border-yellow-400 bg-zinc-800 object-contain shadow-lg"
-                      priority
-                    />
+                    {imageError ? (
+                      <div className="flex h-[258px] w-48 flex-col items-center justify-center rounded-xl border-4 border-yellow-400 bg-zinc-800 shadow-lg">
+                        <div className="text-6xl">{assignedRole.emoji}</div>
+                      </div>
+                    ) : (
+                      <Image
+                        width={192}
+                        height={258}
+                        src={`/images/role/${assignedRole.id}.png`}
+                        alt={assignedRole.name}
+                        autoFocus={false}
+                        className="rounded-xl border-4 border-yellow-400 bg-zinc-800 object-contain shadow-lg"
+                        priority
+                        onError={() => setImageError(true)}
+                      />
+                    )}
                     <div className="mt-4 text-center text-2xl font-bold text-yellow-400">
                       {assignedRole.name}
                     </div>

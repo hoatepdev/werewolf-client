@@ -21,7 +21,8 @@ import { renderAvatar } from '@/helpers'
 import { Button } from '@/components/ui/button'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
-import { buildJoinRoomUrl } from '@/lib/room-code'
+import { buildJoinRoomUrl, formatRoomCode } from '@/lib/room-code'
+import { ReadyChecklist } from '@/components/ReadyChecklist'
 
 const initialApproved: Player[] = []
 const initialPending: Player[] = []
@@ -125,7 +126,10 @@ export default function ApprovePlayerPage({
   }
 
   const countPlayer = approvedPlayers.length
+  const rolesAssigned =
+    approvedPlayers.length > 0 && approvedPlayers.every((player) => Boolean(player.role))
   const canContinue =
+    !rolesAssigned &&
     approvedPlayers.length >= MIN_PLAYER &&
     approvedPlayers.length === selectedRoles.length
 
@@ -164,8 +168,8 @@ export default function ApprovePlayerPage({
                     <span className="text-gray-400">Không có mã phòng</span>
                   )}
                 </div>
-                <div className="mb-4 text-center text-2xl font-bold text-yellow-400">
-                  {roomCode}
+                <div className="mb-4 text-center text-2xl font-bold tracking-[0.35em] text-yellow-400">
+                  {formatRoomCode(roomCode)}
                 </div>
                 <DialogClose asChild>
                   <button
@@ -182,30 +186,42 @@ export default function ApprovePlayerPage({
       />
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center">
         <div className="w-full">
-          <div className="mb-2 text-base font-semibold tracking-wide">
-            NGƯỜI CHƠI ĐÃ DUYỆT
-          </div>
-          <div className="mb-6 space-y-2">
-            {approvedPlayers.length === 0 ? (
-              <div className="rounded-xl bg-zinc-800 px-4 py-3 text-center text-zinc-400">
-                Không có người chơi
+          {rolesAssigned ? (
+            <div className="mb-6">
+              <ReadyChecklist
+                players={approvedPlayers}
+                title="Danh sách sẵn sàng"
+                assignedRoles={rolesAssigned}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="mb-2 text-base font-semibold tracking-wide">
+                NGƯỜI CHƠI ĐÃ DUYỆT
               </div>
-            ) : (
-              approvedPlayers.map((player) => (
-                <div
-                  key={player.id}
-                  className="flex items-center justify-between gap-4 rounded-xl bg-zinc-800 px-4 py-3"
-                >
-                  <span className="flex w-6 items-center justify-center text-2xl font-bold text-yellow-400">
-                    {renderAvatar(player)}
-                  </span>
-                  <span className="flex-1 text-base font-medium">
-                    {player.username}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+              <div className="mb-6 space-y-2">
+                {approvedPlayers.length === 0 ? (
+                  <div className="rounded-xl bg-zinc-800 px-4 py-3 text-center text-zinc-400">
+                    Không có người chơi
+                  </div>
+                ) : (
+                  approvedPlayers.map((player) => (
+                    <div
+                      key={player.id}
+                      className="flex items-center justify-between gap-4 rounded-xl bg-zinc-800 px-4 py-3"
+                    >
+                      <span className="flex w-6 items-center justify-center text-2xl font-bold text-yellow-400">
+                        {renderAvatar(player)}
+                      </span>
+                      <span className="flex-1 text-base font-medium">
+                        {player.username}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
           <div className="mb-2 text-base font-semibold tracking-wide">
             NGƯỜI CHƠI CHỜ DUYỆT
           </div>
@@ -252,7 +268,7 @@ export default function ApprovePlayerPage({
           </div>
         </div>
 
-        {countPlayer >= 0 && (
+        {!rolesAssigned && countPlayer >= 0 && (
           <>
             <hr className="my-4 w-full border-t border-zinc-700" />
             <RoleSelection
@@ -265,7 +281,9 @@ export default function ApprovePlayerPage({
 
       <div className="mx-auto mt-auto mb-2 flex w-full max-w-sm flex-col">
         <div className="mb-2 text-center text-sm text-zinc-400">
-          Nhấn TIẾP TỤC sẽ phân vai ngẫu nhiên cho người chơi.
+          {rolesAssigned
+            ? 'Đang chờ tất cả người chơi xác nhận sẵn sàng.'
+            : 'Nhấn TIẾP TỤC sẽ phân vai ngẫu nhiên cho người chơi.'}
         </div>
         <Button
           variant="yellow"

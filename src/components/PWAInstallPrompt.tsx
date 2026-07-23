@@ -32,7 +32,7 @@ export function PWAInstallPrompt() {
 
           <div className="min-w-0 flex-1">
             <h3 className="mb-2 text-lg font-bold text-white">
-              Cài đặt Lunar Verdict Offline
+              Cài đặt Ma Sói
             </h3>
             <p className="text-sm leading-relaxed text-zinc-300">
               Cài đặt ứng dụng để mở nhanh hơn và nhận thông báo trong ván chơi

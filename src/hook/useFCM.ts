@@ -7,6 +7,9 @@ import { getSocket } from '@/lib/socket'
 import { useRoomStore } from './useRoomStore'
 
 const DEVICE_ID_KEY = 'werewolf-push-device-id'
+const REGISTRATION_KEY_PREFIX = 'werewolf-push-registration'
+
+type ParticipantKind = 'player' | 'gm'
 
 function getDeviceId() {
   if (typeof window === 'undefined') return ''
@@ -15,6 +18,41 @@ function getDeviceId() {
   const next = crypto.randomUUID()
   localStorage.setItem(DEVICE_ID_KEY, next)
   return next
+}
+
+function getRegistrationKey(
+  roomCode: string,
+  participantKind: ParticipantKind,
+) {
+  if (typeof window === 'undefined' || !roomCode) return ''
+  return `${REGISTRATION_KEY_PREFIX}:${roomCode}:${participantKind}:${getDeviceId()}`
+}
+
+function getRoomRegistrationState(
+  roomCode: string,
+  participantKind: ParticipantKind,
+) {
+  const key = getRegistrationKey(roomCode, participantKind)
+  if (!key) return false
+  return localStorage.getItem(key) === 'registered'
+}
+
+function markRoomRegistered(
+  roomCode: string,
+  participantKind: ParticipantKind,
+) {
+  const key = getRegistrationKey(roomCode, participantKind)
+  if (!key) return
+  localStorage.setItem(key, 'registered')
+}
+
+function clearRoomRegistered(
+  roomCode: string,
+  participantKind: ParticipantKind,
+) {
+  const key = getRegistrationKey(roomCode, participantKind)
+  if (!key) return
+  localStorage.removeItem(key)
 }
 
 export const useFCM = () => {
@@ -85,8 +123,14 @@ export const useFCM = () => {
     return false
   }
 
+  const isRegisteredForRoom = useCallback(
+    (roomCode: string, participantKind: ParticipantKind) =>
+      getRoomRegistrationState(roomCode, participantKind),
+    [],
+  )
+
   const registerForRoom = useCallback(
-    async (roomCode: string, participantKind: 'player' | 'gm') => {
+    async (roomCode: string, participantKind: ParticipantKind) => {
       const currentToken = token ?? (await getFCMToken())
       if (!currentToken || !roomCode) return false
 
@@ -114,6 +158,7 @@ export const useFCM = () => {
               resolve(false)
               return
             }
+            markRoomRegistered(roomCode, participantKind)
             resolve(true)
           },
         )
@@ -130,7 +175,7 @@ export const useFCM = () => {
   )
 
   const unregisterForRoom = useCallback(
-    async (roomCode: string, participantKind: 'player' | 'gm') => {
+    async (roomCode: string, participantKind: ParticipantKind) => {
       const socket = getSocket()
       if (!socket.connected) socket.connect()
       const currentToken = token ?? undefined
@@ -143,14 +188,30 @@ export const useFCM = () => {
             token: currentToken,
             deviceId: getDeviceId(),
             participantKind,
+            persistentPlayerId,
+            reconnectToken,
+            gmPersistentId,
+            gmReconnectToken,
           },
-          (ack?: { success: boolean; message?: string }) => {
-            resolve(ack?.success === true)
+          (ack?: { success: boolean; status?: string; message?: string }) => {
+            const success = ack?.success === true || ack?.status === 'not_found'
+            if (success) {
+              clearRoomRegistered(roomCode, participantKind)
+            } else {
+              toast.error(ack?.message || 'Không thể tắt thông báo')
+            }
+            resolve(success)
           },
         )
       })
     },
-    [token],
+    [
+      gmPersistentId,
+      gmReconnectToken,
+      persistentPlayerId,
+      reconnectToken,
+      token,
+    ],
   )
 
   useEffect(() => {
@@ -178,10 +239,10 @@ export const useFCM = () => {
       unsubscribe = onMessage(messaging, (payload) => {
         console.log('Message received in foreground:', payload)
 
-        toast(payload.notification?.title || 'New Message', {
+        toast(payload.notification?.title || 'Thông báo mới', {
           description: payload.notification?.body,
           action: {
-            label: 'View',
+            label: 'Mở',
             onClick: () => {
               if (payload.data?.url) {
                 window.open(payload.data.url, '_blank')
@@ -206,5 +267,6 @@ export const useFCM = () => {
     getFCMToken,
     registerForRoom,
     unregisterForRoom,
+    isRegisteredForRoom,
   }
 }

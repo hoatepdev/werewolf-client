@@ -9,7 +9,9 @@ interface VotingResultPhaseProps {
 
 const getOutcome = (result: VotingResultSummary) => {
   if (result.cause === 'tie') {
-    const names = result.tiedPlayers?.map((player) => player.username).join(', ')
+    const names = result.tiedPlayers
+      ?.map((player) => player.username)
+      .join(', ')
     return {
       emoji: '⚖️',
       title: 'Hòa phiếu',
@@ -50,7 +52,9 @@ const VotingResultPhase: React.FC<VotingResultPhaseProps> = ({ result }) => {
   if (!result) {
     return (
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6 text-center">
-        <h3 className="text-xl font-bold text-yellow-400">🗳️ Kết quả bỏ phiếu</h3>
+        <h3 className="text-xl font-bold text-yellow-400">
+          🗳️ Kết quả bỏ phiếu
+        </h3>
         <div className="w-full rounded-lg bg-gray-900/80 p-4 text-sm text-gray-300">
           Đang tổng hợp kết quả bỏ phiếu...
         </div>
@@ -85,6 +89,20 @@ const VotingResultPhase: React.FC<VotingResultPhaseProps> = ({ result }) => {
           <p className="mt-2 text-sm text-gray-300">{outcome.description}</p>
         </div>
 
+        {result.additionalDeaths && result.additionalDeaths.length > 0 && (
+          <div className="w-full rounded-xl border border-pink-400/30 bg-pink-950/30 p-4">
+            <div className="text-lg font-bold text-pink-300">
+              💔 Chết vì tình
+            </div>
+            <p className="mt-2 text-sm text-gray-300">
+              {result.additionalDeaths
+                .map((death) => death.playerName)
+                .join(', ')}{' '}
+              chết theo người yêu.
+            </p>
+          </div>
+        )}
+
         <div className="w-full rounded-lg bg-gray-900/80 p-4">
           <div className="mb-3 flex items-center justify-between border-b border-zinc-700 pb-2">
             <span className="font-semibold text-yellow-300">Tổng quan</span>
@@ -94,7 +112,9 @@ const VotingResultPhase: React.FC<VotingResultPhaseProps> = ({ result }) => {
           </div>
           <div className="grid grid-cols-3 gap-3 text-center text-sm">
             <div className="rounded-lg bg-zinc-800 p-3">
-              <div className="text-2xl font-bold text-red-300">{targetVoteCount}</div>
+              <div className="text-2xl font-bold text-red-300">
+                {targetVoteCount}
+              </div>
               <div className="text-gray-400">Phiếu chọn người</div>
             </div>
             <div className="rounded-lg bg-zinc-800 p-3">
@@ -104,7 +124,9 @@ const VotingResultPhase: React.FC<VotingResultPhaseProps> = ({ result }) => {
               <div className="text-gray-400">Phiếu trắng</div>
             </div>
             <div className="rounded-lg bg-zinc-800 p-3">
-              <div className="text-2xl font-bold text-blue-300">{timeoutCount}</div>
+              <div className="text-2xl font-bold text-blue-300">
+                {timeoutCount}
+              </div>
               <div className="text-gray-400">Không phản hồi</div>
             </div>
           </div>
@@ -119,7 +141,9 @@ const VotingResultPhase: React.FC<VotingResultPhaseProps> = ({ result }) => {
                   key={vote.voterId}
                   className="flex items-center justify-between rounded-lg bg-zinc-800 px-3 py-2"
                 >
-                  <span className="font-semibold text-gray-200">{vote.voterName}</span>
+                  <span className="font-semibold text-gray-200">
+                    {vote.voterName}
+                  </span>
                   <span className="mx-2 text-zinc-500">→</span>
                   <span
                     className={
@@ -132,7 +156,7 @@ const VotingResultPhase: React.FC<VotingResultPhaseProps> = ({ result }) => {
                   >
                     {vote.kind === 'timeout'
                       ? 'Không phản hồi'
-                      : vote.targetName ?? 'Bỏ phiếu trắng'}
+                      : (vote.targetName ?? 'Bỏ phiếu trắng')}
                   </span>
                 </li>
               ))}
@@ -146,15 +170,21 @@ const VotingResultPhase: React.FC<VotingResultPhaseProps> = ({ result }) => {
 
         {result.totals.length > 0 && (
           <div className="w-full rounded-lg bg-gray-900/80 p-4">
-            <div className="mb-3 font-semibold text-yellow-300">Tổng phiếu theo người</div>
+            <div className="mb-3 font-semibold text-yellow-300">
+              Tổng phiếu theo người
+            </div>
             <ul className="space-y-2 text-sm">
               {result.totals.map((total) => (
                 <li
                   key={total.targetId}
                   className="flex items-center justify-between rounded-lg bg-zinc-800 px-3 py-2"
                 >
-                  <span className="font-semibold text-gray-200">{total.targetName}</span>
-                  <span className="font-bold text-yellow-300">{total.count} phiếu</span>
+                  <span className="font-semibold text-gray-200">
+                    {total.targetName}
+                  </span>
+                  <span className="font-bold text-yellow-300">
+                    {total.count} phiếu
+                  </span>
                 </li>
               ))}
             </ul>

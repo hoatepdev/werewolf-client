@@ -7,6 +7,7 @@ export type Player = {
   avatarKey: number
   username: string
   status: StatusPlayer
+  ready?: boolean
   alive?: boolean
   role?: Role
 }

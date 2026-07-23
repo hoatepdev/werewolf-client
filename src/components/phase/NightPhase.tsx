@@ -4,6 +4,7 @@ import WerewolfAction from '../actions/WerewolfAction'
 import SeerAction from '../actions/SeerAction'
 import WitchAction from '../actions/WitchAction'
 import BodyguardAction from '../actions/BodyguardAction'
+import CupidAction from '../actions/CupidAction'
 import Waiting from './Waiting'
 import { Player } from '@/types/player'
 
@@ -24,6 +25,8 @@ const NightPhase: React.FC<NightPhaseProps> = ({ roomCode }) => {
         return <WitchAction roomCode={roomCode} />
       case 'bodyguard':
         return <BodyguardAction roomCode={roomCode} />
+      case 'cupid':
+        return <CupidAction roomCode={roomCode} />
       case 'hunter':
       case 'villager':
       case 'tanner':

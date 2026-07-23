@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { Player } from '@/types/player'
+import type { GameLogEntry } from '@/types/game-log'
 
 const serverStorage: Storage = {
   getItem: () => null,
@@ -14,7 +15,7 @@ const serverStorage: Storage = {
 export type Phase = 'night' | 'day' | 'voting' | 'conclude' | 'ended'
 
 export interface NightPrompt {
-  type: 'werewolf' | 'seer' | 'witch' | 'bodyguard' | 'hunter'
+  type: 'werewolf' | 'seer' | 'witch' | 'bodyguard' | 'hunter' | 'cupid'
   message: string
   candidates?: Array<{
     id: string
@@ -26,12 +27,15 @@ export interface NightPrompt {
   canPoison?: boolean
   alivePlayerIds?: Array<{ id: string; username: string }>
   lastProtected?: string
+  minSelections?: number
+  maxSelections?: number
 }
 
 export interface NightResult {
   diedPlayerIds: string[]
   deaths?: Array<{ playerId: string; cause: string }>
-  cause: 'werewolf' | 'witch' | 'protected' | 'hunter'
+  cause: 'werewolf' | 'witch' | 'protected' | 'hunter' | 'lover'
+  gameLog?: GameLogEntry[]
 }
 
 export type VotingChoice = 'target' | 'abstain'
@@ -51,12 +55,18 @@ export interface VotingProgress {
 }
 
 export interface VotingResultSummary {
+  gameLog?: GameLogEntry[]
   round: number
   eliminatedPlayerId: string | null
   eliminatedPlayerName: string | null
   cause: 'vote' | 'hunter' | 'tie' | 'no_votes'
   tiedPlayerIds?: string[]
   tiedPlayers?: Array<{ id: string; username: string }>
+  additionalDeaths?: Array<{
+    playerId: string
+    playerName: string
+    cause: 'lover'
+  }>
   votes: Array<{
     voterId: string
     voterName: string
@@ -100,6 +110,7 @@ export type RoomState = {
   votingProgress: VotingProgress | null
   votingResult: VotingResultSummary | null
   playerVotingState: PlayerVotingState | null
+  loverPartner: { id: string; username: string } | null
 
   setSocket: (socket: import('socket.io-client').Socket) => void
   setRoomCode: (roomCode: string) => void
@@ -124,6 +135,7 @@ export type RoomState = {
   setVotingProgress: (progress: VotingProgress | null) => void
   setVotingResult: (result: VotingResultSummary | null) => void
   setPlayerVotingState: (state: PlayerVotingState | null) => void
+  setLoverPartner: (partner: { id: string; username: string } | null) => void
   setStateRoomStore: (state: Partial<RoomState>) => void
 }
 
@@ -152,6 +164,7 @@ export const useRoomStore = create<RoomState>()(
       votingProgress: null,
       votingResult: null,
       playerVotingState: null,
+      loverPartner: null,
 
       setSocket: (socket) => set({ socket }),
       setRoomCode: (roomCode: string) => set({ roomCode }),
@@ -184,6 +197,7 @@ export const useRoomStore = create<RoomState>()(
           votingProgress: null,
           votingResult: null,
           playerVotingState: null,
+          loverPartner: null,
         }),
       clearSavedSession: () =>
         set({
@@ -201,6 +215,7 @@ export const useRoomStore = create<RoomState>()(
           votingProgress: null,
           votingResult: null,
           playerVotingState: null,
+          loverPartner: null,
         }),
       clearGameRuntimeState: () =>
         set({
@@ -214,6 +229,7 @@ export const useRoomStore = create<RoomState>()(
           votingProgress: null,
           votingResult: null,
           playerVotingState: null,
+          loverPartner: null,
         }),
       clearPlayerRoomSession: () =>
         set({
@@ -230,6 +246,7 @@ export const useRoomStore = create<RoomState>()(
           votingProgress: null,
           votingResult: null,
           playerVotingState: null,
+          loverPartner: null,
         }),
       clearGmRoomSession: () =>
         set({
@@ -245,6 +262,7 @@ export const useRoomStore = create<RoomState>()(
           votingProgress: null,
           votingResult: null,
           playerVotingState: null,
+          loverPartner: null,
         }),
       setAlive: (alive) => set({ alive }),
       // Night phase setters
@@ -256,6 +274,7 @@ export const useRoomStore = create<RoomState>()(
       setVotingProgress: (progress) => set({ votingProgress: progress }),
       setVotingResult: (result) => set({ votingResult: result }),
       setPlayerVotingState: (playerVotingState) => set({ playerVotingState }),
+      setLoverPartner: (loverPartner) => set({ loverPartner }),
       setStateRoomStore: (state: Partial<RoomState>) => set(state),
     }),
     {
@@ -305,6 +324,7 @@ export const getStateRoomStore = () => {
     votingProgress,
     votingResult,
     playerVotingState,
+    loverPartner,
     clearSavedSession,
     clearGameRuntimeState,
     clearPlayerRoomSession,
@@ -331,6 +351,7 @@ export const getStateRoomStore = () => {
     votingProgress,
     votingResult,
     playerVotingState,
+    loverPartner,
     clearSavedSession,
     clearGameRuntimeState,
     clearPlayerRoomSession,

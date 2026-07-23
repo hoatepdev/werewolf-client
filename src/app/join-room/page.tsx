@@ -1,14 +1,17 @@
 'use client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { CircleX, Loader2Icon, ScanQrCode, X, SwitchCamera } from 'lucide-react'
+import { CircleX, Loader2Icon, ScanQrCode, SwitchCamera } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useRoomStore } from '@/hook/useRoomStore'
 import { getSocket } from '@/lib/socket'
-import { parseRoomCodeInput } from '@/lib/room-code'
+import {
+  formatRoomCode,
+  isRoomCodeValid,
+  parseRoomCodeInput,
+} from '@/lib/room-code'
 import { toast } from 'sonner'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
 
@@ -18,6 +21,8 @@ export default function JoinRoomPage() {
 
   const scannerRef = useRef<HTMLDivElement>(null)
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null)
+  const scannerStartingRef = useRef(false)
+  const scannerRunningRef = useRef(false)
   const focusRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -40,13 +45,25 @@ export default function JoinRoomPage() {
   )
 
   const stopScanner = useCallback(() => {
-    if (html5QrCodeRef.current) {
-      html5QrCodeRef.current
-        .stop()
-        .then(() => html5QrCodeRef.current?.clear())
-        .catch(() => html5QrCodeRef.current?.clear())
-      html5QrCodeRef.current = null
+    const scanner = html5QrCodeRef.current
+    if (!scanner) return
+
+    const clearScanner = () => {
+      try {
+        scanner.clear()
+      } catch {}
     }
+
+    html5QrCodeRef.current = null
+    scannerStartingRef.current = false
+    scannerRunningRef.current = false
+
+    if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+      scanner.stop().then(clearScanner).catch(clearScanner)
+      return
+    }
+
+    clearScanner()
   }, [])
 
   useEffect(() => {
@@ -69,9 +86,11 @@ export default function JoinRoomPage() {
   useEffect(() => {
     if (!scanning || !scannerRef.current || typeof window === 'undefined')
       return
+    if (scannerStartingRef.current || scannerRunningRef.current) return
 
     setScanError(null)
     setScanSuccess(false)
+    scannerStartingRef.current = true
     const qrRegionId = 'qr-scanner'
     const qrCode = new Html5Qrcode(qrRegionId)
     html5QrCodeRef.current = qrCode
@@ -86,7 +105,7 @@ export default function JoinRoomPage() {
         },
         (decodedText: string) => {
           const parsedRoomCode = parseRoomCodeInput(decodedText)
-          if (!parsedRoomCode) {
+          if (!isRoomCodeValid(parsedRoomCode)) {
             setScanError('Mã QR không chứa mã phòng hợp lệ.')
             return
           }
@@ -98,9 +117,29 @@ export default function JoinRoomPage() {
         },
         () => {},
       )
+      .then(() => {
+        scannerStartingRef.current = false
+
+        if (html5QrCodeRef.current !== qrCode) {
+          scannerRunningRef.current = false
+          qrCode
+            .stop()
+            .then(() => qrCode.clear())
+            .catch(() => qrCode.clear())
+          return
+        }
+
+        scannerRunningRef.current = true
+      })
       .catch(() => {
-        setScanError('Không thể mở camera. Bạn có thể nhập mã phòng thủ công.')
-        setScanning(false)
+        scannerStartingRef.current = false
+        scannerRunningRef.current = false
+
+        if (html5QrCodeRef.current === qrCode) {
+          html5QrCodeRef.current = null
+          setScanError('Không thể mở camera. Bạn có thể nhập mã phòng thủ công.')
+          setScanning(false)
+        }
       })
 
     return () => stopScanner()
@@ -143,10 +182,16 @@ export default function JoinRoomPage() {
     setScanSuccess(false)
   }
 
+  const roomCodeValid = isRoomCodeValid(roomCode)
+
   const handleJoinRoom = async () => {
     const normalizedRoomCode = parseRoomCodeInput(roomCode)
-    if (!normalizedRoomCode || !username) {
-      toast.error('Vui lòng nhập mã phòng và tên người dùng')
+    if (!isRoomCodeValid(normalizedRoomCode)) {
+      toast.error('Vui lòng nhập mã phòng gồm 6 chữ số')
+      return
+    }
+    if (!username) {
+      toast.error('Vui lòng nhập tên người dùng')
       return
     }
     setLoading(true)
@@ -208,7 +253,10 @@ export default function JoinRoomPage() {
         <div className="mt-8 mb-12 flex w-full max-w-xs flex-col gap-3 text-center">
           {scanSuccess && roomCode && (
             <div className="rounded-xl border border-green-500/40 bg-green-950/40 px-4 py-3 text-sm text-green-300">
-              Đã quét mã phòng <span className="font-bold">{roomCode}</span>
+              Đã quét mã phòng{' '}
+              <span className="font-bold tracking-[0.35em]">
+                {formatRoomCode(roomCode)}
+              </span>
             </div>
           )}
           <div className="grid grid-cols-2 gap-6">
@@ -250,20 +298,41 @@ export default function JoinRoomPage() {
         <p className="mb-2 text-sm text-zinc-400">
           Hoặc nhập mã phòng thủ công
         </p>
-        <Input
-          className="mx-auto h-16 max-w-xs border-none bg-zinc-800 text-lg text-white focus-visible:ring-0 focus-visible:ring-offset-0"
-          placeholder="Nhập mã phòng"
-          value={roomCode}
-          onChange={(e) => handleRoomCodeChange(e.target.value)}
-          ref={focusRef}
-        />
+        <div className="relative mx-auto w-full max-w-xs">
+          <input
+            ref={focusRef}
+            className="sr-only"
+            aria-label="Nhập mã phòng gồm 6 chữ số"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={6}
+            autoComplete="one-time-code"
+            value={roomCode}
+            onChange={(e) => handleRoomCodeChange(e.target.value)}
+          />
+          <button
+            type="button"
+            className="grid w-full grid-cols-6 gap-2"
+            onClick={() => focusRef.current?.focus()}
+          >
+            {Array.from({ length: 6 }).map((_, index) => (
+              <span
+                key={index}
+                className="flex h-14 items-center justify-center rounded-xl bg-zinc-800 text-2xl font-bold text-white ring-1 ring-zinc-700 transition-colors data-[filled=true]:ring-yellow-400"
+                data-filled={Boolean(roomCode[index])}
+              >
+                {roomCode[index] || ''}
+              </span>
+            ))}
+          </button>
+        </div>
       </div>
       <div className="mx-auto mt-auto mb-2 flex w-full max-w-sm flex-col">
         <Button
           variant="yellow"
           className="w-full"
           type="button"
-          disabled={!roomCode || loading}
+          disabled={!roomCodeValid || loading}
           onClick={handleJoinRoom}
         >
           {loading ? (

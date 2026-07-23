@@ -6,6 +6,7 @@ export type Role =
   | 'hunter'
   | 'bodyguard'
   | 'tanner'
+  | 'cupid'
 
 export interface RoleObject {
   id: Role

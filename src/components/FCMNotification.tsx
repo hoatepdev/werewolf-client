@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from './ui/card'
+import { toast } from 'sonner'
 
 interface FCMNotificationProps {
   roomCode: string
@@ -21,9 +22,20 @@ export const FCMNotification = ({
   roomCode,
   participantKind,
 }: FCMNotificationProps) => {
-  const { permission, isSupported, requestPermission, registerForRoom } = useFCM()
+  const {
+    permission,
+    isSupported,
+    requestPermission,
+    registerForRoom,
+    unregisterForRoom,
+    isRegisteredForRoom,
+  } = useFCM()
   const [isRegistering, setIsRegistering] = useState(false)
   const [registered, setRegistered] = useState(false)
+
+  useEffect(() => {
+    setRegistered(isRegisteredForRoom(roomCode, participantKind))
+  }, [isRegisteredForRoom, participantKind, roomCode])
 
   useEffect(() => {
     if (permission !== 'granted' || registered || isRegistering) return
@@ -59,6 +71,18 @@ export const FCMNotification = ({
 
       const success = await registerForRoom(roomCode, participantKind)
       setRegistered(success)
+    } finally {
+      setIsRegistering(false)
+    }
+  }
+
+  const handleDisable = async () => {
+    setIsRegistering(true)
+    try {
+      const success = await unregisterForRoom(roomCode, participantKind)
+      if (!success) return
+      setRegistered(false)
+      toast.success('Đã tắt thông báo cho phòng này')
     } finally {
       setIsRegistering(false)
     }
@@ -109,6 +133,16 @@ export const FCMNotification = ({
             Game sẽ nhắc bạn khi đến lượt quan trọng trong phòng này.
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <Button
+            onClick={handleDisable}
+            disabled={isRegistering}
+            variant="default"
+            className="border border-green-400/40 bg-green-950/40 py-2 text-sm text-green-100 hover:bg-green-900/50"
+          >
+            {isRegistering ? 'Đang tắt...' : 'Tắt thông báo'}
+          </Button>
+        </CardContent>
       </Card>
     )
   }

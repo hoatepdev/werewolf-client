@@ -11,6 +11,7 @@ import { SafeGameStats } from './game-stats-safe'
 import { GameLog } from './game-log'
 import { HoldToConfirmButton } from './hold-to-confirm-button'
 import { PrivateTrigger } from './private-trigger'
+import { getHudPhaseColorClass, getPhaseLabel } from '@/components/game-hud'
 
 interface TableLayerProps {
   phase: string
@@ -43,27 +44,10 @@ export function TableLayer({
   onActivatePrivate,
   onRefresh,
 }: TableLayerProps) {
-  const phaseLabel =
-    phase === 'night'
-      ? 'Đêm'
-      : phase === 'day'
-        ? 'Ngày'
-        : phase === 'voting'
-          ? 'Bỏ phiếu'
-          : phase === 'ended'
-            ? 'Kết thúc'
-            : 'Chưa bắt đầu'
-
-  const phaseColor =
-    phase === 'night'
-      ? 'bg-blue-600'
-      : phase === 'day'
-        ? 'bg-yellow-600'
-        : phase === 'voting'
-          ? 'bg-red-600'
-          : phase === 'ended'
-            ? 'bg-gray-600'
-            : 'bg-gray-600'
+  const phaseLabel = getPhaseLabel(phase as Parameters<typeof getPhaseLabel>[0])
+  const phaseColor = getHudPhaseColorClass(
+    phase as Parameters<typeof getHudPhaseColorClass>[0],
+  )
 
   return (
     <>

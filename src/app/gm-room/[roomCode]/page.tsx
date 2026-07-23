@@ -13,6 +13,9 @@ import { confirmDialog } from '@/components/ui/alert-dialog'
 import type { GmLogEntry } from './modules/types'
 import { useRoomStore } from '@/hook/useRoomStore'
 import { FCMNotification } from '@/components/FCMNotification'
+import { TimerProvider } from '@/hook/useTimerContext'
+import { GmGameHudContainer } from '@/components/game-hud'
+import { formatRoomCode } from '@/lib/room-code'
 
 const GmRoomPage = () => {
   const socket = getSocket()
@@ -56,6 +59,9 @@ const GmRoomPage = () => {
     handleGetPlayers,
     handleResetRoom: resetRoom,
     handleSetMockPlayers,
+    gmCommandError,
+    pendingGmCommand,
+    votingProgress,
   } = useSocketConnection(
     roomCode,
     socket,
@@ -108,19 +114,24 @@ const GmRoomPage = () => {
   const togglePrivateMode = () => setIsPrivateMode((prev) => !prev)
 
   const handleResetRoom = async () => {
+    const isActiveGame = phase !== 'ended'
     const confirmed = await confirmDialog({
-      title: 'Chơi lại phòng này',
-      description:
-        'Reset ván hiện tại và đưa tất cả người chơi về sảnh chờ trong cùng mã phòng?',
-      confirmText: 'Chơi lại',
+      title: isActiveGame ? 'Reset ván đang diễn ra?' : 'Chơi lại phòng này',
+      description: isActiveGame
+        ? 'Thao tác này sẽ dừng ván hiện tại và đưa tất cả người chơi về sảnh chờ trong cùng mã phòng. Chỉ dùng khi GM cần can thiệp khẩn cấp.'
+        : 'Reset ván hiện tại và đưa tất cả người chơi về sảnh chờ trong cùng mã phòng?',
+      confirmText: isActiveGame ? 'Reset cưỡng bức' : 'Chơi lại',
       cancelText: 'Hủy',
     })
     if (!confirmed) return
 
-    resetRoom(() => {
-      setIsPrivateMode(false)
-      setGmLogs([])
-      router.push(`/approve-room/${roomCode}`)
+    resetRoom({
+      force: isActiveGame,
+      onSuccess: () => {
+        setIsPrivateMode(false)
+        setGmLogs([])
+        router.push(`/approve-room/${roomCode}`)
+      },
     })
   }
 
@@ -138,62 +149,71 @@ const GmRoomPage = () => {
 
   return (
     <MainLayout maxWidth="max-w-6xl">
-      <PageHeader
-        title={roomCode}
-        onBack={handleLeaveRoom}
-        right={
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+      <TimerProvider>
+        <PageHeader title={formatRoomCode(roomCode)} onBack={handleLeaveRoom} />
+
+        <GmGameHudContainer
+          roomCode={roomCode}
+          isConnected={isConnected}
+          phase={phase}
+          players={players}
+          gameStats={gameStats}
+          winner={winner}
+          isPrivateMode={isPrivateMode}
+          onLeave={handleLeaveRoom}
+          onRefresh={handleGetPlayers}
+          onOpenPrivate={togglePrivateMode}
+          className="mb-6"
+        />
+
+        <div className="fixed top-44 right-4 z-40 w-72 max-w-[calc(100vw-2rem)] lg:top-40">
+          <FCMNotification roomCode={roomCode} participantKind="gm" />
+        </div>
+
+        <TableLayer
+          phase={phase}
+          onNextPhase={handleNextPhase}
+          currentAudio={currentAudio}
+          isPlaying={isPlayingRef.current}
+          audioStatus={audioStatus}
+          stopAudio={() => setCurrentAudio(null)}
+          audioQueue={audioQueue}
+          playAudio={setCurrentAudio}
+          players={players}
+          gameStats={gameStats}
+          gmLogs={gmLogs}
+          onActivatePrivate={togglePrivateMode}
+          onRefresh={handleGetPlayers}
+        />
+
+        <AnimatePresence>
+          {isPrivateMode && (
+            <PrivateOverlay
+              onClose={togglePrivateMode}
+              roomCode={roomCode}
+              isConnected={isConnected}
+              phase={phase}
+              onNextPhase={handleNextPhase}
+              onRefresh={handleGetPlayers}
+              onResetRoom={handleResetRoom}
+              players={players}
+              onEliminate={handleEliminatePlayer}
+              onRevive={handleRevivePlayer}
+              gameStats={gameStats}
+              nightActions={nightActions}
+              gmLogs={gmLogs}
+              socket={socket}
+              forceRender={forceRender}
+              setForceRender={setForceRender}
+              handleSetMockPlayers={handleSetMockPlayers}
+              winner={winner}
+              gmCommandError={gmCommandError}
+              pendingGmCommand={pendingGmCommand}
+              votingProgress={votingProgress}
             />
-            <span className="text-sm text-gray-300">
-              {isConnected ? 'Đã kết nối' : 'Mất kết nối'}
-            </span>
-          </div>
-        }
-      />
-
-      <div className="fixed top-20 right-4 z-40 w-72 max-w-[calc(100vw-2rem)]">
-        <FCMNotification roomCode={roomCode} participantKind="gm" />
-      </div>
-
-      <TableLayer
-        phase={phase}
-        onNextPhase={handleNextPhase}
-        currentAudio={currentAudio}
-        isPlaying={isPlayingRef.current}
-        audioStatus={audioStatus}
-        stopAudio={() => setCurrentAudio(null)}
-        audioQueue={audioQueue}
-        playAudio={setCurrentAudio}
-        players={players}
-        gameStats={gameStats}
-        gmLogs={gmLogs}
-        onActivatePrivate={togglePrivateMode}
-        onRefresh={handleGetPlayers}
-      />
-
-      <AnimatePresence>
-        {isPrivateMode && (
-          <PrivateOverlay
-            onClose={togglePrivateMode}
-            phase={phase}
-            onNextPhase={handleNextPhase}
-            onResetRoom={handleResetRoom}
-            players={players}
-            onEliminate={handleEliminatePlayer}
-            onRevive={handleRevivePlayer}
-            gameStats={gameStats}
-            nightActions={nightActions}
-            gmLogs={gmLogs}
-            socket={socket}
-            forceRender={forceRender}
-            setForceRender={setForceRender}
-            handleSetMockPlayers={handleSetMockPlayers}
-            winner={winner}
-          />
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </TimerProvider>
     </MainLayout>
   )
 }

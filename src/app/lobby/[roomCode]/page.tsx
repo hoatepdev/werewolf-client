@@ -13,12 +13,16 @@ import { toast } from 'sonner'
 import { renderAvatar } from '@/helpers'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
+import { FCMNotification } from '@/components/FCMNotification'
+import { ReadyChecklist } from '@/components/ReadyChecklist'
+import { formatRoomCode } from '@/lib/room-code'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
   const router = useRouter()
   const [showRoleModal, setShowRoleModal] = useState(false)
   const [assignedRole, setAssignedRole] = useState<RoleObject>(LIST_ROLE[0])
+  const [hasAssignedRole, setHasAssignedRole] = useState(false)
 
   const { roomCode } = React.use(params)
 
@@ -27,6 +31,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     approvedPlayers,
     username,
     avatarKey,
+    role,
     setRole,
     setApprovedPlayers,
     setAlive,
@@ -54,7 +59,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       setUsername(data.username)
       setAvatarKey(data.avatarKey)
     }
-    const handlePlayerLeft = (data: { username: string; activeGame: boolean }) => {
+    const handlePlayerLeft = (data: {
+      username: string
+      activeGame: boolean
+    }) => {
       if (data.username) toast.info(`${data.username} đã rời phòng`)
     }
     const handleAssignedRole = ({ role }: { role: Player['role'] }) => {
@@ -62,6 +70,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         const roleData = LIST_ROLE.find((r) => r.id === role) || LIST_ROLE[0]
         setAssignedRole(roleData)
         setRole(roleData.id)
+        setHasAssignedRole(true)
         setShowRoleModal(true)
       }, 1000)
     }
@@ -97,6 +106,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     }
   }, [
     playerId,
+    role,
     roomCode,
     router,
     setApprovedPlayers,
@@ -160,7 +170,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   return (
     <MainLayout>
       <PageHeader
-        title={roomCode}
+        title={formatRoomCode(roomCode)}
         onBack={handleLeaveRoom}
         right={
           <button
@@ -183,16 +193,29 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       <div className="flex flex-1 flex-col items-center">
         <div className="mb-4 text-center">
           <h1 className="text-xl font-bold">
-            Mã phòng: <span className="text-yellow-400">{roomCode}</span>
+            Mã phòng:{' '}
+            <span className="tracking-[0.35em] text-yellow-400">
+              {formatRoomCode(roomCode)}
+            </span>
           </h1>
         </div>
         <div className="w-full max-w-sm">
-          <div className="mb-12 text-center">
+          <div className="mb-6 text-center">
             <h2 className="font-semibold">
               Người chơi ({approvedPlayers.length}/9)
             </h2>
           </div>
+          <div className="mb-8">
+            <FCMNotification roomCode={roomCode} participantKind="player" />
+          </div>
           <PlayerGrid players={approvedPlayers} mode="lobby" />
+          <div className="mt-6">
+            <ReadyChecklist
+              players={approvedPlayers}
+              currentPlayerId={playerId}
+              assignedRoles={hasAssignedRole || Boolean(role)}
+            />
+          </div>
         </div>
       </div>
       <RoleRandomizerModal

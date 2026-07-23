@@ -1,3 +1,6 @@
+const ROOM_CODE_LENGTH = 6
+const ROOM_CODE_PATTERN = /^\d{6}$/
+
 export function parseRoomCodeInput(value: string): string {
   const trimmed = value.trim()
   if (!trimmed) return ''
@@ -18,6 +21,14 @@ export function buildJoinRoomUrl(roomCode: string, origin?: string): string {
   return origin ? `${origin}${path}` : path
 }
 
+export function isRoomCodeValid(roomCode: string): boolean {
+  return ROOM_CODE_PATTERN.test(roomCode)
+}
+
+export function formatRoomCode(roomCode: string): string {
+  return normalizeRoomCode(roomCode).split('').join(' ')
+}
+
 function normalizeRoomCode(value: string): string {
-  return value.trim().toUpperCase()
+  return value.trim().replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH)
 }

@@ -25,6 +25,8 @@ import { useRouter } from 'next/navigation'
 import { confirmDialog } from '@/components/ui/alert-dialog'
 import type { GameLogEntry } from '@/types/game-log'
 import { FCMNotification } from '@/components/FCMNotification'
+import { PlayerGameHudContainer } from '@/components/game-hud'
+import GameHistoryLog from '@/components/GameHistoryLog'
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
@@ -47,6 +49,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     }
     winner?: 'villagers' | 'werewolves' | 'tanner'
     gameLog?: GameLogEntry[]
+    loverPartner?: { id: string; username: string } | null
   }
 
   const [gameWinner, setGameWinner] = useState<
@@ -76,6 +79,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     votingResult,
     setVotingResult,
     setPlayerVotingState,
+    setLoverPartner,
     clearSavedSession,
     clearGameRuntimeState,
     clearPlayerRoomSession,
@@ -153,6 +157,12 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       if (typeof data.alive === 'boolean') setAlive(data.alive)
     }
 
+    const syncGameLogFromPayload = (payload: { gameLog?: GameLogEntry[] }) => {
+      if (Array.isArray(payload.gameLog)) {
+        setGameLog(payload.gameLog)
+      }
+    }
+
     const applyPlayerSnapshot = (snapshot: PlayerStateSnapshot) => {
       if (snapshot.playerId) setPlayerId(snapshot.playerId)
       if (snapshot.role) setRole(snapshot.role)
@@ -169,9 +179,11 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       }
 
       setNightPrompt(snapshot.nightPrompt ?? null)
+      setLoverPartner(snapshot.loverPartner ?? null)
       setHunterDeathShooting(snapshot.hunterDeathShooting === true)
       setVotingProgress(snapshot.voting?.progress ?? null)
       setPlayerVotingState(snapshot.voting?.state ?? null)
+      syncGameLogFromPayload(snapshot)
       if (snapshot.voting?.result) {
         setVotingResult(snapshot.voting.result)
       } else if (snapshot.phase === 'night' || snapshot.phase === 'voting') {
@@ -184,7 +196,6 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         setShowReveal(false)
         setVotingProgress(null)
         setPlayerVotingState(null)
-        if (snapshot.gameLog) setGameLog(snapshot.gameLog)
       }
     }
 
@@ -225,7 +236,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     socket.on('player:stateSnapshot', applyPlayerSnapshot)
     document.addEventListener('visibilitychange', handleVisibilitySync)
     window.addEventListener('focus', requestStateSyncThrottled)
-    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage)
+    navigator.serviceWorker?.addEventListener(
+      'message',
+      handleServiceWorkerMessage,
+    )
 
     if (socket.connected) {
       handleReconnect()
@@ -239,6 +253,17 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     socket.on('night:action-timeout', () => {
       setNightPrompt(null)
     })
+
+    socket.on(
+      'night:cupid-linked',
+      (partner: { partnerId: string; partnerName: string }) => {
+        setLoverPartner({
+          id: partner.partnerId,
+          username: partner.partnerName,
+        })
+        toast.success(`Bạn đã được ghép đôi với ${partner.partnerName}.`)
+      },
+    )
 
     socket.on('game:phaseChanged', (newPhase: { phase: string }) => {
       setPhase(
@@ -264,32 +289,40 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       }
     })
 
-    socket.on(
-      'game:nightResult',
-      ({ diedPlayerIds, cause, deaths }: NightResult) => {
-        setNightResult({ diedPlayerIds, cause, deaths })
+    socket.on('game:nightResult', (payload: NightResult) => {
+      const { diedPlayerIds, cause, deaths } = payload
+      syncGameLogFromPayload(payload)
+      setNightResult({ diedPlayerIds, cause, deaths })
 
-        const newApprovedPlayers: Player[] = approvedPlayersRef.current.map(
-          (player) =>
-            diedPlayerIds.includes(player.id)
-              ? { ...player, alive: false }
-              : player,
-        )
+      const newApprovedPlayers: Player[] = approvedPlayersRef.current.map(
+        (player) =>
+          diedPlayerIds.includes(player.id)
+            ? { ...player, alive: false }
+            : player,
+      )
 
-        if (diedPlayerIds.includes(playerIdRef.current)) {
-          setAlive(false)
-          playSound('player_die')
-          triggerHaptic([200, 100, 200, 100, 500]) // Heavy death vibration
-          // Hunter death shoot is triggered by game:hunterShoot, not here
-        } else if (diedPlayerIds.length > 0) {
-          // Someone else died
-          playSound('player_die')
-          triggerHaptic(50) // Small bump
+      if (diedPlayerIds.includes(playerIdRef.current)) {
+        setAlive(false)
+        playSound('player_die')
+        triggerHaptic([200, 100, 200, 100, 500]) // Heavy death vibration
+        if (
+          deaths?.some(
+            (death) =>
+              death.playerId === playerIdRef.current && death.cause === 'lover',
+          )
+        ) {
+          toast.error('Người yêu của bạn đã chết. Bạn cũng chết theo.')
         }
+        // Hunter death shoot is triggered by game:hunterShoot, not here
+      } else if (diedPlayerIds.length > 0) {
+        // Someone else died
+        playSound('player_die')
+        triggerHaptic(50) // Small bump
+      }
 
-        setApprovedPlayers(newApprovedPlayers)
-      },
-    )
+      approvedPlayersRef.current = newApprovedPlayers
+      setApprovedPlayers(newApprovedPlayers)
+    })
 
     socket.on('voting:progress', setVotingProgress)
     socket.on('voting:state', (state: PlayerVotingState) => {
@@ -305,16 +338,59 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
     socket.on(
       'game:hunterShot',
-      ({ hunterId, targetId }: { hunterId: string; targetId: string }) => {
-        const target = approvedPlayersRef.current.find((p) => p.id === targetId)
+      ({
+        hunterId,
+        targetId,
+        additionalDeaths,
+        gameLog,
+      }: {
+        hunterId: string
+        targetId: string | null
+        additionalDeaths?: Array<{
+          playerId: string
+          playerName: string
+          cause: 'lover'
+        }>
+        gameLog?: GameLogEntry[]
+      }) => {
+        syncGameLogFromPayload({ gameLog })
+        const target = targetId
+          ? approvedPlayersRef.current.find((p) => p.id === targetId)
+          : undefined
+        const diedPlayerIds = [
+          ...(targetId ? [targetId] : []),
+          ...(additionalDeaths?.map((death) => death.playerId) ?? []),
+        ]
+        const updatedPlayers = approvedPlayersRef.current.map((player) =>
+          diedPlayerIds.includes(player.id)
+            ? { ...player, alive: false }
+            : player,
+        )
+        approvedPlayersRef.current = updatedPlayers
+        setApprovedPlayers(updatedPlayers)
+        if (diedPlayerIds.includes(playerIdRef.current)) {
+          setAlive(false)
+        }
         if (hunterId !== playerIdRef.current) {
-          toast.info(`Thợ săn đã bắn ${target?.username ?? 'một người'}!`)
+          toast.info(
+            target
+              ? `Thợ săn đã bắn ${target.username}!`
+              : 'Thợ săn đã bỏ qua lượt bắn.',
+          )
+        }
+        if (
+          additionalDeaths?.some(
+            (death) => death.playerId === playerIdRef.current,
+          )
+        ) {
+          toast.error('Người yêu của bạn đã chết. Bạn cũng chết theo.')
         }
         setHunterDeathShooting(false)
       },
     )
 
     const handleVotingResult = (data: VotingResultSummary) => {
+      syncGameLogFromPayload(data)
       // Skip player updates if game already ended — game:gameEnded has authoritative data
       if (gameWinnerRef.current) return
 
@@ -335,17 +411,29 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         return
       }
 
+      const diedPlayerIds = [
+        data.eliminatedPlayerId,
+        ...(data.additionalDeaths?.map((death) => death.playerId) ?? []),
+      ]
       const newApprovedPlayers = approvedPlayersRef.current.map((player) =>
-        player.id === data.eliminatedPlayerId
+        diedPlayerIds.includes(player.id)
           ? { ...player, alive: false }
           : player,
       )
+      approvedPlayersRef.current = newApprovedPlayers
       setApprovedPlayers(newApprovedPlayers)
 
-      if (data.eliminatedPlayerId === playerIdRef.current) {
+      if (diedPlayerIds.includes(playerIdRef.current)) {
         setAlive(false)
         playSound('player_die')
         triggerHaptic([200, 100, 200, 100, 500])
+        if (
+          data.additionalDeaths?.some(
+            (death) => death.playerId === playerIdRef.current,
+          )
+        ) {
+          toast.error('Người yêu của bạn đã chết. Bạn cũng chết theo.')
+        }
       } else {
         playSound('player_die')
         triggerHaptic(50)
@@ -376,9 +464,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           setAlive(false)
         }
       }
-      if (logData) {
-        setGameLog(logData)
-      }
+      syncGameLogFromPayload({ gameLog: logData })
       setVotingProgress(null)
       setVotingResult(null)
       setPlayerVotingState(null)
@@ -437,6 +523,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         handleServiceWorkerMessage,
       )
       socket.off('night:action-timeout')
+      socket.off('night:cupid-linked')
       socket.off('game:phaseChanged')
       socket.off('game:nightResult')
       socket.off('voting:progress')
@@ -450,7 +537,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       socket.off('room:playerLeft', handlePlayerLeft)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [persistentPlayerId, reconnectToken, rehydrated, roomCode, setVotingResult])
+  }, [
+    persistentPlayerId,
+    reconnectToken,
+    rehydrated,
+    roomCode,
+    setVotingResult,
+  ])
 
   const handleLeaveActiveRoom = async () => {
     const confirmed = await confirmDialog({
@@ -542,19 +635,31 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     <TimerProvider>
       <div className="min-h-screen">
         {!gameWinner && (
-          <button
-            className="fixed top-4 left-4 z-40 rounded-full bg-zinc-900/80 px-3 py-2 text-sm text-zinc-200 shadow-lg backdrop-blur transition-colors hover:bg-zinc-800"
-            onClick={handleLeaveActiveRoom}
-          >
-            Rời ván
-          </button>
+          <div className="fixed top-4 right-4 left-4 z-40 mx-auto max-w-5xl">
+            <PlayerGameHudContainer
+              roomCode={roomCode}
+              onLeave={handleLeaveActiveRoom}
+            />
+          </div>
         )}
         {!gameWinner && (
-          <div className="fixed top-4 right-4 z-40 w-72 max-w-[calc(100vw-2rem)]">
+          <div className="fixed top-52 right-4 z-40 w-72 max-w-[calc(100vw-2rem)] lg:top-36">
             <FCMNotification roomCode={roomCode} participantKind="player" />
           </div>
         )}
-        {renderPhase()}
+        <div className={!gameWinner ? 'pt-56 lg:pt-40' : undefined}>
+          {renderPhase()}
+          {!gameWinner && (
+            <div className="mx-auto mt-6 w-full max-w-sm px-4 pb-8">
+              <GameHistoryLog
+                gameLog={gameLog}
+                title="Lịch sử ván"
+                compact
+                showEmptyState
+              />
+            </div>
+          )}
+        </div>
       </div>
     </TimerProvider>
   )
