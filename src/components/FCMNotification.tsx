@@ -74,7 +74,21 @@ export const FCMNotification = ({
     } finally {
       setIsRegistering(false)
     }
-  }
+  }, [
+    isRegistering,
+    participantKind,
+    permission,
+    registerForRoom,
+    registered,
+    roomCode,
+  ])
+
+  const handleEnable = async () => {
+    setIsRegistering(true)
+    try {
+      const granted =
+        permission === 'granted' ? true : await requestPermission()
+      if (!granted) return
 
   const handleDisable = async () => {
     setIsRegistering(true)

@@ -2,14 +2,20 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useGameStore } from '@/store/game/gameStore';
+import { usePathname } from 'next/navigation';
+import { useRoomStore } from '@/hook/useRoomStore';
 import { DayScene } from './DayScene';
 import { NightScene } from './NightScene';
 import { VotingScene } from './VotingScene';
 import { IdleScene } from './IdleScene';
 
 export const BackgroundEngine = () => {
-  const currentPhase = useGameStore((state) => state.currentPhase);
+  const pathname = usePathname();
+  const roomCode = useRoomStore((state) => state.roomCode);
+  const phase = useRoomStore((state) => state.phase);
+  const isGameRoute =
+    pathname?.startsWith('/room/') || pathname?.startsWith('/gm-room/');
+  const currentPhase = isGameRoute && roomCode ? phase : 'IDLE';
   const [showFlash, setShowFlash] = useState(false);
   const [prevPhase, setPrevPhase] = useState(currentPhase);
 
@@ -31,7 +37,10 @@ export const BackgroundEngine = () => {
         {currentPhase === 'IDLE' && <IdleScene key="idle" />}
         {currentPhase === 'day' && <DayScene key="day" />}
         {currentPhase === 'night' && <NightScene key="night" />}
-        {currentPhase === 'voting' && <VotingScene key="voting" />}
+        {(currentPhase === 'voting' || currentPhase === 'conclude') && (
+          <VotingScene key="voting" />
+        )}
+        {currentPhase === 'ended' && <IdleScene key="ended" />}
       </AnimatePresence>
 
       {/* Transition Effect: White Flash (Night -> Day) */}

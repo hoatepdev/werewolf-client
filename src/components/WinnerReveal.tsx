@@ -8,7 +8,7 @@ import { useRoomStore } from '@/hook/useRoomStore'
 type WinnerType = 'villagers' | 'werewolves' | 'tanner'
 
 // Helper: Get player's team based on their role
-const getPlayerTeam = (role: string | null): WinnerType | null => {
+const getPlayerTeam = (role?: string | null): WinnerType | null => {
   if (!role) return null
   const villagerRoles = ['villager', 'seer', 'witch', 'hunter', 'bodyguard']
   if (villagerRoles.includes(role)) return 'villagers'

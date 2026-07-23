@@ -217,6 +217,16 @@ export function useSocketConnection(
       'gm:stateSnapshotError': (data: { message?: string }) => {
         setCommandError(data.message || 'Không thể đồng bộ trạng thái GM.')
       },
+      'gm:connectRoomError': (data: { message?: string }) => {
+        setIsConnected(false)
+        const message =
+          data.message && data.message !== 'Not authorized.'
+            ? data.message
+            : 'Không thể tiếp tục phòng quản trò. Phòng có thể đã hết hạn hoặc phiên không còn hợp lệ.'
+        toast.error(message)
+        onReconnectFailed?.(message)
+      },
+      'gm:stateSnapshot': applyGmSnapshot,
       'game:phaseChanged': (data: {
         phase: 'night' | 'day' | 'voting' | 'conclude' | 'ended'
       }) => {
@@ -250,6 +260,14 @@ export function useSocketConnection(
         setWinner(null)
         setNightActions([])
         setVotingProgress(null)
+        setCurrentAudio(null)
+        toast.success('Phòng đã được reset')
+      },
+      'room:reset': () => {
+        clearGameRuntimeState()
+        setPhase('night')
+        setWinner(null)
+        setNightActions([])
         setCurrentAudio(null)
         toast.success('Phòng đã được reset')
       },

@@ -79,6 +79,45 @@ export interface VotingResultSummary {
   totalVoters: number
 }
 
+export type VotingChoice = 'target' | 'abstain'
+export type VotingResponseKind = 'target' | 'abstain' | 'timeout'
+
+export interface PlayerVotingState {
+  hasResponded: boolean
+  choice: VotingChoice | null
+  targetId: string | null
+  targetName: string | null
+}
+
+export interface VotingProgress {
+  votedCount: number
+  respondedCount?: number
+  totalVoters: number
+}
+
+export interface VotingResultSummary {
+  round: number
+  eliminatedPlayerId: string | null
+  eliminatedPlayerName: string | null
+  cause: 'vote' | 'hunter' | 'tie' | 'no_votes'
+  tiedPlayerIds?: string[]
+  tiedPlayers?: Array<{ id: string; username: string }>
+  votes: Array<{
+    voterId: string
+    voterName: string
+    targetId: string | null
+    targetName: string | null
+    kind?: VotingResponseKind
+  }>
+  totals: Array<{ targetId: string; targetName: string; count: number }>
+  abstainCount: number
+  timeoutCount?: number
+  targetVoteCount?: number
+  votedCount: number
+  respondedCount?: number
+  totalVoters: number
+}
+
 export type RoomState = {
   roomCode: string
   playerId: string

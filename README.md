@@ -21,6 +21,15 @@ Create a `.env.local` file in the root directory:
 NEXT_PUBLIC_SOCKET_URL=http://localhost:4001
 # Production example:
 # NEXT_PUBLIC_SOCKET_URL=https://your-server-domain.com
+
+# Firebase web config (public) + VAPID key for Cloud Messaging
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_VAPID_KEY=
 ```
 
 ## Architecture
@@ -202,6 +211,12 @@ Service worker is configured via `next-pwa` in `next.config.js`. For production:
 - Zustand state is persisted in localStorage
 - Clear browser data to reset stored state
 - `rehydrated` flag gates rendering until localStorage is loaded
+
+### Push notifications not arriving
+
+- Verify Firebase web env values and `NEXT_PUBLIC_FIREBASE_VAPID_KEY` are set before running `npm run build` or `npm run start:dev`
+- `public/sw.js` is generated from `public/sw.template.js` by `scripts/build-sw.js`
+- The server must be configured with Firebase Admin credentials and users must grant notification permission in the player/GM room
 
 ### PWA not updating
 
