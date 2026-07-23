@@ -9,30 +9,63 @@ import { renderAvatar } from '@/helpers'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Footer from '@/components/Footer'
+import { confirmDialog } from '@/components/ui/alert-dialog'
+import { toast } from 'sonner'
+import { formatRoomCode } from '@/lib/room-code'
 
 export default function Home() {
   const router = useRouter()
 
-  const { username, avatarKey, setUsername, setAvatarKey, setResetGame } =
-    useRoomStore()
+  const {
+    username,
+    avatarKey,
+    roomCode,
+    persistentPlayerId,
+    reconnectToken,
+    gmPersistentId,
+    gmReconnectToken,
+    rehydrated,
+    setUsername,
+    setAvatarKey,
+    clearSavedSession,
+  } = useRoomStore()
 
   const [step, setStep] = useState<'input' | 'mode'>('input')
   const [name, setName] = useState('')
   const [avatar, setAvatar] = useState<number>(0)
 
   useEffect(() => {
-    setResetGame()
-  }, [setResetGame])
-
-  useEffect(() => {
     if (username) setName(username)
     if (typeof avatarKey === 'number') setAvatar(avatarKey)
   }, [username, avatarKey])
+
+  const hasPlayerSession = Boolean(
+    rehydrated && roomCode && persistentPlayerId && reconnectToken,
+  )
+  const hasGmSession = Boolean(
+    rehydrated && roomCode && gmPersistentId && gmReconnectToken,
+  )
+  const hasSavedSession = hasPlayerSession || hasGmSession
 
   const handleContinue = () => {
     setUsername(name.trim())
     setAvatarKey(avatar)
     setStep('mode')
+  }
+
+  const handleClearSavedSession = async () => {
+    const confirmed = await confirmDialog({
+      title: 'Bỏ ván đã lưu?',
+      description:
+        'Bạn sẽ xóa phiên kết nối lại trên thiết bị này. Nếu ván vẫn đang diễn ra, bạn cần mã phòng hoặc tạo phòng mới để tham gia lại.',
+      confirmText: 'Bỏ ván',
+      cancelText: 'Giữ lại',
+    })
+
+    if (!confirmed) return
+
+    clearSavedSession()
+    toast.success('Đã bỏ phiên ván cũ.')
   }
 
   return (
@@ -41,12 +74,12 @@ export default function Home() {
         <div className="flex flex-col items-center gap-2 text-center text-4xl font-extrabold tracking-tight text-white">
           <Image
             src="/images/logo/logo.png"
-            alt="Lunar Verdict"
+            alt="Ma Sói"
             width={80}
             height={80}
           />
           <div>
-            <span className="text-yellow-500">Lunar</span> Verdict
+            <span className="text-yellow-500">Ma Sói</span>
           </div>
         </div>
         <motion.div
@@ -58,7 +91,85 @@ export default function Home() {
           OFFLINE
         </motion.div>
       </div>
-      <section className="flex w-full flex-1 flex-col items-center justify-center">
+      <section className="flex w-full flex-1 flex-col items-center justify-center gap-6">
+        {hasSavedSession && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="w-full max-w-sm rounded-2xl border border-yellow-400/40 bg-zinc-950/80 p-4 shadow-lg shadow-yellow-950/30"
+          >
+            <div className="mb-4">
+              <p className="text-lg font-bold text-yellow-400">
+                Bạn có ván đang chơi
+              </p>
+              <div className="mt-2 space-y-1 text-sm text-zinc-300">
+                <p>
+                  Phòng:{' '}
+                  <span className="font-semibold tracking-[0.35em] text-white">
+                    {formatRoomCode(roomCode)}
+                  </span>
+                </p>
+                {username && (
+                  <p>
+                    Tên: <span className="font-semibold text-white">{username}</span>
+                  </p>
+                )}
+                <p className="text-xs text-zinc-500">
+                  Nếu phòng đã hết hạn, bạn có thể bỏ phiên này và tham gia lại.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {hasPlayerSession && (
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-3">
+                  <p className="font-semibold text-zinc-100">
+                    Tiếp tục với vai trò người chơi
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-400">
+                    Kết nối lại vào phòng cũ bằng phiên đã lưu trên thiết bị này.
+                  </p>
+                  <Button
+                    variant="yellow"
+                    className="mt-3 w-full"
+                    type="button"
+                    onClick={() => router.push(`/room/${roomCode}`)}
+                  >
+                    Tiếp tục ván
+                  </Button>
+                </div>
+              )}
+
+              {hasGmSession && (
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-3">
+                  <p className="font-semibold text-zinc-100">
+                    Tiếp tục với vai trò quản trò
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-400">
+                    Khôi phục quyền quản trò nếu phòng vẫn còn hoạt động.
+                  </p>
+                  <Button
+                    className="mt-3 w-full"
+                    type="button"
+                    onClick={() => router.push(`/gm-room/${roomCode}`)}
+                  >
+                    Vào lại phòng quản trò
+                  </Button>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleClearSavedSession}
+                className="text-sm font-medium text-zinc-400 underline-offset-4 hover:text-red-300 hover:underline"
+              >
+                Bỏ ván này
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {step === 'input' && (
           <div className="flex w-full max-w-xs flex-col items-center gap-6">
             <div className="flex w-full flex-col gap-2">

@@ -12,6 +12,8 @@ import {
   DialogTrigger,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { getPhaseLabel, getRoleDisplay } from '@/components/game-hud'
+import { formatRoomCode } from '@/lib/room-code'
 
 export default function RoomLayout({
   children,
@@ -30,6 +32,7 @@ export default function RoomLayout({
     phase,
     alive,
   } = useRoomStore()
+  const roleDisplay = getRoleDisplay(role)
 
   const handleLeaveRoom = async () => {
     const confirmed = await confirmDialog({
@@ -46,7 +49,7 @@ export default function RoomLayout({
   return (
     <MainLayout>
       <PageHeader
-        title={roomCode}
+        title={formatRoomCode(roomCode)}
         onBack={handleLeaveRoom}
         right={
           <div className="flex min-w-[120px] items-center justify-end gap-2">
@@ -76,8 +79,8 @@ export default function RoomLayout({
                       <div className="truncate text-base font-semibold">
                         {username || 'Người chơi'}
                       </div>
-                      <div className="text-xs text-zinc-400">
-                        Phòng: {roomCode}
+                      <div className="text-xs tracking-[0.25em] text-zinc-400">
+                        Phòng: {formatRoomCode(roomCode)}
                       </div>
                     </div>
                   </div>
@@ -90,11 +93,15 @@ export default function RoomLayout({
                     </div>
                     <div className="rounded-md bg-zinc-800 p-2">
                       <div className="text-zinc-400">Vai trò</div>
-                      <div className="text-white">{role || '—'}</div>
+                      <div className="text-white">
+                        {roleDisplay
+                          ? `${roleDisplay.emoji} ${roleDisplay.name}`
+                          : '—'}
+                      </div>
                     </div>
                     <div className="rounded-md bg-zinc-800 p-2">
                       <div className="text-zinc-400">Giai đoạn</div>
-                      <div className="text-white">{phase}</div>
+                      <div className="text-white">{getPhaseLabel(phase)}</div>
                     </div>
                     <div className="rounded-md bg-zinc-800 p-2">
                       <div className="text-zinc-400">Còn sống</div>

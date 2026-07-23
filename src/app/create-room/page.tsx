@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
-import { buildJoinRoomUrl } from '@/lib/room-code'
+import { buildJoinRoomUrl, formatRoomCode } from '@/lib/room-code'
 
 const CreateRoomPage = () => {
   const socket = getSocket()
@@ -80,8 +80,8 @@ const CreateRoomPage = () => {
           Nếu không quét được QR, người chơi có thể nhập mã phòng này trong ứng dụng
         </p>
         <div className="mb-8 flex w-full items-center rounded-xl border-2 border-yellow-400 bg-[#23232a] px-4 py-3">
-          <span className="flex-1 truncate font-mono text-lg text-white">
-            {roomCode}
+          <span className="flex-1 truncate font-mono text-lg tracking-[0.35em] text-white">
+            {formatRoomCode(roomCode)}
           </span>
           <button
             className="ml-2 text-xl text-yellow-400 hover:text-yellow-500"
