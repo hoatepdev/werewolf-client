@@ -1,10 +1,10 @@
 # Werewolf Client
 
-A modern, responsive web PWA client for the Lunar Verdict (Ma Sói) game, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
+A modern, responsive web PWA client for the Ma Sói game, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
 
 ## Features
 
-- Join or create game rooms for Lunar Verdict
+- Join or create game rooms for Ma Sói
 - Real-time gameplay via WebSocket (Socket.IO)
 - Avatar selection and player management
 - Progressive Web App (PWA) with offline support

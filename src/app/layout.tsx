@@ -14,7 +14,7 @@ const tiktokSans = {
 }
 
 export const metadata: Metadata = {
-  title: 'Lunar Verdict Offline',
+  title: 'Ma Sói',
   description:
     'Chơi ma sói với bạn bè. Tạo phòng, tham gia và chơi cùng bạn bè.',
   keywords: [
@@ -38,16 +38,16 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'Lunar Verdict Offline',
+    title: 'Ma Sói',
     description: 'Chơi ma sói với bạn bè',
     url: 'https://werewolf-client-beta.vercel.app',
-    siteName: 'Lunar Verdict Offline',
+    siteName: 'Ma Sói',
     images: [
       {
         url: '/images/logo/logo.png',
         width: 512,
         height: 512,
-        alt: 'Lunar Verdict Offline Logo',
+        alt: 'Ma Sói Logo',
       },
     ],
     locale: 'vi_VN',
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Lunar Verdict Offline',
+    title: 'Ma Sói',
     description: 'Chơi ma sói với bạn bè',
     images: ['/images/logo/logo.png'],
   },
@@ -63,13 +63,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Lunar Verdict Offline',
+    title: 'Ma Sói',
   },
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'Lunar Verdict Offline',
+    'apple-mobile-web-app-title': 'Ma Sói',
     'msapplication-TileColor': '#18181b',
     'msapplication-config': '/browserconfig.xml',
   },
@@ -102,7 +102,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta
           name="apple-mobile-web-app-title"
-          content="Lunar Verdict Offline"
+          content="Ma Sói"
         />
         <meta name="msapplication-TileColor" content="#18181b" />
         <meta
