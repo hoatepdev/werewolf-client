@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import {
   NightPrompt,
   NightResult,
+  Phase,
   PlayerVotingState,
   VotingProgress,
   VotingResultSummary,
@@ -27,6 +28,23 @@ import type { GameLogEntry } from '@/types/game-log'
 import { FCMNotification } from '@/components/FCMNotification'
 import { PlayerGameHudContainer } from '@/components/game-hud'
 import GameHistoryLog from '@/components/GameHistoryLog'
+import PhaseTransitionOverlay from '@/components/phase/PhaseTransitionOverlay'
+
+type PhaseOverlayPhase = Extract<Phase, 'night' | 'day' | 'voting' | 'conclude'>
+
+const isPhaseOverlayPhase = (phase: string): phase is PhaseOverlayPhase =>
+  phase === 'night' ||
+  phase === 'day' ||
+  phase === 'voting' ||
+  phase === 'conclude'
+
+const PHASE_HAPTIC_PATTERNS: Record<PhaseOverlayPhase, number | number[]> = {
+  night: [60, 40, 80],
+  day: 50,
+  voting: [80, 40, 80],
+  conclude: [100, 60, 100],
+}
+
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
   const router = useRouter()
@@ -57,6 +75,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     'villagers' | 'werewolves' | 'tanner' | null
   >(null)
   const [showReveal, setShowReveal] = useState(false)
+  const [phaseOverlay, setPhaseOverlay] = useState<{
+    phase: PhaseOverlayPhase
+    nonce: number
+  } | null>(null)
   const [gameLog, setGameLog] = useState<GameLogEntry[]>([])
 
   const {
@@ -91,6 +113,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const playerIdRef = useRef(playerId)
   const roleRef = useRef(role)
   const lastVotingResultKeyRef = useRef<string | null>(null)
+  const lastPhaseOverlayRef = useRef<{
+    phase: PhaseOverlayPhase
+    shownAt: number
+  } | null>(null)
   const reconnectFailedRef = useRef(false)
   const snapshotReceivedRef = useRef(false)
   const syncFallbackRequestedRef = useRef(false)
@@ -197,6 +223,21 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       }
     }
 
+    const showPhaseOverlay = (nextPhase: PhaseOverlayPhase) => {
+      if (gameWinnerRef.current) return
+
+      const now = Date.now()
+      const last = lastPhaseOverlayRef.current
+      if (last?.phase === nextPhase && now - last.shownAt < 1500) return
+
+      lastPhaseOverlayRef.current = { phase: nextPhase, shownAt: now }
+      setPhaseOverlay((current) => ({
+        phase: nextPhase,
+        nonce: (current?.nonce ?? 0) + 1,
+      }))
+      triggerHaptic(PHASE_HAPTIC_PATTERNS[nextPhase])
+    }
+
     const applyPlayerSnapshot = (snapshot: PlayerStateSnapshot) => {
       snapshotReceivedRef.current = true
       clearRecoveryTimers()
@@ -233,6 +274,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       }
       if (snapshot.winner) {
         gameWinnerRef.current = snapshot.winner
+        setPhaseOverlay(null)
         setGameWinner(snapshot.winner)
         setShowReveal(false)
         setVotingProgress(null)
@@ -312,9 +354,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     )
 
     socket.on('game:phaseChanged', (newPhase: { phase: string }) => {
-      setPhase(
-        newPhase.phase as 'night' | 'day' | 'voting' | 'conclude' | 'ended',
-      )
+      setPhase(newPhase.phase as Phase)
       setNightPrompt(null)
       if (newPhase.phase !== 'voting') {
         setVotingProgress(null)
@@ -334,6 +374,9 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         playSound('day_start')
       }
 
+      if (isPhaseOverlayPhase(newPhase.phase)) {
+        showPhaseOverlay(newPhase.phase)
+      }
     })
 
     socket.on('game:nightResult', (payload: NightResult) => {
@@ -515,6 +558,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       setVotingProgress(null)
       setVotingResult(null)
       setPlayerVotingState(null)
+      setPhaseOverlay(null)
       setGameWinner(winner)
       setShowReveal(true)
     }
@@ -525,6 +569,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       setGameWinner(null)
       gameWinnerRef.current = null
       setShowReveal(false)
+      setPhaseOverlay(null)
       setGameLog([])
       lastVotingResultKeyRef.current = null
       toast.success('Phòng đã được reset. Quay lại sảnh chờ.')
@@ -695,6 +740,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           <div className="fixed top-52 right-4 z-40 w-72 max-w-[calc(100vw-2rem)] lg:top-36">
             <FCMNotification roomCode={roomCode} participantKind="player" />
           </div>
+        )}
+        {!gameWinner && (
+          <PhaseTransitionOverlay
+            phase={phaseOverlay?.phase ?? null}
+            nonce={phaseOverlay?.nonce ?? 0}
+            onComplete={() => setPhaseOverlay(null)}
+          />
         )}
         <div className={!gameWinner ? 'pt-56 lg:pt-40' : undefined}>
           {renderPhase()}
