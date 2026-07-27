@@ -110,8 +110,9 @@ const ROLE_GUIDE_META: Record<
     tone: 'border-fuchsia-400/30 bg-fuchsia-950/20 text-fuchsia-200',
   },
   cupid: {
-    faction: 'Biến số tình yêu',
-    objective: 'Ghép đôi hai người chơi và tạo một bí mật nguy hiểm.',
+    faction: 'Phe Dân / Tình yêu',
+    objective:
+      'Đêm đầu tiên ghép đôi hai người. Cặp đôi biết nhau; một người chết thì người còn lại chết theo. Hiện tại cặp đôi không tạo phe thắng riêng.',
     tone: 'border-pink-400/30 bg-pink-950/20 text-pink-200',
   },
 }
@@ -411,6 +412,25 @@ function WinConditions() {
             </div>
           </GuideCard>
         ))}
+        <GuideCard className="border-pink-400/30 bg-pink-950/20 p-4 text-pink-100">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl leading-none" aria-hidden="true">
+              💘
+            </span>
+            <div>
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <h3 className="font-bold text-white">Lưu ý về cặp đôi</h3>
+                <span className="rounded-full bg-black/25 px-2 py-0.5 text-[10px] font-bold tracking-wider text-zinc-200 uppercase">
+                  Tình yêu
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-zinc-300">
+                Thần tình yêu thuộc phe Dân. Cặp đôi yêu nhau là liên kết sinh tử,
+                không phải một phe thắng riêng trong phiên bản hiện tại.
+              </p>
+            </div>
+          </div>
+        </GuideCard>
       </div>
     </motion.section>
   )

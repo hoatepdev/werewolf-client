@@ -10,7 +10,7 @@ type WinnerType = 'villagers' | 'werewolves' | 'tanner'
 // Helper: Get player's team based on their role
 const getPlayerTeam = (role?: string | null): WinnerType | null => {
   if (!role) return null
-  const villagerRoles = ['villager', 'seer', 'witch', 'hunter', 'bodyguard']
+  const villagerRoles = ['villager', 'seer', 'witch', 'hunter', 'bodyguard', 'cupid']
   if (villagerRoles.includes(role)) return 'villagers'
   if (role === 'werewolf') return 'werewolves'
   if (role === 'tanner') return 'tanner'
