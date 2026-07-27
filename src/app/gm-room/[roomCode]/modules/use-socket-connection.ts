@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Socket } from 'socket.io-client'
 import { toast } from 'sonner'
 import { useRoomStore } from '@/hook/useRoomStore'
@@ -68,6 +68,7 @@ export function useSocketConnection(
   const [winner, setWinner] = useState<
     'villagers' | 'werewolves' | 'tanner' | null
   >(null)
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const updateGameStats = useCallback((playerList: Player[]) => {
     const alivePlayers = playerList.filter((p) => p.alive)
@@ -131,6 +132,13 @@ export function useSocketConnection(
       }
     }
 
+    const clearReconnectTimeout = () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+    }
+
     const connectGmRoom = () => {
       if (!gmPersistentId || !gmReconnectToken) {
         const message = 'Không tìm thấy phiên quản trò đã lưu.'
@@ -139,17 +147,25 @@ export function useSocketConnection(
         return
       }
 
+      clearReconnectTimeout()
       socket.emit('rq_gm:connectGmRoom', {
         roomCode,
         gmRoomId: `gm:${roomCode}:${socket.id}`,
         gmPersistentId,
         gmReconnectToken,
       })
+      reconnectTimeoutRef.current = setTimeout(() => {
+        const message = 'Không thể khôi phục phiên quản trò.'
+        setIsConnected(false)
+        toast.error(message)
+        onReconnectFailed?.(message)
+      }, 5000)
     }
+
+    socket.on('connect', connectGmRoom)
 
     if (!socket.connected) {
       socket.connect()
-      socket.once('connect', connectGmRoom)
     } else {
       connectGmRoom()
     }
@@ -202,12 +218,14 @@ export function useSocketConnection(
         gmRoomId: string
         message: string
       }) => {
+        clearReconnectTimeout()
         setIsConnected(true)
         setGmCommandError(null)
         toast.success('GM đã kết nối thành công')
         requestGmStateSync()
       },
       'gm:connectRoomError': (data: { message?: string }) => {
+        clearReconnectTimeout()
         setIsConnected(false)
         const message =
           data.message && data.message !== 'Not authorized.'
@@ -215,6 +233,15 @@ export function useSocketConnection(
             : 'Không thể tiếp tục phòng quản trò. Phòng có thể đã hết hạn hoặc phiên không còn hợp lệ.'
         toast.error(message)
         onReconnectFailed?.(message)
+      },
+      disconnect: () => {
+        clearReconnectTimeout()
+        setIsConnected(false)
+        toast.warning('Mất kết nối quản trò. Đang thử kết nối lại...')
+      },
+      connect_error: () => {
+        setIsConnected(false)
+        toast.warning('Chưa kết nối được máy chủ. Đang thử lại...')
       },
       'gm:stateSnapshot': applyGmSnapshot,
       'gm:stateSnapshotError': (data: { message?: string }) => {
@@ -309,6 +336,7 @@ export function useSocketConnection(
     )
 
     return () => {
+      clearReconnectTimeout()
       socket.off('connect', connectGmRoom)
       Object.entries(handlers).forEach(([event, handler]) => {
         socket.off(event, handler as (...args: unknown[]) => void)

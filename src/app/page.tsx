@@ -136,7 +136,7 @@ export default function Home() {
                     variant="yellow"
                     className="mt-3 w-full"
                     type="button"
-                    onClick={() => router.push(`/room/${roomCode}`)}
+                    onClick={() => router.push(`/lobby/${roomCode}`)}
                   >
                     Tiếp tục ván
                   </Button>
