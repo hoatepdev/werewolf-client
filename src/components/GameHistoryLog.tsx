@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { LIST_ROLE } from '@/constants/role'
 import type {
   GameEndLogEntry,
   GameLogEntry,
@@ -37,6 +38,10 @@ interface GameHistoryLogProps {
   revealDetails?: boolean
 }
 
+function getRoleName(role: string) {
+  return LIST_ROLE.find((r) => r.id === role)?.name ?? role
+}
+
 function NightLogEntryView({
   entry,
   revealDetails,
@@ -52,6 +57,7 @@ function NightLogEntryView({
     seerResult,
     witchHeal,
     witchPoisonTarget,
+    cupidPair,
     deaths,
     saved,
   } = entry
@@ -79,6 +85,17 @@ function NightLogEntryView({
                 <span className="text-blue-400">🛡️</span>
                 <span>
                   Bảo vệ: <span className="font-semibold">{bodyguardTarget}</span>
+                </span>
+              </li>
+            )}
+            {cupidPair && (
+              <li className="flex items-start gap-2">
+                <span className="text-pink-400">💘</span>
+                <span>
+                  Thần tình yêu ghép đôi:{' '}
+                  <span className="font-semibold text-pink-300">
+                    {cupidPair.first} và {cupidPair.second}
+                  </span>
                 </span>
               </li>
             )}
@@ -147,7 +164,22 @@ function NightLogEntryView({
 }
 
 function VotingLogEntryView({ entry }: { entry: VotingLogEntry }) {
-  const { round, votes, eliminatedPlayer, cause, tiedPlayers } = entry
+  const {
+    round,
+    votes,
+    eliminatedPlayer,
+    cause,
+    tiedPlayers,
+    targetVoteCount,
+    abstainCount,
+    timeoutCount,
+    totalVoters,
+  } = entry
+  const hasVoteSummary =
+    targetVoteCount !== undefined ||
+    abstainCount !== undefined ||
+    timeoutCount !== undefined ||
+    totalVoters !== undefined
 
   return (
     <div className="mb-3 rounded-lg bg-zinc-800/50 p-3">
@@ -157,14 +189,38 @@ function VotingLogEntryView({ entry }: { entry: VotingLogEntry }) {
       </div>
       {votes.length > 0 && (
         <ul className="mb-2 space-y-1 text-sm">
-          {votes.map((vote, idx) => (
-            <li key={idx} className="text-zinc-300">
-              <span className="font-semibold">{vote.voter}</span>
-              <span className="mx-1 text-zinc-500">→</span>
-              <span className="font-semibold">{vote.target}</span>
-            </li>
-          ))}
+          {votes.map((vote, idx) => {
+            const kind = vote.kind ?? 'target'
+            const targetText =
+              kind === 'abstain'
+                ? 'Bỏ qua'
+                : kind === 'timeout'
+                  ? 'Hết giờ'
+                  : vote.target ?? 'Không rõ'
+            const targetClassName =
+              kind === 'abstain'
+                ? 'font-semibold text-blue-300'
+                : kind === 'timeout'
+                  ? 'font-semibold text-zinc-500'
+                  : 'font-semibold'
+
+            return (
+              <li key={idx} className="text-zinc-300">
+                <span className="font-semibold">{vote.voter}</span>
+                <span className="mx-1 text-zinc-500">→</span>
+                <span className={targetClassName}>{targetText}</span>
+              </li>
+            )
+          })}
         </ul>
+      )}
+      {hasVoteSummary && (
+        <div className="mb-2 flex flex-wrap gap-2 text-xs text-zinc-400">
+          {targetVoteCount !== undefined && <span>{targetVoteCount} phiếu hợp lệ</span>}
+          {abstainCount !== undefined && <span>• {abstainCount} bỏ qua</span>}
+          {timeoutCount !== undefined && <span>• {timeoutCount} hết giờ</span>}
+          {totalVoters !== undefined && <span>• {totalVoters} người được vote</span>}
+        </div>
       )}
       <div className="text-sm">
         {eliminatedPlayer ? (
@@ -207,7 +263,7 @@ function HunterShotLogEntryView({ entry }: { entry: HunterShotLogEntry }) {
 }
 
 function GameEndLogEntryView({ entry }: { entry: GameEndLogEntry }) {
-  const { winner, totalRounds } = entry
+  const { winner, totalRounds, players } = entry
   const winnerConfig = WINNER_DISPLAY[winner]
 
   return (
@@ -222,6 +278,21 @@ function GameEndLogEntryView({ entry }: { entry: GameEndLogEntry }) {
         <span className="text-zinc-500">•</span>
         <span className="text-zinc-400">{totalRounds} vòng</span>
       </div>
+      {players.length > 0 && (
+        <ul className="mt-3 divide-y divide-zinc-700/70 rounded-lg border border-zinc-700/70 bg-zinc-900/60 px-3 text-sm">
+          {players.map((player, idx) => (
+            <li key={`${player.username}-${idx}`} className="flex items-center justify-between gap-3 py-2">
+              <span className="min-w-0">
+                <span className="font-semibold text-zinc-100">{player.username}</span>{' '}
+                <span className="text-xs text-zinc-400">({getRoleName(player.role)})</span>
+              </span>
+              <span className={player.alive ? 'shrink-0 text-green-400' : 'shrink-0 text-red-400'}>
+                {player.alive ? 'Sống' : 'Chết'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

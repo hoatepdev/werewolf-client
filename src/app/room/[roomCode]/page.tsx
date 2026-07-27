@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import {
   NightPrompt,
   NightResult,
+  Phase,
   PlayerVotingState,
   VotingProgress,
   VotingResultSummary,
@@ -27,6 +28,22 @@ import type { GameLogEntry } from '@/types/game-log'
 import { FCMNotification } from '@/components/FCMNotification'
 import { PlayerGameHudContainer } from '@/components/game-hud'
 import GameHistoryLog from '@/components/GameHistoryLog'
+import PhaseTransitionOverlay from '@/components/phase/PhaseTransitionOverlay'
+
+type PhaseOverlayPhase = Extract<Phase, 'night' | 'day' | 'voting' | 'conclude'>
+
+const isPhaseOverlayPhase = (phase: string): phase is PhaseOverlayPhase =>
+  phase === 'night' ||
+  phase === 'day' ||
+  phase === 'voting' ||
+  phase === 'conclude'
+
+const PHASE_HAPTIC_PATTERNS: Record<PhaseOverlayPhase, number | number[]> = {
+  night: [60, 40, 80],
+  day: 50,
+  voting: [80, 40, 80],
+  conclude: [100, 60, 100],
+}
 
 const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const socket = getSocket()
@@ -36,11 +53,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const [nightResult, setNightResult] = useState<NightResult | null>(null)
   type PlayerStateSnapshot = {
     phase?: 'night' | 'day' | 'voting' | 'conclude' | 'ended' | null
+    gameStarted?: boolean
     playerId?: string
     role?: Player['role']
     alive?: boolean | null
     players?: Player[]
     nightPrompt?: NightPrompt | null
+    nightResult?: NightResult | null
     hunterDeathShooting?: boolean
     voting?: {
       progress?: VotingProgress | null
@@ -56,6 +75,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     'villagers' | 'werewolves' | 'tanner' | null
   >(null)
   const [showReveal, setShowReveal] = useState(false)
+  const [phaseOverlay, setPhaseOverlay] = useState<{
+    phase: PhaseOverlayPhase
+    nonce: number
+  } | null>(null)
   const [gameLog, setGameLog] = useState<GameLogEntry[]>([])
 
   const {
@@ -90,7 +113,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   const playerIdRef = useRef(playerId)
   const roleRef = useRef(role)
   const lastVotingResultKeyRef = useRef<string | null>(null)
+  const lastPhaseOverlayRef = useRef<{
+    phase: PhaseOverlayPhase
+    shownAt: number
+  } | null>(null)
   const reconnectFailedRef = useRef(false)
+  const snapshotReceivedRef = useRef(false)
+  const syncFallbackRequestedRef = useRef(false)
   const gameWinnerRef = useRef<'villagers' | 'werewolves' | 'tanner' | null>(
     null,
   )
@@ -108,17 +137,48 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     if (!rehydrated) return
 
     let reconnectTimeout: ReturnType<typeof setTimeout> | undefined
+    let fallbackTimeout: ReturnType<typeof setTimeout> | undefined
+
+    const clearRecoveryTimers = () => {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout)
+      if (fallbackTimeout) clearTimeout(fallbackTimeout)
+    }
 
     const handleReconnectFailure = (message?: string) => {
       if (reconnectFailedRef.current) return
       reconnectFailedRef.current = true
-      if (reconnectTimeout) clearTimeout(reconnectTimeout)
+      clearRecoveryTimers()
       toast.error(
         message ||
           'Không thể tiếp tục ván. Ván có thể đã kết thúc, phòng đã hết hạn hoặc phiên trên thiết bị này không còn hợp lệ.',
       )
-      clearSavedSession()
+      clearPlayerRoomSession()
       router.replace('/')
+    }
+
+    const requestStateSync = () => {
+      if (!persistentPlayerId || !reconnectToken) return
+      socket.emit('rq_player:syncState', {
+        roomCode,
+        persistentPlayerId,
+        reconnectToken,
+      })
+    }
+
+    const startRecoveryTimeout = () => {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout)
+      reconnectTimeout = setTimeout(() => {
+        if (snapshotReceivedRef.current) return
+        if (!syncFallbackRequestedRef.current) {
+          syncFallbackRequestedRef.current = true
+          requestStateSync()
+          fallbackTimeout = setTimeout(() => {
+            if (!snapshotReceivedRef.current) handleReconnectFailure()
+          }, 3000)
+          return
+        }
+        handleReconnectFailure()
+      }, 5000)
     }
 
     // Reconnect: re-register with server using persistent ID
@@ -128,15 +188,15 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         return
       }
 
+      snapshotReceivedRef.current = false
+      syncFallbackRequestedRef.current = false
+      toast.info('Đang khôi phục phiên...')
       socket.emit('rq_player:rejoinRoom', {
         roomCode,
         persistentPlayerId,
         reconnectToken,
       })
-
-      reconnectTimeout = setTimeout(() => {
-        handleReconnectFailure()
-      }, 5000)
+      startRecoveryTimeout()
     }
     const handlePlayerRejoined = (data: {
       role?: Player['role']
@@ -144,7 +204,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       players?: Player[]
       alive?: boolean | null
     }) => {
-      if (reconnectTimeout) clearTimeout(reconnectTimeout)
+      toast.success('Đã kết nối lại, đang đồng bộ trạng thái...')
       if (data.role) setRole(data.role)
       if (data.phase) setPhase(data.phase)
       if (data.players) {
@@ -163,7 +223,24 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       }
     }
 
+    const showPhaseOverlay = (nextPhase: PhaseOverlayPhase) => {
+      if (gameWinnerRef.current) return
+
+      const now = Date.now()
+      const last = lastPhaseOverlayRef.current
+      if (last?.phase === nextPhase && now - last.shownAt < 1500) return
+
+      lastPhaseOverlayRef.current = { phase: nextPhase, shownAt: now }
+      setPhaseOverlay((current) => ({
+        phase: nextPhase,
+        nonce: (current?.nonce ?? 0) + 1,
+      }))
+      triggerHaptic(PHASE_HAPTIC_PATTERNS[nextPhase])
+    }
+
     const applyPlayerSnapshot = (snapshot: PlayerStateSnapshot) => {
+      snapshotReceivedRef.current = true
+      clearRecoveryTimers()
       if (snapshot.playerId) setPlayerId(snapshot.playerId)
       if (snapshot.role) setRole(snapshot.role)
       if (snapshot.phase) setPhase(snapshot.phase)
@@ -179,6 +256,11 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       }
 
       setNightPrompt(snapshot.nightPrompt ?? null)
+      if (snapshot.nightResult) {
+        setNightResult(snapshot.nightResult)
+      } else if (snapshot.phase === 'night' || snapshot.phase === 'voting') {
+        setNightResult(null)
+      }
       setLoverPartner(snapshot.loverPartner ?? null)
       setHunterDeathShooting(snapshot.hunterDeathShooting === true)
       setVotingProgress(snapshot.voting?.progress ?? null)
@@ -192,20 +274,12 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       }
       if (snapshot.winner) {
         gameWinnerRef.current = snapshot.winner
+        setPhaseOverlay(null)
         setGameWinner(snapshot.winner)
         setShowReveal(false)
         setVotingProgress(null)
         setPlayerVotingState(null)
       }
-    }
-
-    const requestStateSync = () => {
-      if (!persistentPlayerId || !reconnectToken) return
-      socket.emit('rq_player:syncState', {
-        roomCode,
-        persistentPlayerId,
-        reconnectToken,
-      })
     }
 
     let lastSyncAt = 0
@@ -230,7 +304,21 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       handleReconnectFailure(data.message)
     }
 
+    const handleDisconnect = () => {
+      if (!reconnectFailedRef.current) {
+        toast.warning('Mất kết nối. Đang thử kết nối lại...')
+      }
+    }
+
+    const handleConnectError = () => {
+      if (!reconnectFailedRef.current) {
+        toast.warning('Chưa kết nối được máy chủ. Đang thử lại...')
+      }
+    }
+
     socket.on('connect', handleReconnect)
+    socket.on('disconnect', handleDisconnect)
+    socket.on('connect_error', handleConnectError)
     socket.on('player:rejoined', handlePlayerRejoined)
     socket.on('player:rejoinRoomError', handlePlayerRejoinError)
     socket.on('player:stateSnapshot', applyPlayerSnapshot)
@@ -266,9 +354,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     )
 
     socket.on('game:phaseChanged', (newPhase: { phase: string }) => {
-      setPhase(
-        newPhase.phase as 'night' | 'day' | 'voting' | 'conclude' | 'ended',
-      )
+      setPhase(newPhase.phase as Phase)
       setNightPrompt(null)
       if (newPhase.phase !== 'voting') {
         setVotingProgress(null)
@@ -286,6 +372,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
         playSound('night_start')
       } else if (newPhase.phase === 'day') {
         playSound('day_start')
+      }
+
+      if (isPhaseOverlayPhase(newPhase.phase)) {
+        showPhaseOverlay(newPhase.phase)
       }
     })
 
@@ -468,6 +558,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       setVotingProgress(null)
       setVotingResult(null)
       setPlayerVotingState(null)
+      setPhaseOverlay(null)
       setGameWinner(winner)
       setShowReveal(true)
     }
@@ -478,6 +569,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       setGameWinner(null)
       gameWinnerRef.current = null
       setShowReveal(false)
+      setPhaseOverlay(null)
       setGameLog([])
       lastVotingResultKeyRef.current = null
       toast.success('Phòng đã được reset. Quay lại sảnh chờ.')
@@ -511,8 +603,10 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     socket.on('room:playerLeft', handlePlayerLeft)
 
     return () => {
-      if (reconnectTimeout) clearTimeout(reconnectTimeout)
+      clearRecoveryTimers()
       socket.off('connect', handleReconnect)
+      socket.off('disconnect', handleDisconnect)
+      socket.off('connect_error', handleConnectError)
       socket.off('player:rejoined', handlePlayerRejoined)
       socket.off('player:rejoinRoomError', handlePlayerRejoinError)
       socket.off('player:stateSnapshot', applyPlayerSnapshot)
@@ -646,6 +740,13 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
           <div className="fixed top-52 right-4 z-40 w-72 max-w-[calc(100vw-2rem)] lg:top-36">
             <FCMNotification roomCode={roomCode} participantKind="player" />
           </div>
+        )}
+        {!gameWinner && (
+          <PhaseTransitionOverlay
+            phase={phaseOverlay?.phase ?? null}
+            nonce={phaseOverlay?.nonce ?? 0}
+            onComplete={() => setPhaseOverlay(null)}
+          />
         )}
         <div className={!gameWinner ? 'pt-56 lg:pt-40' : undefined}>
           {renderPhase()}

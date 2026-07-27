@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Socket } from 'socket.io-client'
 import { toast } from 'sonner'
 import { useRoomStore } from '@/hook/useRoomStore'
+import type { GameLogEntry } from '@/types/game-log'
 import type { Player, GameStats } from '@/types/player'
 import type {
   AudioEvent,
@@ -28,8 +29,13 @@ type GmActionLogSnapshotEntry = {
 type GmStateSnapshot = {
   phase?: 'night' | 'day' | 'voting' | 'conclude' | 'ended' | null
   players?: Player[]
+  gameLog?: GameLogEntry[]
   gmActionLog?: GmActionLogSnapshotEntry[]
   winner?: 'villagers' | 'werewolves' | 'tanner'
+}
+
+type GmGameLogPayload = {
+  gameLog?: GameLogEntry[]
 }
 
 export function useSocketConnection(
@@ -40,6 +46,7 @@ export function useSocketConnection(
   forceRender: boolean,
   onReconnectFailed?: (message?: string) => void,
   onSnapshotLogs?: (logs: GmLogEntry[]) => void,
+  onGameLogSync?: (gameLog: GameLogEntry[]) => void,
 ) {
   const [isConnected, setIsConnected] = useState(false)
   const [players, setPlayers] = useState<Player[]>([])
@@ -68,6 +75,7 @@ export function useSocketConnection(
   const [winner, setWinner] = useState<
     'villagers' | 'werewolves' | 'tanner' | null
   >(null)
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const updateGameStats = useCallback((playerList: Player[]) => {
     const alivePlayers = playerList.filter((p) => p.alive)
@@ -131,6 +139,13 @@ export function useSocketConnection(
       }
     }
 
+    const clearReconnectTimeout = () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+    }
+
     const connectGmRoom = () => {
       if (!gmPersistentId || !gmReconnectToken) {
         const message = 'Không tìm thấy phiên quản trò đã lưu.'
@@ -139,17 +154,25 @@ export function useSocketConnection(
         return
       }
 
+      clearReconnectTimeout()
       socket.emit('rq_gm:connectGmRoom', {
         roomCode,
         gmRoomId: `gm:${roomCode}:${socket.id}`,
         gmPersistentId,
         gmReconnectToken,
       })
+      reconnectTimeoutRef.current = setTimeout(() => {
+        const message = 'Không thể khôi phục phiên quản trò.'
+        setIsConnected(false)
+        toast.error(message)
+        onReconnectFailed?.(message)
+      }, 5000)
     }
+
+    socket.on('connect', connectGmRoom)
 
     if (!socket.connected) {
       socket.connect()
-      socket.once('connect', connectGmRoom)
     } else {
       connectGmRoom()
     }
@@ -164,6 +187,9 @@ export function useSocketConnection(
       }
       if (snapshot.winner) {
         setWinner(snapshot.winner)
+      }
+      if (Array.isArray(snapshot.gameLog)) {
+        onGameLogSync?.(snapshot.gameLog)
       }
       if (snapshot.gmActionLog) {
         const logTypeBySnapshotType: Record<
@@ -202,12 +228,14 @@ export function useSocketConnection(
         gmRoomId: string
         message: string
       }) => {
+        clearReconnectTimeout()
         setIsConnected(true)
         setGmCommandError(null)
         toast.success('GM đã kết nối thành công')
         requestGmStateSync()
       },
       'gm:connectRoomError': (data: { message?: string }) => {
+        clearReconnectTimeout()
         setIsConnected(false)
         const message =
           data.message && data.message !== 'Not authorized.'
@@ -215,6 +243,15 @@ export function useSocketConnection(
             : 'Không thể tiếp tục phòng quản trò. Phòng có thể đã hết hạn hoặc phiên không còn hợp lệ.'
         toast.error(message)
         onReconnectFailed?.(message)
+      },
+      disconnect: () => {
+        clearReconnectTimeout()
+        setIsConnected(false)
+        toast.warning('Mất kết nối quản trò. Đang thử kết nối lại...')
+      },
+      connect_error: () => {
+        setIsConnected(false)
+        toast.warning('Chưa kết nối được máy chủ. Đang thử lại...')
       },
       'gm:stateSnapshot': applyGmSnapshot,
       'gm:stateSnapshotError': (data: { message?: string }) => {
@@ -255,10 +292,14 @@ export function useSocketConnection(
         setWinner(null)
         setNightActions([])
         setVotingProgress(null)
+        onGameLogSync?.([])
         setCurrentAudio(null)
         toast.success('Phòng đã được reset')
       },
       'gm:nightAction': (nightAction: NightActionData) => {
+        if (Array.isArray(nightAction.gameLog)) {
+          onGameLogSync?.(nightAction.gameLog)
+        }
         setNightActions((prev) => [...prev, nightAction])
         // Don't add timeout messages to audio queue - they reveal role info
         if (nightAction.action !== 'timeout') {
@@ -268,16 +309,26 @@ export function useSocketConnection(
           })
         }
       },
-      'gm:votingAction': (data: { type: 'votingAction'; message: string }) => {
+      'gm:votingAction': (
+        data: { type: 'votingAction'; message: string } & GmGameLogPayload,
+      ) => {
+        if (Array.isArray(data.gameLog)) {
+          onGameLogSync?.(data.gameLog)
+        }
         addToQueue({
           type: data.type,
           message: data.message,
         })
       },
-      'gm:hunterAction': (data: {
-        type: 'hunterDied' | 'hunterShot' | 'hunterSkipped'
-        message: string
-      }) => {
+      'gm:hunterAction': (
+        data: {
+          type: 'hunterDied' | 'hunterShot' | 'hunterSkipped'
+          message: string
+        } & GmGameLogPayload,
+      ) => {
+        if (Array.isArray(data.gameLog)) {
+          onGameLogSync?.(data.gameLog)
+        }
         addToQueue({
           type: 'hunterAction',
           message: data.message,
@@ -287,10 +338,13 @@ export function useSocketConnection(
         type: 'gameEnded'
         message: string
         winner: 'villagers' | 'werewolves' | 'tanner'
-      }) => {
+      } & GmGameLogPayload) => {
         setPhase('ended')
         setWinner(data.winner)
         setVotingProgress(null)
+        if (Array.isArray(data.gameLog)) {
+          onGameLogSync?.(data.gameLog)
+        }
         addToQueue({
           type: data.type,
           message: data.message,
@@ -309,6 +363,7 @@ export function useSocketConnection(
     )
 
     return () => {
+      clearReconnectTimeout()
       socket.off('connect', connectGmRoom)
       Object.entries(handlers).forEach(([event, handler]) => {
         socket.off(event, handler as (...args: unknown[]) => void)
@@ -332,6 +387,7 @@ export function useSocketConnection(
     gmReconnectToken,
     onReconnectFailed,
     onSnapshotLogs,
+    onGameLogSync,
     applyPlayerList,
     setCommandError,
   ])
@@ -420,6 +476,7 @@ export function useSocketConnection(
           setWinner(null)
           setNightActions([])
           setVotingProgress(null)
+          onGameLogSync?.([])
           setCurrentAudio(null)
           toast.success(ack.message || 'Đã reset phòng')
           options?.onSuccess?.()
@@ -429,6 +486,7 @@ export function useSocketConnection(
     [
       clearGameRuntimeState,
       roomCode,
+      onGameLogSync,
       setCommandError,
       setCurrentAudio,
       setPhase,

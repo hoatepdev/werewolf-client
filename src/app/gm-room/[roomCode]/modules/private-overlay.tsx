@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { Socket } from 'socket.io-client'
+import type { GameLogEntry } from '@/types/game-log'
 import type { Player, GameStats } from '@/types/player'
 import type { GmLogEntry, NightActionData, VotingProgress } from './types'
 import { backdropVariants, overlayVariants } from '@/lib/motion'
@@ -10,6 +11,7 @@ import { PlayerList } from './player-list'
 import { GameStatsCard } from './game-stats'
 import { NightActionLog } from './night-action-log'
 import { GameLog } from './game-log'
+import GameHistoryLog from '@/components/GameHistoryLog'
 import { MockPlayersComponent } from './mock-player'
 import { HoldToConfirmButton } from './hold-to-confirm-button'
 import { Button } from '@/components/ui/button'
@@ -50,6 +52,7 @@ interface PrivateOverlayProps {
   onRevive: (playerId: string) => Promise<boolean>
   gameStats: GameStats
   nightActions: NightActionData[]
+  gameLog: GameLogEntry[]
   gmLogs: GmLogEntry[]
   socket: Socket
   forceRender: boolean
@@ -74,6 +77,7 @@ export function PrivateOverlay({
   onRevive,
   gameStats,
   nightActions,
+  gameLog,
   gmLogs,
   socket,
   forceRender,
@@ -187,7 +191,17 @@ export function PrivateOverlay({
           {/* Night action log */}
           <NightActionLog nightActions={nightActions} />
 
-          {/* Full game log */}
+          {/* Match history */}
+          <GameHistoryLog
+            gameLog={gameLog}
+            title="Nhật ký trận đấu"
+            initiallyExpanded={isGameEnded}
+            compact
+            showEmptyState
+            revealDetails
+          />
+
+          {/* GM action log */}
           <GameLog logs={gmLogs} filtered={false} />
 
           {/* Mock players (dev tool) - local development only */}

@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { getSocket } from '@/lib/socket'
 import { useParams, useRouter } from 'next/navigation'
+import type { GameLogEntry } from '@/types/game-log'
 import PageHeader from '@/components/PageHeader'
 import MainLayout from '@/components/MainLayout'
 import { useAudioQueue } from './modules/use-audio-queue'
@@ -24,6 +25,7 @@ const GmRoomPage = () => {
   const roomCode = params.roomCode
 
   const [isPrivateMode, setIsPrivateMode] = useState(false)
+  const [gameLog, setGameLog] = useState<GameLogEntry[]>([])
   const [gmLogs, setGmLogs] = useState<GmLogEntry[]>([])
   const [forceRender, setForceRender] = useState(false)
   const clearSavedSession = useRoomStore((state) => state.clearSavedSession)
@@ -35,6 +37,10 @@ const GmRoomPage = () => {
 
   const handleSnapshotLogs = useCallback((logs: GmLogEntry[]) => {
     setGmLogs(logs)
+  }, [])
+
+  const handleGameLogSync = useCallback((entries: GameLogEntry[]) => {
+    setGameLog(entries)
   }, [])
 
   const {
@@ -70,6 +76,7 @@ const GmRoomPage = () => {
     forceRender,
     handleReconnectFailed,
     handleSnapshotLogs,
+    handleGameLogSync,
   )
 
   useEffect(() => {
@@ -129,6 +136,7 @@ const GmRoomPage = () => {
       force: isActiveGame,
       onSuccess: () => {
         setIsPrivateMode(false)
+        setGameLog([])
         setGmLogs([])
         router.push(`/approve-room/${roomCode}`)
       },
@@ -181,6 +189,7 @@ const GmRoomPage = () => {
           playAudio={setCurrentAudio}
           players={players}
           gameStats={gameStats}
+          gameLog={gameLog}
           gmLogs={gmLogs}
           onActivatePrivate={togglePrivateMode}
           onRefresh={handleGetPlayers}
@@ -201,6 +210,7 @@ const GmRoomPage = () => {
               onRevive={handleRevivePlayer}
               gameStats={gameStats}
               nightActions={nightActions}
+              gameLog={gameLog}
               gmLogs={gmLogs}
               socket={socket}
               forceRender={forceRender}

@@ -26,12 +26,24 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
 
   const { roomCode } = React.use(params)
 
+  type PlayerStateSnapshot = {
+    gameStarted?: boolean
+    playerId?: string
+    role?: Player['role']
+    alive?: boolean | null
+    players?: Player[]
+  }
+
   const {
     playerId,
     approvedPlayers,
     username,
     avatarKey,
     role,
+    persistentPlayerId,
+    reconnectToken,
+    rehydrated,
+    setPlayerId,
     setRole,
     setApprovedPlayers,
     setAlive,
@@ -41,21 +53,65 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
   } = useRoomStore()
 
   useEffect(() => {
-    if (!socket.connected) socket.connect()
-    socket.emit('rq_player:getPlayers', { roomCode })
+    if (!rehydrated) return
 
-    const handleUpdatePlayers = (data: Player[]) => {
+    let recoveryTimeout: ReturnType<typeof setTimeout> | undefined
+
+    const clearRecoveryTimeout = () => {
+      if (recoveryTimeout) clearTimeout(recoveryTimeout)
+    }
+
+    const handleRecoveryFailure = (message?: string) => {
+      clearRecoveryTimeout()
+      toast.error(
+        message ||
+          'Không thể khôi phục phiên. Phòng có thể đã hết hạn hoặc phiên trên thiết bị này không còn hợp lệ.',
+      )
+      clearPlayerRoomSession()
+      router.replace('/')
+    }
+
+    const applyPlayers = (data: Player[]) => {
       const approvedPlayers = data.filter(
         (player) => player.status === 'approved',
       )
       setApprovedPlayers(approvedPlayers)
+    }
+
+    const applyRole = (nextRole?: Player['role']) => {
+      if (!nextRole) return
+      const roleData = LIST_ROLE.find((r) => r.id === nextRole) || LIST_ROLE[0]
+      setAssignedRole(roleData)
+      setRole(roleData.id)
+      setHasAssignedRole(true)
+    }
+
+    const emitRejoin = () => {
+      if (!persistentPlayerId || !reconnectToken) {
+        handleRecoveryFailure('Không tìm thấy phiên phòng cũ.')
+        return
+      }
+
+      toast.info('Đang khôi phục phiên...')
+      socket.emit('rq_player:rejoinRoom', {
+        roomCode,
+        persistentPlayerId,
+        reconnectToken,
+      })
+      recoveryTimeout = setTimeout(() => {
+        handleRecoveryFailure()
+      }, 5000)
+    }
+
+    const handleUpdatePlayers = (data: Player[]) => {
+      applyPlayers(data)
     }
     const handleInfoUpdated = (data: {
       playerId: string
       username: string
       avatarKey: number
     }) => {
-      if (data.playerId !== playerId) return
+      if (data.playerId !== useRoomStore.getState().playerId) return
       setUsername(data.username)
       setAvatarKey(data.avatarKey)
     }
@@ -67,10 +123,7 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     }
     const handleAssignedRole = ({ role }: { role: Player['role'] }) => {
       setTimeout(() => {
-        const roleData = LIST_ROLE.find((r) => r.id === role) || LIST_ROLE[0]
-        setAssignedRole(roleData)
-        setRole(roleData.id)
-        setHasAssignedRole(true)
+        applyRole(role)
         setShowRoleModal(true)
       }, 1000)
     }
@@ -89,15 +142,67 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
     }) => {
       toast.warning(`${username} đã mất kết nối`)
     }
+    const handlePlayerRejoined = (data: {
+      playerId?: string
+      role?: Player['role']
+      players?: Player[]
+      alive?: boolean | null
+    }) => {
+      if (data.playerId) setPlayerId(data.playerId)
+      applyRole(data.role)
+      if (data.players) applyPlayers(data.players)
+      if (typeof data.alive === 'boolean') setAlive(data.alive)
+    }
+    const handlePlayerSnapshot = (snapshot: PlayerStateSnapshot) => {
+      clearRecoveryTimeout()
+      if (snapshot.playerId) setPlayerId(snapshot.playerId)
+      applyRole(snapshot.role)
+      if (snapshot.players) applyPlayers(snapshot.players)
+      if (typeof snapshot.alive === 'boolean' || snapshot.alive === null) {
+        setAlive(snapshot.alive)
+      }
+      if (snapshot.gameStarted) {
+        router.replace(`/room/${roomCode}`)
+      }
+    }
+    const handlePlayerRejoinError = (data: { message?: string }) => {
+      handleRecoveryFailure(data.message)
+    }
+    const handleDisconnect = () => {
+      toast.warning('Mất kết nối. Đang thử kết nối lại...')
+    }
+    const handleConnectError = () => {
+      toast.warning('Chưa kết nối được máy chủ. Đang thử lại...')
+    }
 
+    socket.on('connect', emitRejoin)
+    socket.on('disconnect', handleDisconnect)
+    socket.on('connect_error', handleConnectError)
     socket.on('room:updatePlayers', handleUpdatePlayers)
+    socket.on('player:rejoined', handlePlayerRejoined)
+    socket.on('player:stateSnapshot', handlePlayerSnapshot)
+    socket.on('player:rejoinRoomError', handlePlayerRejoinError)
     socket.on('player:assignedRole', handleAssignedRole)
     socket.on('room:readySuccess', handleReadySuccess)
     socket.on('room:playerDisconnected', handlePlayerDisconnected)
     socket.on('player:infoUpdated', handleInfoUpdated)
     socket.on('room:playerLeft', handlePlayerLeft)
+
+    if (socket.connected) {
+      emitRejoin()
+    } else {
+      socket.connect()
+    }
+
     return () => {
+      clearRecoveryTimeout()
+      socket.off('connect', emitRejoin)
+      socket.off('disconnect', handleDisconnect)
+      socket.off('connect_error', handleConnectError)
       socket.off('room:updatePlayers', handleUpdatePlayers)
+      socket.off('player:rejoined', handlePlayerRejoined)
+      socket.off('player:stateSnapshot', handlePlayerSnapshot)
+      socket.off('player:rejoinRoomError', handlePlayerRejoinError)
       socket.off('player:assignedRole', handleAssignedRole)
       socket.off('room:readySuccess', handleReadySuccess)
       socket.off('room:playerDisconnected', handlePlayerDisconnected)
@@ -105,12 +210,16 @@ const RoomPage = ({ params }: { params: Promise<{ roomCode: string }> }) => {
       socket.off('room:playerLeft', handlePlayerLeft)
     }
   }, [
-    playerId,
-    role,
+    persistentPlayerId,
+    reconnectToken,
+    rehydrated,
     roomCode,
     router,
+    clearPlayerRoomSession,
+    setAlive,
     setApprovedPlayers,
     setAvatarKey,
+    setPlayerId,
     setRole,
     setUsername,
     socket,

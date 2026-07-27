@@ -1,6 +1,7 @@
 'use client'
 
 import type { AudioEvent, AudioStatus } from './types'
+import type { GameLogEntry } from '@/types/game-log'
 import type { Player, GameStats } from '@/types/player'
 import type { GmLogEntry } from './types'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,7 @@ import { AudioQueue } from './audio-queue'
 import { SafePlayerList } from './player-list-safe'
 import { SafeGameStats } from './game-stats-safe'
 import { GameLog } from './game-log'
+import GameHistoryLog from '@/components/GameHistoryLog'
 import { HoldToConfirmButton } from './hold-to-confirm-button'
 import { PrivateTrigger } from './private-trigger'
 import { getHudPhaseColorClass, getPhaseLabel } from '@/components/game-hud'
@@ -24,6 +26,7 @@ interface TableLayerProps {
   playAudio: (audio: AudioEvent | null) => void
   players: Player[]
   gameStats: GameStats
+  gameLog: GameLogEntry[]
   gmLogs: GmLogEntry[]
   onActivatePrivate: () => void
   onRefresh: () => void
@@ -40,6 +43,7 @@ export function TableLayer({
   playAudio,
   players,
   gameStats,
+  gameLog,
   gmLogs,
   onActivatePrivate,
   onRefresh,
@@ -90,7 +94,16 @@ export function TableLayer({
         <SafePlayerList players={players} />
       </div>
 
-      {/* Game log */}
+      {/* Match history */}
+      <GameHistoryLog
+        gameLog={gameLog}
+        title="Nhật ký trận đấu"
+        compact
+        showEmptyState
+        revealDetails
+      />
+
+      {/* GM action log */}
       <GameLog logs={gmLogs} filtered />
 
       {/* Safe game stats */}
