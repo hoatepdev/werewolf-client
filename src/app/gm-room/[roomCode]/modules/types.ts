@@ -1,3 +1,5 @@
+import type { GameLogEntry } from '@/types/game-log'
+
 export type AudioStatus = 'idle' | 'speaking' | 'error'
 
 export interface AudioEvent {
@@ -22,6 +24,7 @@ export interface NightActionData {
   action: string
   message: string
   timestamp: number
+  gameLog?: GameLogEntry[]
 }
 
 export interface GmLogEntry {

@@ -7,6 +7,7 @@ export interface NightLogEntry {
   seerResult: boolean | null
   witchHeal: boolean
   witchPoisonTarget: string | null
+  cupidPair: { first: string; second: string } | null
   deaths: Array<{ username: string; cause: string }>
   saved: string[]
 }
@@ -14,10 +15,18 @@ export interface NightLogEntry {
 export interface VotingLogEntry {
   type: 'voting_result'
   round: number
-  votes: Array<{ voter: string; target: string }>
+  votes: Array<{
+    voter: string
+    target: string | null
+    kind?: 'target' | 'abstain' | 'timeout'
+  }>
   eliminatedPlayer: string | null
   cause: 'vote' | 'hunter' | 'tie' | 'no_votes'
   tiedPlayers?: string[]
+  abstainCount?: number
+  timeoutCount?: number
+  targetVoteCount?: number
+  totalVoters?: number
 }
 
 export interface HunterShotLogEntry {

@@ -4,6 +4,7 @@ import { memo, useState } from 'react'
 import { toast } from 'sonner'
 import { renderAvatar } from '@/helpers'
 import { confirmDialog } from '@/components/ui/alert-dialog'
+import { getRoleDisplay } from '@/components/game-hud/GameHud.helpers'
 import type { Player } from '@/types/player'
 
 interface PlayerListProps {
@@ -74,6 +75,7 @@ export const PlayerList = memo(function PlayerList({
           players.map((player) => {
             const isEliminating = eliminatingPlayerId === player.id
             const commandForPlayer = pendingGmCommand?.endsWith(`:${player.id}`)
+            const roleDisplay = getRoleDisplay(player.role)
 
             return (
               <div
@@ -112,7 +114,9 @@ export const PlayerList = memo(function PlayerList({
                                         : 'bg-gray-600'
                         }`}
                       >
-                        {player.role || 'Chưa phân vai'}
+                        {roleDisplay
+                          ? `${roleDisplay.emoji} ${roleDisplay.name}`
+                          : player.role || 'Chưa phân vai'}
                       </span>
                       <span
                         className={`rounded px-2 py-1 ${player.alive ? 'bg-green-600' : 'bg-red-600'}`}
