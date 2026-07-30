@@ -1,11 +1,15 @@
 import React from 'react'
+import CountdownTimer from '@/components/CountdownTimer'
 import { NightResult, useRoomStore } from '@/hook/useRoomStore'
+import { useTimer } from '@/hook/useTimerContext'
 import { PlayerGrid } from '../PlayerGrid'
 
 const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
   nightResult,
 }) => {
   const { approvedPlayers, playerId } = useRoomStore()
+  const timer = useTimer()
+  const showDayTimer = timer.isActive && timer.timerContext === 'day'
 
   return (
     <div className="relative h-full w-full flex-1">
@@ -18,6 +22,20 @@ const DayPhase: React.FC<{ nightResult: NightResult | null }> = ({
             Trời sáng rồi, mời mọi người thức dậy
           </p>
         </div>
+
+        {showDayTimer && (
+          <div className="flex w-full items-center justify-between gap-4 rounded-xl border border-yellow-400/30 bg-yellow-950/30 p-4">
+            <div>
+              <p className="text-sm font-semibold text-yellow-200">
+                Thời gian thảo luận còn lại
+              </p>
+              <p className="text-xs text-yellow-100/70">
+                Hết giờ sẽ chuyển sang bỏ phiếu
+              </p>
+            </div>
+            <CountdownTimer countdown={timer} size={64} showLabel />
+          </div>
+        )}
 
         <div className="w-full">
           <PlayerGrid

@@ -4,6 +4,7 @@ import type { AudioEvent, AudioStatus } from './types'
 import type { GameLogEntry } from '@/types/game-log'
 import type { Player, GameStats } from '@/types/player'
 import type { GmLogEntry } from './types'
+import { Clock, FastForward, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AudioControl } from './audio-control'
 import { AudioQueue } from './audio-queue'
@@ -18,6 +19,9 @@ import { getHudPhaseColorClass, getPhaseLabel } from '@/components/game-hud'
 interface TableLayerProps {
   phase: string
   onNextPhase: () => void
+  onStartDayTimer: (durationMs?: number) => void | Promise<boolean>
+  onExtendDayTimer: (deltaMs: number) => void | Promise<boolean>
+  onSkipDayTimer: () => void | Promise<boolean>
   currentAudio: AudioEvent | null
   isPlaying: boolean
   audioStatus: AudioStatus
@@ -35,6 +39,9 @@ interface TableLayerProps {
 export function TableLayer({
   phase,
   onNextPhase,
+  onStartDayTimer,
+  onExtendDayTimer,
+  onSkipDayTimer,
   currentAudio,
   isPlaying,
   audioStatus,
@@ -78,6 +85,41 @@ export function TableLayer({
             {phaseLabel}
           </span>
         </div>
+
+        {phase === 'day' && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-yellow-400/20 bg-yellow-950/20 p-3">
+            <span className="mr-2 flex items-center gap-2 text-sm font-semibold text-yellow-200">
+              <Clock className="h-4 w-4" />
+              Timer ngày
+            </span>
+            <Button
+              type="button"
+              variant="black"
+              onClick={() => onStartDayTimer(3 * 60 * 1000)}
+              className="gap-2 text-xs"
+            >
+              <Clock className="h-4 w-4" />
+              Bắt đầu 3 phút
+            </Button>
+            <Button
+              type="button"
+              variant="black"
+              onClick={() => onExtendDayTimer(30 * 1000)}
+              className="gap-2 text-xs"
+            >
+              <Plus className="h-4 w-4" />
+              +30 giây
+            </Button>
+            <Button
+              type="button"
+              onClick={onSkipDayTimer}
+              className="gap-2 bg-orange-600 text-xs text-white hover:bg-orange-700"
+            >
+              <FastForward className="h-4 w-4" />
+              Kết thúc thảo luận
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Two-column layout: Audio | Players */}

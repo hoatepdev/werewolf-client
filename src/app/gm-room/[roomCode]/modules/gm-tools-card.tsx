@@ -1,6 +1,6 @@
 'use client'
 
-import { RefreshCw, RotateCcw, ShieldAlert } from 'lucide-react'
+import { Clock, FastForward, Plus, RefreshCw, RotateCcw, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { VotingProgress } from './types'
 import { HoldToConfirmButton } from './hold-to-confirm-button'
@@ -14,6 +14,9 @@ interface GmToolsCardProps {
   onNextPhase: () => void
   onRefresh: () => void
   onResetRoom: () => void
+  onStartDayTimer: (durationMs?: number) => void | Promise<boolean>
+  onExtendDayTimer: (deltaMs: number) => void | Promise<boolean>
+  onSkipDayTimer: () => void | Promise<boolean>
 }
 
 const PHASE_LABELS: Record<string, string> = {
@@ -33,9 +36,13 @@ export function GmToolsCard({
   onNextPhase,
   onRefresh,
   onResetRoom,
+  onStartDayTimer,
+  onExtendDayTimer,
+  onSkipDayTimer,
 }: GmToolsCardProps) {
   const isResetting = pendingGmCommand === 'reset'
   const isChangingPhase = phase === 'night' || phase === 'voting' || phase === 'ended'
+  const isDayTimerPending = pendingGmCommand?.startsWith('day-timer:') ?? false
 
   return (
     <div className="rounded-lg border border-yellow-500/20 bg-zinc-800/80 p-6 shadow-lg">
@@ -86,6 +93,56 @@ export function GmToolsCard({
           <div className="flex items-start gap-2">
             <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <span>{commandError}</span>
+          </div>
+        </div>
+      )}
+
+      {phase === 'day' && (
+        <div className="mb-4 rounded-lg border border-yellow-400/20 bg-yellow-950/20 p-3">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-yellow-200">
+            <Clock className="h-4 w-4" />
+            Timer thảo luận
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Button
+              type="button"
+              variant="black"
+              onClick={() => onStartDayTimer(3 * 60 * 1000)}
+              disabled={Boolean(pendingGmCommand)}
+              className="gap-2 text-xs"
+            >
+              <Clock className="h-4 w-4" />
+              Bắt đầu 3 phút
+            </Button>
+            <Button
+              type="button"
+              variant="black"
+              onClick={() => onExtendDayTimer(30 * 1000)}
+              disabled={Boolean(pendingGmCommand)}
+              className="gap-2 text-xs"
+            >
+              <Plus className="h-4 w-4" />
+              +30 giây
+            </Button>
+            <Button
+              type="button"
+              variant="black"
+              onClick={() => onExtendDayTimer(60 * 1000)}
+              disabled={Boolean(pendingGmCommand)}
+              className="gap-2 text-xs"
+            >
+              <Plus className="h-4 w-4" />
+              +1 phút
+            </Button>
+            <Button
+              type="button"
+              onClick={onSkipDayTimer}
+              disabled={Boolean(pendingGmCommand)}
+              className="gap-2 bg-orange-600 text-xs text-white hover:bg-orange-700"
+            >
+              <FastForward className="h-4 w-4" />
+              {isDayTimerPending ? 'Đang xử lý...' : 'Kết thúc'}
+            </Button>
           </div>
         </div>
       )}

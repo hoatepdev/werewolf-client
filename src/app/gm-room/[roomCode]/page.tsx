@@ -60,6 +60,9 @@ const GmRoomPage = () => {
     nightActions,
     winner,
     handleNextPhase,
+    handleStartDayTimer,
+    handleExtendDayTimer,
+    handleSkipDayTimer,
     handleEliminatePlayer,
     handleRevivePlayer,
     handleGetPlayers,
@@ -181,6 +184,9 @@ const GmRoomPage = () => {
         <TableLayer
           phase={phase}
           onNextPhase={handleNextPhase}
+          onStartDayTimer={handleStartDayTimer}
+          onExtendDayTimer={handleExtendDayTimer}
+          onSkipDayTimer={handleSkipDayTimer}
           currentAudio={currentAudio}
           isPlaying={isPlayingRef.current}
           audioStatus={audioStatus}
@@ -205,6 +211,9 @@ const GmRoomPage = () => {
               onNextPhase={handleNextPhase}
               onRefresh={handleGetPlayers}
               onResetRoom={handleResetRoom}
+              onStartDayTimer={handleStartDayTimer}
+              onExtendDayTimer={handleExtendDayTimer}
+              onSkipDayTimer={handleSkipDayTimer}
               players={players}
               onEliminate={handleEliminatePlayer}
               onRevive={handleRevivePlayer}

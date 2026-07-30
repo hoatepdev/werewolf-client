@@ -51,5 +51,6 @@ export interface GmCommandAck {
     | 'player_not_found'
     | 'invalid_state'
     | 'requires_force'
+    | 'not_found'
   message?: string
 }

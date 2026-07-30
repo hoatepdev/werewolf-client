@@ -397,6 +397,49 @@ export function useSocketConnection(
     socket.emit('rq_gm:nextPhase', { roomCode })
   }, [roomCode, socket])
 
+  const handleDayTimerControl = useCallback(
+    (
+      action: 'start' | 'extend' | 'skip',
+      payload: { durationMs?: number; deltaMs?: number } = {},
+    ) => {
+      setGmCommandError(null)
+      setPendingGmCommand(`day-timer:${action}`)
+
+      return new Promise<boolean>((resolve) => {
+        socket.emit(
+          'rq_gm:dayTimerControl',
+          { roomCode, action, ...payload },
+          (ack?: GmCommandAck) => {
+            setPendingGmCommand(null)
+            if (!ack?.success) {
+              setCommandError(ack?.message || 'Không thể điều khiển timer ngày.')
+              resolve(false)
+              return
+            }
+            toast.success(ack.message || 'Đã cập nhật timer thảo luận')
+            resolve(true)
+          },
+        )
+      })
+    },
+    [roomCode, setCommandError, socket],
+  )
+
+  const handleStartDayTimer = useCallback(
+    (durationMs?: number) => handleDayTimerControl('start', { durationMs }),
+    [handleDayTimerControl],
+  )
+
+  const handleExtendDayTimer = useCallback(
+    (deltaMs: number) => handleDayTimerControl('extend', { deltaMs }),
+    [handleDayTimerControl],
+  )
+
+  const handleSkipDayTimer = useCallback(
+    () => handleDayTimerControl('skip'),
+    [handleDayTimerControl],
+  )
+
   const handleEliminatePlayer = useCallback(
     (player: Player, reason: string) => {
       setGmCommandError(null)
@@ -513,6 +556,9 @@ export function useSocketConnection(
     votingProgress,
     clearGmCommandError: () => setGmCommandError(null),
     handleNextPhase,
+    handleStartDayTimer,
+    handleExtendDayTimer,
+    handleSkipDayTimer,
     handleEliminatePlayer,
     handleRevivePlayer,
     handleGetPlayers,

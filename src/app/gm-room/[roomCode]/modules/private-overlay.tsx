@@ -47,6 +47,9 @@ interface PrivateOverlayProps {
   onNextPhase: () => void
   onRefresh: () => void
   onResetRoom: () => void
+  onStartDayTimer: (durationMs?: number) => void | Promise<boolean>
+  onExtendDayTimer: (deltaMs: number) => void | Promise<boolean>
+  onSkipDayTimer: () => void | Promise<boolean>
   players: Player[]
   onEliminate: (player: Player, reason: string) => Promise<boolean>
   onRevive: (playerId: string) => Promise<boolean>
@@ -72,6 +75,9 @@ export function PrivateOverlay({
   onNextPhase,
   onRefresh,
   onResetRoom,
+  onStartDayTimer,
+  onExtendDayTimer,
+  onSkipDayTimer,
   players,
   onEliminate,
   onRevive,
@@ -172,6 +178,9 @@ export function PrivateOverlay({
             onNextPhase={onNextPhase}
             onRefresh={onRefresh}
             onResetRoom={onResetRoom}
+            onStartDayTimer={onStartDayTimer}
+            onExtendDayTimer={onExtendDayTimer}
+            onSkipDayTimer={onSkipDayTimer}
           />
 
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

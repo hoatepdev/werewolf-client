@@ -13,6 +13,7 @@ export type HudTimerContext =
   | 'werewolf'
   | 'witch'
   | 'seer'
+  | 'day'
   | 'voting'
   | string
   | null
