@@ -70,15 +70,14 @@ const CreateRoomPage = () => {
           Người chơi quét mã QR này để mở trang tham gia và gửi yêu cầu vào
           phòng
         </p>
-        <div className="mb-20 rounded-2xl border-4 border-yellow-400 bg-white p-2">
-          <div className="flex h-48 w-48 items-center justify-center rounded-xl bg-gray-200">
+        <div className="mb-16 border-2 border-yellow-400 bg-white p-2" aria-label="Mã QR tham gia phòng">
+          <div className="flex h-48 w-48 items-center justify-center bg-gray-200">
             {roomCode ? (
               <QRCode
                 value={joinRoomUrl}
                 // size={180}
                 bgColor="#fff"
                 fgColor="#000"
-                className="rounded-xl"
               />
             ) : (
               <span className="text-gray-400">Đang tạo mã QR...</span>
@@ -96,21 +95,21 @@ const CreateRoomPage = () => {
           Nếu không quét được QR, người chơi có thể nhập mã phòng này trong ứng
           dụng
         </p>
-        <div className="mb-8 flex w-full items-center rounded-xl border-2 border-yellow-400 bg-[#23232a] px-4 py-3">
+        <div className="mb-8 flex w-full items-center border-l-2 border-yellow-400 bg-zinc-900 px-4 py-3">
           <span className="flex-1 truncate font-mono text-lg tracking-[0.35em] text-white">
             {formatRoomCode(roomCode)}
           </span>
           <button
-            className="ml-2 text-xl text-yellow-400 hover:text-yellow-500"
+            type="button"
+            className="ml-2 flex h-10 w-10 items-center justify-center text-yellow-400 hover:text-yellow-300 disabled:cursor-not-allowed disabled:text-zinc-600"
             aria-label="Sao chép mã phòng"
+            disabled={!roomCode}
+            onClick={() => {
+              navigator.clipboard.writeText(roomCode)
+              toast.success('Đã sao chép mã phòng')
+            }}
           >
-            <Clipboard
-              className="h-6 w-6 cursor-pointer"
-              onClick={() => {
-                navigator.clipboard.writeText(roomCode || '')
-                toast.success('Đã sao chép mã phòng')
-              }}
-            />
+            <Clipboard className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
       </div>

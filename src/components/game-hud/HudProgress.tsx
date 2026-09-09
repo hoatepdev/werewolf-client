@@ -28,10 +28,10 @@ export function HudProgress({ voting, className }: HudProgressProps) {
           {voting.hasResponded ? ' · Đã gửi' : ''}
         </span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
+      <div className="h-1 overflow-hidden bg-zinc-800">
         <div
-          className="h-full rounded-full bg-yellow-400 transition-all duration-300"
-          style={{ width: `${percent}%` }}
+          className="h-full origin-left bg-yellow-400 transition-transform duration-300"
+          style={{ transform: `scaleX(${percent / 100})` }}
         />
       </div>
     </div>

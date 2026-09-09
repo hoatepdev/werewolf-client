@@ -15,9 +15,9 @@ export const GameLog = memo(function GameLog({ logs, filtered }: GameLogProps) {
   }, [logs, filtered])
 
   return (
-    <div className="m-6 max-h-96 overflow-y-auto rounded-lg bg-zinc-800">
-      <h3 className="mb-2 font-bold text-yellow-400">Lịch sử game (log)</h3>
-      <ul className="space-y-1 text-sm">
+    <div className="my-3 max-h-96 overflow-y-auto rounded-lg bg-zinc-800 px-3 py-2">
+      <h3 className="font-bold text-yellow-400">Lịch sử game (log)</h3>
+      <ul className="mt-2 space-y-1 text-sm">
         {visibleLogs.map((log, idx) => (
           <li key={idx}>
             <span className="text-zinc-400">

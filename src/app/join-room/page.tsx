@@ -229,10 +229,10 @@ export default function JoinRoomPage() {
             <div
               ref={scannerRef}
               id="qr-scanner"
-              className="absolute inset-0 z-20 h-full w-full overflow-hidden rounded-2xl border-none"
+              className="absolute inset-0 z-20 h-full w-full overflow-hidden border border-yellow-400"
             />
           ) : (
-            <div className="absolute inset-6 flex flex-col items-center justify-center rounded-2xl bg-zinc-900 text-center">
+            <div className="absolute inset-6 flex flex-col items-center justify-center border-y border-zinc-800 bg-zinc-950 text-center">
               <ScanQrCode className="mb-4 h-16 w-16 text-yellow-400" />
               <p className="px-4 text-sm text-zinc-300">
                 Quét QR từ màn hình của quản trò để nhập mã phòng nhanh hơn.
@@ -240,8 +240,8 @@ export default function JoinRoomPage() {
             </div>
           )}
           {scanError && (
-            <div className="absolute inset-0 z-30 flex items-center justify-center rounded-2xl bg-black/80 p-4">
-              <span className="text-center text-red-400">{scanError}</span>
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/90 p-4" role="alert">
+              <span className="border-l-2 border-red-400 pl-3 text-center text-red-300">{scanError}</span>
             </div>
           )}
           <div className="absolute top-0 left-0 h-7 w-7 rounded-tl-2xl border-t-4 border-l-4 border-yellow-400" />
@@ -252,7 +252,7 @@ export default function JoinRoomPage() {
 
         <div className="mt-8 mb-12 flex w-full max-w-xs flex-col gap-3 text-center">
           {scanSuccess && roomCode && (
-            <div className="rounded-xl border border-green-500/40 bg-green-950/40 px-4 py-3 text-sm text-green-300">
+            <div className="border-l-2 border-green-400 bg-green-950/40 px-4 py-3 text-sm text-green-300" role="status">
               Đã quét mã phòng{' '}
               <span className="font-bold tracking-[0.35em]">
                 {formatRoomCode(roomCode)}
@@ -272,14 +272,17 @@ export default function JoinRoomPage() {
                   : startScanning
               }
               className="w-full"
+              aria-label={scanning ? 'Dừng quét mã QR' : 'Bắt đầu quét mã QR'}
             >
               {scanning ? (
                 <div className="flex items-center justify-center gap-2">
-                  <CircleX className="h-8 w-8" />
+                  <CircleX className="h-6 w-6" aria-hidden="true" />
+                  <span>Dừng quét</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <ScanQrCode className="h-8 w-8" />
+                  <ScanQrCode className="h-6 w-6" aria-hidden="true" />
+                  <span>Quét mã</span>
                 </div>
               )}
             </Button>
@@ -288,21 +291,24 @@ export default function JoinRoomPage() {
               type="button"
               onClick={handleSwitchCamera}
               className="w-full"
+              aria-label="Đổi camera"
             >
               <div className="flex items-center justify-center gap-2">
-                <SwitchCamera className="h-8 w-8" />
+                <SwitchCamera className="h-6 w-6" aria-hidden="true" />
+                <span>Đổi camera</span>
               </div>
             </Button>
           </div>
         </div>
-        <p className="mb-2 text-sm text-zinc-400">
-          Hoặc nhập mã phòng thủ công
+        <p id="room-code-help" className="mb-2 text-sm text-zinc-400">
+          Hoặc nhập mã phòng gồm 6 chữ số
         </p>
         <div className="relative mx-auto w-full max-w-xs">
           <input
             ref={focusRef}
             className="sr-only"
             aria-label="Nhập mã phòng gồm 6 chữ số"
+            aria-describedby="room-code-help"
             inputMode="numeric"
             pattern="[0-9]*"
             maxLength={6}
@@ -318,7 +324,7 @@ export default function JoinRoomPage() {
             {Array.from({ length: 6 }).map((_, index) => (
               <span
                 key={index}
-                className="flex h-14 items-center justify-center rounded-xl bg-zinc-800 text-2xl font-bold text-white ring-1 ring-zinc-700 transition-colors data-[filled=true]:ring-yellow-400"
+                className="flex h-14 items-center justify-center border-b-2 border-zinc-700 bg-zinc-900 text-2xl font-bold text-white transition-colors data-[filled=true]:border-yellow-400"
                 data-filled={Boolean(roomCode[index])}
               >
                 {roomCode[index] || ''}

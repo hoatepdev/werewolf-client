@@ -30,34 +30,34 @@ export const ReadyChecklist = ({
         : 'Chưa có người chơi sẵn sàng'
 
   return (
-    <section className="w-full rounded-2xl border border-zinc-700 bg-zinc-900/70 p-4 shadow-lg">
+    <section className="w-full border-y border-zinc-800 py-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-zinc-100">{title}</h2>
           <p className="text-sm text-zinc-400">{summary}</p>
         </div>
-        <div className="rounded-full bg-yellow-400/10 px-3 py-1 text-sm font-bold text-yellow-300 ring-1 ring-yellow-400/30">
+        <div className="border-l-2 border-yellow-400 bg-yellow-400/10 px-3 py-1 text-sm font-bold text-yellow-300 tabular-nums">
           {readyCount}/{totalCount}
         </div>
       </div>
 
       {approvedPlayers.length === 0 ? (
-        <div className="rounded-xl bg-zinc-800 px-4 py-3 text-center text-sm text-zinc-400">
+        <div className="border-l-2 border-zinc-700 px-4 py-3 text-sm text-zinc-400">
           Chưa có người chơi được duyệt
         </div>
       ) : (
-        <div className="space-y-2">
+        <ul className="divide-y divide-zinc-800">
           {approvedPlayers.map((player) => {
             const isReady = player.ready === true
             const isCurrentPlayer = player.id === currentPlayerId
 
             return (
-              <div
+              <li
                 key={player.id}
-                className="flex items-center justify-between gap-3 rounded-xl bg-zinc-800 px-4 py-3"
+                className="flex items-center justify-between gap-3 py-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-2xl text-yellow-400">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-zinc-800 text-2xl text-yellow-400">
                     {renderAvatar(player)}
                   </span>
                   <div className="min-w-0">
@@ -71,10 +71,10 @@ export const ReadyChecklist = ({
                 </div>
 
                 <span
-                  className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
+                  className={`inline-flex shrink-0 items-center gap-1 border-l-2 px-2.5 py-1 text-xs font-semibold ${
                     isReady
-                      ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/30'
-                      : 'bg-yellow-400/10 text-yellow-300 ring-yellow-400/30'
+                      ? 'border-emerald-400 bg-emerald-500/10 text-emerald-400'
+                      : 'border-yellow-400 bg-yellow-400/10 text-yellow-300'
                   }`}
                 >
                   {isReady ? (
@@ -84,10 +84,10 @@ export const ReadyChecklist = ({
                   )}
                   {isReady ? 'Đã sẵn sàng' : 'Chưa sẵn sàng'}
                 </span>
-              </div>
+              </li>
             )
           })}
-        </div>
+        </ul>
       )}
     </section>
   )

@@ -32,7 +32,7 @@ export const BackgroundEngine = () => {
   }, [currentPhase, prevPhase]);
 
   return (
-    <div className="fixed inset-0 w-full h-full -z-10 bg-black overflow-hidden pointer-events-none">
+    <div className="pointer-events-none fixed inset-0 -z-10 h-full w-full overflow-hidden bg-zinc-950">
       <AnimatePresence mode="popLayout">
         {currentPhase === 'IDLE' && <IdleScene key="idle" />}
         {currentPhase === 'day' && <DayScene key="day" />}
@@ -48,7 +48,7 @@ export const BackgroundEngine = () => {
         {showFlash && (
           <motion.div
             key="flash"
-            className="absolute inset-0 bg-white z-50 mix-blend-screen"
+            className="absolute inset-0 z-50 bg-white"
             initial={{ opacity: 0 }}
             animate={{ opacity: [0, 1, 0] }}
             exit={{ opacity: 0 }}

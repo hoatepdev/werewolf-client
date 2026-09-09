@@ -2,12 +2,11 @@
 
 import { Clock, FastForward, Plus, RefreshCw, RotateCcw, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { HoldToConfirmButton } from '@/components/hold-to-confirm-button'
 import type { VotingProgress } from './types'
-import { HoldToConfirmButton } from './hold-to-confirm-button'
 
 interface GmToolsCardProps {
   phase: string
-  isConnected: boolean
   commandError?: string | null
   pendingGmCommand?: string | null
   votingProgress?: VotingProgress | null
@@ -19,17 +18,8 @@ interface GmToolsCardProps {
   onSkipDayTimer: () => void | Promise<boolean>
 }
 
-const PHASE_LABELS: Record<string, string> = {
-  night: 'Đêm',
-  day: 'Ban ngày',
-  voting: 'Bỏ phiếu',
-  conclude: 'Kết luận',
-  ended: 'Kết thúc',
-}
-
 export function GmToolsCard({
   phase,
-  isConnected,
   commandError,
   pendingGmCommand,
   votingProgress,
@@ -45,46 +35,19 @@ export function GmToolsCard({
   const isDayTimerPending = pendingGmCommand?.startsWith('day-timer:') ?? false
 
   return (
-    <div className="rounded-lg border border-yellow-500/20 bg-zinc-800/80 p-6 shadow-lg">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-yellow-400">🛠️ Công cụ GM</h2>
-          <p className="mt-1 text-xs text-zinc-400">
-            Điều hành ván ở chế độ riêng tư, không hiển thị cho người chơi.
-          </p>
-        </div>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            isConnected
-              ? 'bg-green-500/20 text-green-300'
-              : 'bg-red-500/20 text-red-300'
-          }`}
-        >
-          {isConnected ? 'Đã kết nối' : 'Mất kết nối'}
-        </span>
-      </div>
-
-      <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-        <div className="rounded-lg bg-zinc-900/70 p-3">
-          <p className="text-zinc-500">Giai đoạn hiện tại</p>
-          <p className="mt-1 font-semibold text-white">
-            {PHASE_LABELS[phase] || phase || 'Chưa bắt đầu'}
-          </p>
-        </div>
+    <div>
+      <div className="mb-4 text-sm">
         {phase === 'voting' && votingProgress ? (
-          <div className="rounded-lg bg-zinc-900/70 p-3">
-            <p className="text-zinc-500">Tiến độ bỏ phiếu</p>
-            <p className="mt-1 font-semibold text-white">
+          <p className="text-zinc-400">
+            Tiến độ bỏ phiếu:{' '}
+            <span className="font-semibold text-white">
               {votingProgress.respondedCount}/{votingProgress.totalVoters} đã phản hồi
-            </p>
-          </div>
+            </span>
+          </p>
         ) : (
-          <div className="rounded-lg bg-zinc-900/70 p-3">
-            <p className="text-zinc-500">Lệnh đang chạy</p>
-            <p className="mt-1 font-semibold text-white">
-              {pendingGmCommand ? 'Đang xử lý...' : 'Sẵn sàng'}
-            </p>
-          </div>
+          <p className="text-zinc-500">
+            {pendingGmCommand ? 'Đang xử lý lệnh...' : 'Sẵn sàng'}
+          </p>
         )}
       </div>
 
@@ -173,11 +136,6 @@ export function GmToolsCard({
           {phase === 'ended' ? 'Chơi lại' : 'Reset ván'}
         </Button>
       </div>
-
-      <p className="mt-4 text-xs leading-relaxed text-zinc-500">
-        Lưu ý: loại bỏ/hồi sinh thủ công chỉ chỉnh trạng thái sống/chết. Nếu đang
-        giữa lượt đặc biệt, GM vẫn cần điều hành nhịp chơi phù hợp.
-      </p>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { LIST_ROLE } from '@/constants/role'
 import type {
   GameEndLogEntry,
@@ -77,14 +78,17 @@ function NightLogEntryView({
               <span className="text-red-400">🐺</span>
               <span>
                 Sói tấn công:{' '}
-                <span className="font-semibold">{werewolfTarget ?? 'Không ai'}</span>
+                <span className="font-semibold">
+                  {werewolfTarget ?? 'Không ai'}
+                </span>
               </span>
             </li>
             {bodyguardTarget && (
               <li className="flex items-start gap-2">
                 <span className="text-blue-400">🛡️</span>
                 <span>
-                  Bảo vệ: <span className="font-semibold">{bodyguardTarget}</span>
+                  Bảo vệ:{' '}
+                  <span className="font-semibold">{bodyguardTarget}</span>
                 </span>
               </li>
             )}
@@ -103,8 +107,11 @@ function NightLogEntryView({
               <li className="flex items-start gap-2">
                 <span className="text-purple-400">🔮</span>
                 <span>
-                  Tiên tri xem <span className="font-semibold">{seerTarget}</span> →{' '}
-                  <span className={seerResult ? 'text-red-400' : 'text-green-400'}>
+                  Tiên tri xem{' '}
+                  <span className="font-semibold">{seerTarget}</span> →{' '}
+                  <span
+                    className={seerResult ? 'text-red-400' : 'text-green-400'}
+                  >
                     {seerResult ? 'Sói' : 'Dân'}
                   </span>
                 </span>
@@ -115,11 +122,14 @@ function NightLogEntryView({
                 <span className="text-pink-400">🧪</span>
                 <span>
                   Phù thủy:{' '}
-                  {witchHeal && <span className="text-green-400"> Cứu người</span>}
+                  {witchHeal && (
+                    <span className="text-green-400"> Cứu người</span>
+                  )}
                   {witchPoisonTarget && (
                     <span className="text-red-400">
                       {' '}
-                      Đầu độc <span className="font-semibold">{witchPoisonTarget}</span>
+                      Đầu độc{' '}
+                      <span className="font-semibold">{witchPoisonTarget}</span>
                     </span>
                   )}
                 </span>
@@ -185,7 +195,9 @@ function VotingLogEntryView({ entry }: { entry: VotingLogEntry }) {
     <div className="mb-3 rounded-lg bg-zinc-800/50 p-3">
       <div className="mb-2 flex items-center gap-2 border-b border-zinc-700 pb-2">
         <span className="text-lg">🗳️</span>
-        <span className="font-semibold text-yellow-400">Bỏ phiếu (Vòng {round})</span>
+        <span className="font-semibold text-yellow-400">
+          Bỏ phiếu (Vòng {round})
+        </span>
       </div>
       {votes.length > 0 && (
         <ul className="mb-2 space-y-1 text-sm">
@@ -196,7 +208,7 @@ function VotingLogEntryView({ entry }: { entry: VotingLogEntry }) {
                 ? 'Bỏ qua'
                 : kind === 'timeout'
                   ? 'Hết giờ'
-                  : vote.target ?? 'Không rõ'
+                  : (vote.target ?? 'Không rõ')
             const targetClassName =
               kind === 'abstain'
                 ? 'font-semibold text-blue-300'
@@ -216,20 +228,28 @@ function VotingLogEntryView({ entry }: { entry: VotingLogEntry }) {
       )}
       {hasVoteSummary && (
         <div className="mb-2 flex flex-wrap gap-2 text-xs text-zinc-400">
-          {targetVoteCount !== undefined && <span>{targetVoteCount} phiếu hợp lệ</span>}
+          {targetVoteCount !== undefined && (
+            <span>{targetVoteCount} phiếu hợp lệ</span>
+          )}
           {abstainCount !== undefined && <span>• {abstainCount} bỏ qua</span>}
           {timeoutCount !== undefined && <span>• {timeoutCount} hết giờ</span>}
-          {totalVoters !== undefined && <span>• {totalVoters} người được vote</span>}
+          {totalVoters !== undefined && (
+            <span>• {totalVoters} người được vote</span>
+          )}
         </div>
       )}
       <div className="text-sm">
         {eliminatedPlayer ? (
           <span className="text-red-400">
-            Kết quả: <span className="font-semibold">{eliminatedPlayer}</span> bị loại
+            Kết quả: <span className="font-semibold">{eliminatedPlayer}</span>{' '}
+            bị loại
           </span>
         ) : (
           <span className="text-zinc-400">
-            Kết quả: {cause === 'tie' ? `Hòa phiếu (${tiedPlayers?.join(', ')})` : CAUSE_VI[cause]}
+            Kết quả:{' '}
+            {cause === 'tie'
+              ? `Hòa phiếu (${tiedPlayers?.join(', ')})`
+              : CAUSE_VI[cause]}
           </span>
         )}
       </div>
@@ -244,7 +264,9 @@ function HunterShotLogEntryView({ entry }: { entry: HunterShotLogEntry }) {
     <div className="mb-3 rounded-lg bg-zinc-800/50 p-3">
       <div className="mb-2 flex items-center gap-2 border-b border-zinc-700 pb-2">
         <span className="text-lg">🎯</span>
-        <span className="font-semibold text-yellow-400">Thợ săn (Vòng {round})</span>
+        <span className="font-semibold text-yellow-400">
+          Thợ săn (Vòng {round})
+        </span>
       </div>
       <div className="text-sm">
         {target ? (
@@ -274,19 +296,34 @@ function GameEndLogEntryView({ entry }: { entry: GameEndLogEntry }) {
       </div>
       <div className="flex items-center gap-2 text-sm">
         <span className="text-2xl">{winnerConfig.emoji}</span>
-        <span className="font-semibold text-yellow-400">{winnerConfig.name} thắng!</span>
+        <span className="font-semibold text-yellow-400">
+          {winnerConfig.name} thắng!
+        </span>
         <span className="text-zinc-500">•</span>
         <span className="text-zinc-400">{totalRounds} vòng</span>
       </div>
       {players.length > 0 && (
         <ul className="mt-3 divide-y divide-zinc-700/70 rounded-lg border border-zinc-700/70 bg-zinc-900/60 px-3 text-sm">
           {players.map((player, idx) => (
-            <li key={`${player.username}-${idx}`} className="flex items-center justify-between gap-3 py-2">
+            <li
+              key={`${player.username}-${idx}`}
+              className="flex items-center justify-between gap-3 py-2"
+            >
               <span className="min-w-0">
-                <span className="font-semibold text-zinc-100">{player.username}</span>{' '}
-                <span className="text-xs text-zinc-400">({getRoleName(player.role)})</span>
+                <span className="font-semibold text-zinc-100">
+                  {player.username}
+                </span>{' '}
+                <span className="text-xs text-zinc-400">
+                  ({getRoleName(player.role)})
+                </span>
               </span>
-              <span className={player.alive ? 'shrink-0 text-green-400' : 'shrink-0 text-red-400'}>
+              <span
+                className={
+                  player.alive
+                    ? 'shrink-0 text-green-400'
+                    : 'shrink-0 text-red-400'
+                }
+              >
                 {player.alive ? 'Sống' : 'Chết'}
               </span>
             </li>
@@ -364,35 +401,46 @@ export default function GameHistoryLog({
   revealDetails = false,
 }: GameHistoryLogProps) {
   const [expanded, setExpanded] = useState(initiallyExpanded)
+  const shouldReduceMotion = useReducedMotion()
+  const contentId = useId()
   const hasGameLog = gameLog.length > 0
 
   if (!hasGameLog && !showEmptyState) return null
 
   return (
-    <div
-      className={
-        compact
-          ? 'w-full rounded-2xl border border-zinc-800 bg-zinc-950/85 p-3 shadow-xl backdrop-blur-md'
-          : 'w-full'
-      }
-    >
+    <div className={compact ? 'mt-3 w-full bg-zinc-950' : 'w-full'}>
       <button
         className="flex w-full items-center justify-between rounded-lg bg-zinc-800 px-3 py-2 text-left transition-colors hover:bg-zinc-700"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+        aria-controls={contentId}
       >
         <span className="font-semibold text-yellow-400">{title}</span>
         <span className="text-xs text-zinc-400">
           {expanded ? 'Thu gọn ▲' : 'Xem chi tiết ▼'}
         </span>
       </button>
-      {!hasGameLog && expanded && (
-        <p className="mt-3 rounded-lg border border-dashed border-zinc-700 px-3 py-4 text-sm text-zinc-400">
-          Lịch sử ván sẽ xuất hiện sau kết quả ban đêm, bỏ phiếu và sự kiện công khai.
-        </p>
-      )}
-      {hasGameLog && expanded && (
-        <NarrativeLog entries={gameLog} revealDetails={revealDetails} />
-      )}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            id={contentId}
+            initial={shouldReduceMotion ? false : { height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={shouldReduceMotion ? undefined : { height: 0, opacity: 0 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.25 }}
+            className="overflow-hidden"
+          >
+            {!hasGameLog ? (
+              <p className="mt-3 rounded-lg border border-dashed border-zinc-700 px-3 py-4 text-sm text-zinc-400">
+                Lịch sử ván sẽ xuất hiện sau kết quả ban đêm, bỏ phiếu và sự
+                kiện công khai.
+              </p>
+            ) : (
+              <NarrativeLog entries={gameLog} revealDetails={revealDetails} />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

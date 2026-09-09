@@ -78,8 +78,6 @@ export const metadata: Metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: '#18181b',
   colorScheme: 'dark',
 }
@@ -92,7 +90,7 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${tiktokSans.variable} antialiased`}
+      className={`${tiktokSans.variable} dark antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -113,7 +111,7 @@ export default function RootLayout({
       <body>
         <ProgrammaticDialogProviderSingleton>
           <BackgroundEngine />
-          <div className="bg-zinc-900">{children}</div>
+          <div className="min-h-dvh bg-zinc-950">{children}</div>
           <Toaster position="top-center" richColors duration={2000} />
           <PWAInstallPrompt />
           <PWAServiceWorker />

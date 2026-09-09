@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { RoleObject } from '@/types/role'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -76,9 +81,12 @@ export const RoleRandomizerModal = ({
         style={{
           border: '1px solid transparent',
         }}
-        className="flex items-center justify-center bg-transparent p-0 shadow-none focus:outline-none"
+        className="flex items-center justify-center border-0 bg-transparent p-0"
       >
         <DialogTitle className="sr-only">Kết quả vai trò</DialogTitle>
+        <DialogDescription className="sr-only">
+          Chạm và giữ hoặc nhấn giữ Enter hay phím cách để xem vai trò.
+        </DialogDescription>
         <div className="flex h-full w-full flex-col items-center justify-center">
           <AnimatePresence mode="wait">
             {isSpinning ? (
@@ -207,10 +215,27 @@ export const RoleRandomizerModal = ({
                 className="flex min-h-[400px] flex-col items-center justify-center gap-6 select-none"
               >
                 <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Nhấn giữ để xem vai trò"
+                  aria-pressed={isRevealed}
                   className="relative cursor-pointer touch-none"
                   onPointerDown={() => setIsRevealed(true)}
                   onPointerUp={() => setIsRevealed(false)}
                   onPointerLeave={() => setIsRevealed(false)}
+                  onPointerCancel={() => setIsRevealed(false)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setIsRevealed(true)
+                    }
+                  }}
+                  onKeyUp={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      setIsRevealed(false)
+                    }
+                  }}
+                  onBlur={() => setIsRevealed(false)}
                   onContextMenu={(e) => e.preventDefault()}
                 >
                   <div
@@ -219,7 +244,7 @@ export const RoleRandomizerModal = ({
                     }`}
                   >
                     {imageError ? (
-                      <div className="flex h-[258px] w-48 flex-col items-center justify-center rounded-xl border-4 border-yellow-400 bg-zinc-800 shadow-lg">
+                      <div className="flex h-[258px] w-48 flex-col items-center justify-center rounded-sm border-2 border-yellow-400 bg-zinc-800">
                         <div className="text-6xl">{assignedRole.emoji}</div>
                       </div>
                     ) : (
@@ -229,7 +254,7 @@ export const RoleRandomizerModal = ({
                         src={`/images/role/${assignedRole.id}.png`}
                         alt={assignedRole.name}
                         autoFocus={false}
-                        className="rounded-xl border-4 border-yellow-400 bg-zinc-800 object-contain shadow-lg"
+                        className="rounded-sm border-2 border-yellow-400 bg-zinc-800 object-contain"
                         priority
                         onError={() => setImageError(true)}
                       />
@@ -244,16 +269,15 @@ export const RoleRandomizerModal = ({
 
                   {/* Hidden Overlay */}
                   <div
-                    className={`absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-zinc-800/95 transition-all duration-300 ${
+                    className={`absolute inset-0 flex flex-col items-center justify-center rounded-sm bg-zinc-900 transition-all duration-300 ${
                       isRevealed
                         ? 'pointer-events-none opacity-0 scale-105'
                         : 'opacity-100 scale-100 border-2 border-dashed border-zinc-500 hover:border-yellow-400'
                     }`}
                   >
-                    <Fingerprint className="mb-4 h-16 w-16 animate-pulse text-yellow-400" />
+                    <Fingerprint className="mb-4 h-16 w-16 text-yellow-400" aria-hidden="true" />
                     <div className="text-center font-medium text-zinc-200">
-                      Chạm và giữ<br />
-                      để xem vai trò
+                      Nhấn giữ để xem vai trò
                     </div>
                   </div>
                 </div>
@@ -269,7 +293,7 @@ export const RoleRandomizerModal = ({
                           variant="yellow"
                           onClick={handleReady}
                           disabled={isReady}
-                          className="w-full shadow-md"
+                          className="w-full"
                         >
                           {isReady ? (
                             <div className="flex items-center justify-center gap-2">

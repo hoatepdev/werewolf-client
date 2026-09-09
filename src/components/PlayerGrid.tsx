@@ -5,7 +5,7 @@ import { Player } from '@/types/player'
 import { Card, CardContent } from '@/components/ui/card'
 import { renderAvatar } from '@/helpers'
 import { toast } from 'sonner'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { hoverTapVariants, springTransition } from '@/lib/motion'
 
 interface PlayerGridProps {
@@ -29,6 +29,7 @@ export function PlayerGrid({
   selectableList,
   disabled = false,
 }: PlayerGridProps) {
+  const shouldReduceMotion = useReducedMotion()
   const maxPlayers = 9
   const emptySlots = maxPlayers - players.length
 
@@ -45,74 +46,84 @@ export function PlayerGrid({
 
   return (
     <div className="grid w-full max-w-sm grid-cols-3 gap-3">
-      {listPlayer.map((player) => {
-        const isSelected =
-          player.id === selectedId || selectedIds?.includes(player.id)
+      <AnimatePresence>
+        {listPlayer.map((player) => {
+          const isSelected =
+            player.id === selectedId || selectedIds?.includes(player.id)
 
-        return (
-          <motion.div
-          layout
-          key={player.id}
-          variants={hoverTapVariants}
-          whileHover={player.isSelectable ? 'hover' : undefined}
-          whileTap={player.isSelectable ? 'tap' : undefined}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{
-            opacity: mode === 'lobby' || player.alive ? 1 : 0.5,
-            scale: 1,
-            filter: mode === 'lobby' || player.alive ? 'grayscale(0%)' : 'grayscale(100%)',
-          }}
-          transition={springTransition}
-          style={{ willChange: 'transform' }}
-        >
-          <Card
-            className={`relative h-full w-full overflow-hidden transition-all duration-200 ${
-              isSelected ||
-              (currentPlayerId &&
-                mode === 'lobby' &&
-                player.id === currentPlayerId)
-                ? 'bg-zinc-700/50 ring-2 ring-yellow-400'
-                : 'bg-zinc-800'
-            } ${
-              player.isSelectable
-                ? 'cursor-pointer'
-                : 'pointer-events-none cursor-not-allowed'
-            }`}
-            onClick={() => {
-              if (player.isSelectable) {
-                if (isSelected) {
-                  onSelect?.(null)
-                } else {
-                  onSelect?.(player)
-                }
-              } else toast.error('Bạn không thể chọn người này')
-            }}
-          >
-            <CardContent className="flex flex-col items-center p-3">
-              <div
-                className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold transition-transform ${
-                  isSelected
-                    ? 'bg-yellow-400 text-black'
-                    : 'bg-zinc-600 text-white'
-                }`}
+          return (
+            <motion.div
+              layout={!shouldReduceMotion}
+              key={player.id}
+              variants={hoverTapVariants}
+              whileHover={
+                !shouldReduceMotion && player.isSelectable ? 'hover' : undefined
+              }
+              whileTap={
+                !shouldReduceMotion && player.isSelectable ? 'tap' : undefined
+              }
+              initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
+              animate={{
+                opacity: mode === 'lobby' || player.alive ? 1 : 0.5,
+                scale: 1,
+              }}
+              exit={
+                shouldReduceMotion ? undefined : { opacity: 0, scale: 0.96 }
+              }
+              transition={
+                shouldReduceMotion ? { duration: 0 } : springTransition
+              }
+              style={{ willChange: 'transform' }}
+            >
+              <button
+                type="button"
+                aria-label={`${player.username}, ${player.alive === false ? 'đã chết' : 'còn sống'}`}
+                aria-pressed={player.isSelectable ? Boolean(isSelected) : undefined}
+                aria-disabled={!player.isSelectable}
+                className={`relative h-full w-full overflow-hidden rounded-md border p-3 transition-[background-color,border-color,color,transform] duration-150 active:translate-y-px ${
+                  mode === 'room' && !player.alive ? 'grayscale' : ''
+                } ${
+                  isSelected ||
+                  (currentPlayerId &&
+                    mode === 'lobby' &&
+                    player.id === currentPlayerId)
+                    ? 'border-yellow-400 bg-yellow-400/10'
+                    : 'border-zinc-800 bg-zinc-900'
+                } ${player.isSelectable ? 'cursor-pointer hover:border-zinc-600' : 'cursor-not-allowed opacity-65'}`}
+                onClick={() => {
+                  if (!player.isSelectable) {
+                    toast.error('Bạn không thể chọn người này')
+                    return
+                  }
+                  onSelect?.(isSelected ? null : player)
+                }}
               >
-                {renderAvatar(player)}
-              </div>
-              <div className="text-center">
-                <div className="w-full truncate text-sm font-medium text-white">
-                  {truncateName(player.username)}
-                </div>
-                {mode === 'room' && !player.alive && (
-                  <div className="mt-1 text-xs text-red-500 font-bold tracking-wider animate-pulse">
-                    ĐÃ CHẾT
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`mb-2 flex h-12 w-12 items-center justify-center rounded-sm text-lg font-bold transition-colors ${
+                      isSelected
+                        ? 'bg-yellow-400 text-black'
+                        : 'bg-zinc-700 text-white'
+                    }`}
+                  >
+                    {renderAvatar(player)}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          </motion.div>
-        )
-      })}
+                  <div className="w-full text-center">
+                    <div className="w-full truncate text-sm font-medium text-white">
+                      {truncateName(player.username)}
+                    </div>
+                    {mode === 'room' && !player.alive && (
+                      <div className="mt-1 text-xs font-bold tracking-wider text-red-400">
+                        Đã chết
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </button>
+            </motion.div>
+          )
+        })}
+      </AnimatePresence>
 
       {Array.from({ length: emptySlots }).map((_, index) => (
         <Card

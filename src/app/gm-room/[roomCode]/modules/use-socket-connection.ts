@@ -238,7 +238,7 @@ export function useSocketConnection(
         clearReconnectTimeout()
         setIsConnected(false)
         const message =
-          data.message && data.message !== 'Not authorized.'
+          data.message && data.message !== 'Không có quyền truy cập.'
             ? data.message
             : 'Không thể tiếp tục phòng quản trò. Phòng có thể đã hết hạn hoặc phiên không còn hợp lệ.'
         toast.error(message)

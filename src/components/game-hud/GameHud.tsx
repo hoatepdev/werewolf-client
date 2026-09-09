@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { HoldToConfirmButton } from '@/components/hold-to-confirm-button'
 import { cn } from '@/lib/utils'
 import { getPhaseDescription, getPhaseTone, getWinnerLabel } from './GameHud.helpers'
 import type { GameHudProps } from './GameHud.types'
@@ -44,7 +45,7 @@ export function GameHud({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       className={cn(
-        'rounded-2xl border bg-zinc-950/85 p-3 text-zinc-100 shadow-2xl backdrop-blur-md',
+        'border border-zinc-700 bg-zinc-950 p-3 text-zinc-100',
         tone.borderClass,
         tone.glowClass,
         compact ? 'space-y-3' : 'space-y-4',
@@ -54,7 +55,7 @@ export function GameHud({
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="rounded-2xl border border-zinc-700 bg-zinc-900/80 px-3 py-2">
+          <div className="border-l-2 border-yellow-400 bg-zinc-900 px-3 py-1.5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
               Phòng
             </p>
@@ -72,10 +73,10 @@ export function GameHud({
                 {typeof isConnected === 'boolean' && (
                   <span
                     className={cn(
-                      'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1',
+                      'inline-flex items-center gap-2 border-l-2 px-2 py-1 text-xs font-semibold',
                       isConnected
-                        ? 'bg-green-500/15 text-green-200 ring-green-400/30'
-                        : 'bg-red-500/15 text-red-200 ring-red-400/30',
+                        ? 'border-green-400 bg-green-500/10 text-green-200'
+                        : 'border-red-400 bg-red-500/10 text-red-200',
                     )}
                   >
                     <span
@@ -88,8 +89,8 @@ export function GameHud({
                   </span>
                 )}
                 {privateModeActive && (
-                  <span className="rounded-full bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-200 ring-1 ring-purple-400/30">
-                    🔒 Riêng tư
+                  <span className="border-l-2 border-yellow-400 bg-yellow-400/10 px-2 py-1 text-xs font-semibold text-yellow-200">
+                    Chế độ riêng tư
                   </span>
                 )}
               </div>
@@ -106,8 +107,8 @@ export function GameHud({
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             <PhaseBadge phase={phase} />
             {winnerInfo && (
-              <span className="rounded-full bg-yellow-400/15 px-3 py-1 text-xs font-semibold text-yellow-100 ring-1 ring-yellow-300/30">
-                {winnerInfo.emoji} {winnerInfo.name} thắng
+              <span className="border-l-2 border-yellow-400 bg-yellow-400/10 px-2 py-1 text-xs font-semibold text-yellow-100">
+                {winnerInfo.name} thắng
               </span>
             )}
           </div>
@@ -143,7 +144,7 @@ export function GameHud({
               className="w-auto px-3 py-2 text-sm"
               variant="yellow"
             >
-              🔒 Riêng tư
+              Riêng tư
             </Button>
           )}
           {actions.onRefresh && (
@@ -156,14 +157,10 @@ export function GameHud({
             </Button>
           )}
           {actions.onNextPhase && phase !== 'ended' && (
-            <Button
-              type="button"
-              onClick={actions.onNextPhase}
+            <HoldToConfirmButton
+              onConfirm={actions.onNextPhase}
               className="w-auto px-3 py-2 text-sm"
-              variant="yellow"
-            >
-              Giai đoạn tiếp theo
-            </Button>
+            />
           )}
           {actions.onLeave && (
             <Button

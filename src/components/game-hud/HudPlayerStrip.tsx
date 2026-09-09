@@ -21,7 +21,7 @@ export function HudPlayerStrip({ identity, className }: HudPlayerStripProps) {
 
   return (
     <div className={cn('flex min-w-0 items-center gap-3', className)}>
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-2xl shadow-inner">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-zinc-700 bg-zinc-800 text-2xl">
         {renderAvatar({
           username: identity.username || 'Người chơi',
           avatarKey: identity.avatarKey,
@@ -34,10 +34,10 @@ export function HudPlayerStrip({ identity, className }: HudPlayerStripProps) {
           </p>
           <span
             className={cn(
-              'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold',
+              'shrink-0 border-l-2 px-2 py-0.5 text-[11px] font-semibold',
               identity.alive === false
-                ? 'bg-red-500/15 text-red-200'
-                : 'bg-green-500/15 text-green-200',
+                ? 'border-red-400 bg-red-500/10 text-red-200'
+                : 'border-green-400 bg-green-500/10 text-green-200',
             )}
           >
             {aliveLabel}

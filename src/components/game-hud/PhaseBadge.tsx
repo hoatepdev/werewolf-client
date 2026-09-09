@@ -15,7 +15,7 @@ export function PhaseBadge({ phase, className }: PhaseBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1',
+        'inline-flex items-center gap-2 border-l-2 px-2 py-1 text-xs font-semibold',
         tone.labelClass,
         className,
       )}

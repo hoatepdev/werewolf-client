@@ -143,8 +143,35 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply bg-zinc-950;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-dvh bg-zinc-950 text-zinc-100;
+  }
+  button,
+  [role='button'],
+  a,
+  input,
+  select,
+  textarea {
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400;
+  }
+  code,
+  time,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -164,13 +191,11 @@
 
 /* Thumb (cục kéo) */
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #444, #222);
-  border-radius: 10px;
+  background: #3f3f46;
   border: 2px solid #111;
 }
 
 /* Hover effect */
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #fde68a, #facc15);
-  opacity: 0.85;
+  background: #facc15;
 }

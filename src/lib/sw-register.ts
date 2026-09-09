@@ -3,6 +3,11 @@ export function registerServiceWorker() {
     return
   }
 
+  if (process.env.NODE_ENV !== 'production') {
+    unregisterServiceWorker()
+    return
+  }
+
   const register = () => {
     return navigator.serviceWorker
       .register('/sw.js')

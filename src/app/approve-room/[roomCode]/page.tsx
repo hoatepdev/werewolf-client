@@ -80,22 +80,25 @@ export default function ApprovePlayerPage({
     }, 2000)
   }, [roomCode, router])
 
-  const handleDataPlayers = useCallback((data: Player[]) => {
-    const approvedPlayers: Player[] = []
-    const pendingPlayers: Player[] = []
+  const handleDataPlayers = useCallback(
+    (data: Player[]) => {
+      const approvedPlayers: Player[] = []
+      const pendingPlayers: Player[] = []
 
-    data.forEach((player: Player) => {
-      if (player.status === 'approved') {
-        approvedPlayers.push(player)
-      } else if (player.status === 'pending') {
-        pendingPlayers.push(player)
-      }
-    })
+      data.forEach((player: Player) => {
+        if (player.status === 'approved') {
+          approvedPlayers.push(player)
+        } else if (player.status === 'pending') {
+          pendingPlayers.push(player)
+        }
+      })
 
-    setPendingPlayers(pendingPlayers)
-    setApprovedPlayers(approvedPlayers)
-    setApprovedPlayersStore(approvedPlayers)
-  }, [setApprovedPlayersStore])
+      setPendingPlayers(pendingPlayers)
+      setApprovedPlayers(approvedPlayers)
+      setApprovedPlayersStore(approvedPlayers)
+    },
+    [setApprovedPlayersStore],
+  )
 
   useEffect(() => {
     setOrigin(window.location.origin)
@@ -142,7 +145,8 @@ export default function ApprovePlayerPage({
 
   const countPlayer = approvedPlayers.length
   const rolesAssigned =
-    approvedPlayers.length > 0 && approvedPlayers.every((player) => Boolean(player.role))
+    approvedPlayers.length > 0 &&
+    approvedPlayers.every((player) => Boolean(player.role))
   const validation = useMemo(
     () => validateRoleComposition(selectedRoles, countPlayer, MIN_PLAYER),
     [countPlayer, selectedRoles],
@@ -295,20 +299,20 @@ export default function ApprovePlayerPage({
                   </span>
                   <div className="flex gap-4">
                     <button
-                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-green-500 text-lg text-green-500 hover:bg-green-600 hover:text-white focus:outline-none"
+                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm border border-green-500 text-lg text-green-400 hover:bg-green-600 hover:text-white"
                       onClick={() => {
                         handleApprove(player)
                       }}
-                      aria-label="Duyệt"
+                      aria-label={`Duyệt ${player.username}`}
                     >
                       <Check className="h-6 w-6" />
                     </button>
                     <button
-                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-red-500 text-lg text-red-500 hover:bg-red-600 hover:text-white focus:outline-none active:bg-red-700"
+                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm border border-red-500 text-lg text-red-400 hover:bg-red-600 hover:text-white active:bg-red-700"
                       onClick={() => {
                         handleReject(player)
                       }}
-                      aria-label="Từ chối"
+                      aria-label={`Từ chối ${player.username}`}
                     >
                       <X className="h-6 w-6" />
                     </button>
@@ -418,23 +422,27 @@ function RoleSetupSummary({
       </div>
 
       {!canSetup ? (
-        <div className="rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-3 text-sm text-yellow-100">
+        <div className="mb-2 rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-3 text-sm text-yellow-100">
           Cần ít nhất {minPlayer} người chơi đã duyệt để thiết lập và phân vai.
         </div>
       ) : hasComposition ? (
         <div className="mb-4 grid grid-cols-2 gap-2">
-          {LIST_ROLE.filter((role) => (roleCounts[role.id] ?? 0) > 0).map((role) => (
-            <div
-              key={role.id}
-              className="flex items-center justify-between rounded-xl bg-zinc-800 px-3 py-2"
-            >
-              <span className="flex items-center gap-2 text-sm text-zinc-100">
-                <span>{role.emoji}</span>
-                {role.name}
-              </span>
-              <span className="font-bold text-yellow-300">x{roleCounts[role.id]}</span>
-            </div>
-          ))}
+          {LIST_ROLE.filter((role) => (roleCounts[role.id] ?? 0) > 0).map(
+            (role) => (
+              <div
+                key={role.id}
+                className="flex items-center justify-between rounded-xl bg-zinc-800 px-3 py-2"
+              >
+                <span className="flex items-center gap-2 text-sm text-zinc-100">
+                  <span>{role.emoji}</span>
+                  {role.name}
+                </span>
+                <span className="font-bold text-yellow-300">
+                  x{roleCounts[role.id]}
+                </span>
+              </div>
+            ),
+          )}
         </div>
       ) : (
         <div className="mb-4 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/50 p-4 text-center text-sm text-zinc-400">
@@ -448,18 +456,22 @@ function RoleSetupSummary({
         </StatusMessage>
       )}
       {!isStale && hasComposition && errors.length === 0 && (
-        <StatusMessage tone="success">Cấu hình đã sẵn sàng để phân vai.</StatusMessage>
+        <StatusMessage tone="success">
+          Cấu hình đã sẵn sàng để phân vai.
+        </StatusMessage>
       )}
-      {!isStale && errors.slice(0, 2).map((error) => (
-        <StatusMessage key={error} tone="error">
-          {error}
-        </StatusMessage>
-      ))}
-      {!isStale && warnings.slice(0, 1).map((warning) => (
-        <StatusMessage key={warning} tone="warning">
-          {warning}
-        </StatusMessage>
-      ))}
+      {!isStale &&
+        errors.slice(0, 2).map((error) => (
+          <StatusMessage key={error} tone="error">
+            {error}
+          </StatusMessage>
+        ))}
+      {!isStale &&
+        warnings.slice(0, 1).map((warning) => (
+          <StatusMessage key={warning} tone="warning">
+            {warning}
+          </StatusMessage>
+        ))}
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <Button

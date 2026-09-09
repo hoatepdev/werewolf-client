@@ -22,7 +22,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'w-full cursor-pointer rounded-xl py-3 text-lg font-bold shadow transition-colors focus:ring-2 focus:ring-yellow-400/30 focus:outline-none',
+          'w-full cursor-pointer rounded-md border border-transparent px-2 py-3 text-base font-semibold transition-[background-color,border-color,color,transform] duration-150 hover:border-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400 active:translate-y-px',
           variantClass,
           className,
           props.disabled && 'cursor-not-allowed opacity-50',
@@ -35,7 +35,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button'
 
 const baseClass =
-  'w-full py-3 rounded-xl font-bold text-lg shadow transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400/30'
+  'w-full cursor-pointer rounded-md border border-transparent px-4 py-3 text-base font-semibold transition-[background-color,border-color,color,transform] duration-150 hover:border-white/10 active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400 disabled:cursor-not-allowed disabled:opacity-50'
 
 function buttonVariants({
   variant = 'default',

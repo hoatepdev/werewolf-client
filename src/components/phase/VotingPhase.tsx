@@ -149,8 +149,8 @@ const VotingPhase: React.FC = () => {
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-700">
             <div
-              className="h-full rounded-full bg-yellow-400 transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
+              className="h-full origin-left rounded-full bg-yellow-400 transition-transform duration-300"
+              style={{ transform: `scaleX(${progressPercent / 100})` }}
             />
           </div>
         </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { Lock } from 'lucide-react'
-import { useLongPress } from './use-long-press'
+import { useLongPress } from '@/components/use-long-press'
 
 interface PrivateTriggerProps {
   onActivate: () => void

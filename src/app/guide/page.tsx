@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { LIST_ROLE } from '@/constants/role'
 import { staggerContainerVars, staggerItemVars } from '@/lib/motion'
 import { cn } from '@/lib/utils'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
 
@@ -201,64 +201,29 @@ export default function GuidePage() {
 }
 
 function GuideHero() {
-  const shouldReduceMotion = useReducedMotion()
-
   return (
     <motion.section
       variants={staggerItemVars}
-      className="relative overflow-hidden"
+      className="border-l-2 border-yellow-400 py-2 pl-5"
     >
-      <div className="relative overflow-hidden rounded-3xl border border-yellow-400/30 bg-gradient-to-br from-zinc-950 via-zinc-900 to-yellow-950/30 p-5 shadow-2xl shadow-yellow-950/30">
-        <motion.div
-          aria-hidden="true"
-          animate={
-            shouldReduceMotion
-              ? undefined
-              : { opacity: [0.35, 0.75, 0.35], scale: [1, 1.05, 1] }
-          }
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-12 -right-12 h-44 w-44 rounded-full bg-yellow-300/20 blur-3xl"
-        />
-        <div className="relative z-10">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div className="rounded-full border border-yellow-300/40 bg-yellow-300/10 px-3 py-1 text-[10px] font-bold tracking-[0.18em] text-yellow-200 uppercase">
-              Offline party game
-            </div>
-            <motion.div
-              aria-hidden="true"
-              animate={shouldReduceMotion ? undefined : { y: [0, -5, 0] }}
-              transition={{
-                duration: 3.5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="text-4xl drop-shadow-[0_0_18px_rgba(250,204,21,0.45)]"
-            >
-              🌕
-            </motion.div>
-          </div>
-
-          <div className="space-y-3">
-            <h1 className="text-3xl leading-tight font-black tracking-tight text-white sm:text-4xl">
-              Chào mừng đến với{' '}
-              <span className="text-yellow-400">Ma Sói</span>
-            </h1>
-            <p className="text-base leading-relaxed text-zinc-200">
-              Một ngôi làng yên bình, vài con Sói ẩn mình, và những lá phiếu
-              quyết định số phận dưới ánh trăng.
-            </p>
-            <p className="text-sm leading-relaxed text-zinc-400">
-              Đọc nhanh luật chơi, vai trò, điều kiện thắng và mẹo nhập vai
-              trước khi bắt đầu ván đầu tiên.
-            </p>
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Badge>3-9 người</Badge>
-            <Badge>1 quản trò</Badge>
-            <Badge>Chơi offline</Badge>
-          </div>
-        </div>
+      <p className="mb-3 text-xs font-semibold tracking-[0.16em] text-yellow-300 uppercase">
+        Trò chơi nhập vai tại bàn
+      </p>
+      <h1 className="max-w-xl text-3xl leading-tight font-black tracking-tight text-white sm:text-4xl">
+        Luật chơi <span className="text-yellow-400">Ma Sói</span>
+      </h1>
+      <p className="mt-4 max-w-[62ch] text-base leading-7 text-zinc-200">
+        Một ngôi làng yên bình, vài con Sói ẩn mình, và những lá phiếu quyết
+        định số phận dưới ánh trăng.
+      </p>
+      <p className="mt-2 max-w-[62ch] text-sm leading-6 text-zinc-400">
+        Đọc nhanh luật chơi, vai trò, điều kiện thắng và mẹo nhập vai trước khi
+        bắt đầu ván đầu tiên.
+      </p>
+      <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-zinc-300">
+        <Badge>3-9 người</Badge>
+        <Badge>1 quản trò</Badge>
+        <Badge>Chơi offline</Badge>
       </div>
     </motion.section>
   )
@@ -279,7 +244,7 @@ function QuickStartActions({ onStart }: { onStart: () => void }) {
           desc="Tạo phòng, duyệt người chơi, điều phối pha và giữ bí mật ván đấu."
         />
       </div>
-      <div className="mt-4 rounded-2xl border border-yellow-400/25 bg-yellow-400/5 p-4">
+      <div className="mt-4 border-l-2 border-yellow-400 bg-yellow-400/5 p-4">
         <Button variant="yellow" type="button" onClick={onStart}>
           Nhập tên để bắt đầu
         </Button>
@@ -323,7 +288,7 @@ function PhaseJourney() {
               <span className="text-3xl leading-none" aria-hidden="true">
                 {phase.emoji}
               </span>
-              <span className="rounded-full bg-black/25 px-2 py-1 text-[10px] font-bold tracking-widest uppercase">
+              <span className="border-l border-current px-2 py-1 text-[10px] font-bold tracking-widest uppercase">
                 Pha {index + 1}
               </span>
             </div>
@@ -357,13 +322,13 @@ function RoleEncyclopedia() {
           return (
             <GuideCard key={role.id} className={cn('p-4', meta.tone)}>
               <div className="flex items-start gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-black/25 text-2xl shadow-inner shadow-black/30">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center border-l-2 border-current bg-black/20 text-2xl">
                   <span aria-hidden="true">{role.emoji}</span>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <h3 className="font-bold text-white">{role.name}</h3>
-                    <span className="rounded-full bg-black/25 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                    <span className="border-b border-current pb-0.5 text-[10px] font-bold tracking-wider uppercase">
                       {meta.faction}
                     </span>
                   </div>
@@ -401,7 +366,7 @@ function WinConditions() {
               <div>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <h3 className="font-bold text-white">{wc.faction}</h3>
-                  <span className="rounded-full bg-black/25 px-2 py-0.5 text-[10px] font-bold tracking-wider text-zinc-200 uppercase">
+                  <span className="border-b border-zinc-500 pb-0.5 text-[10px] font-bold tracking-wider text-zinc-200 uppercase">
                     {wc.label}
                   </span>
                 </div>
@@ -448,7 +413,7 @@ function GmGuide() {
         {GM_TIPS.map((tip) => (
           <div
             key={tip.title}
-            className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4"
+            className="border-t border-zinc-800 py-4"
           >
             <div className="mb-2 flex items-center gap-2">
               <span className="text-2xl" aria-hidden="true">
@@ -476,9 +441,9 @@ function SurvivalTips() {
         {SURVIVAL_TIPS.map((tip, index) => (
           <div
             key={tip}
-            className="flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4"
+            className="flex items-start gap-3 border-t border-zinc-800 py-4"
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-xs font-black text-zinc-950">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center border-l-2 border-yellow-400 bg-yellow-400/10 text-xs font-black text-yellow-300">
               {index + 1}
             </span>
             <p className="text-sm leading-relaxed text-zinc-300">{tip}</p>
@@ -492,10 +457,7 @@ function SurvivalTips() {
 function FinalCta({ onStart }: { onStart: () => void }) {
   return (
     <motion.section variants={staggerItemVars}>
-      <div className="overflow-hidden rounded-3xl border border-yellow-400/30 bg-gradient-to-br from-yellow-400/15 via-zinc-950 to-zinc-950 p-5 text-center shadow-2xl shadow-yellow-950/20">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400/15 text-3xl">
-          <span aria-hidden="true">🌙</span>
-        </div>
+      <div className="border-y border-yellow-400/40 bg-yellow-400/5 p-5 text-left">
         <h2 className="text-xl font-black text-white">
           Sẵn sàng phán quyết dưới ánh trăng?
         </h2>
@@ -524,10 +486,10 @@ function TimelineItem({
 }) {
   return (
     <GuideCard className="relative ml-4 border-zinc-800 bg-zinc-950/70 p-4 pl-14">
-      <div className="absolute top-4 left-0 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-yellow-400/40 bg-zinc-950 text-lg shadow-lg shadow-yellow-950/20">
+      <div className="absolute top-4 left-0 flex h-10 w-10 -translate-x-1/2 items-center justify-center border border-yellow-400/40 bg-zinc-950 text-lg">
         <span aria-hidden="true">{step.emoji}</span>
       </div>
-      <span className="mb-2 inline-flex rounded-full bg-yellow-400/10 px-2 py-0.5 text-[10px] font-bold tracking-widest text-yellow-300 uppercase">
+      <span className="mb-2 inline-flex border-l-2 border-yellow-400 px-2 py-0.5 text-[10px] font-bold tracking-widest text-yellow-300 uppercase">
         Bước {index + 1}
       </span>
       <h3 className="font-bold text-white">{step.title}</h3>
@@ -547,7 +509,7 @@ function InfoCard({
 }) {
   return (
     <GuideCard className="border-zinc-800 bg-zinc-950/70 p-4">
-      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-400/10 text-2xl">
+      <div className="mb-3 flex h-11 w-11 items-center justify-center border-l-2 border-yellow-400 bg-yellow-400/10 text-2xl">
         <span aria-hidden="true">{emoji}</span>
       </div>
       <h3 className="font-bold text-white">{title}</h3>
@@ -566,10 +528,7 @@ function GuideCard({
   return (
     <motion.div
       variants={staggerItemVars}
-      className={cn(
-        'rounded-2xl border shadow-lg shadow-black/20 backdrop-blur',
-        className,
-      )}
+      className={cn('border border-zinc-800 bg-zinc-950', className)}
     >
       {children}
     </motion.div>
@@ -598,7 +557,7 @@ function SectionTitle({
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full border border-zinc-700/70 bg-zinc-950/60 px-2 py-2 text-center text-[10px] font-bold text-zinc-200">
+    <span className="border-b border-zinc-600 pb-1 text-[11px] font-semibold text-zinc-200">
       {children}
     </span>
   )

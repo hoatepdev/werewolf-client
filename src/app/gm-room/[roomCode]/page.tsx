@@ -173,6 +173,7 @@ const GmRoomPage = () => {
           isPrivateMode={isPrivateMode}
           onLeave={handleLeaveRoom}
           onRefresh={handleGetPlayers}
+          onNextPhase={handleNextPhase}
           onOpenPrivate={togglePrivateMode}
           className="mb-6"
         />
@@ -182,11 +183,6 @@ const GmRoomPage = () => {
         </div>
 
         <TableLayer
-          phase={phase}
-          onNextPhase={handleNextPhase}
-          onStartDayTimer={handleStartDayTimer}
-          onExtendDayTimer={handleExtendDayTimer}
-          onSkipDayTimer={handleSkipDayTimer}
           currentAudio={currentAudio}
           isPlaying={isPlayingRef.current}
           audioStatus={audioStatus}
@@ -194,11 +190,7 @@ const GmRoomPage = () => {
           audioQueue={audioQueue}
           playAudio={setCurrentAudio}
           players={players}
-          gameStats={gameStats}
-          gameLog={gameLog}
-          gmLogs={gmLogs}
           onActivatePrivate={togglePrivateMode}
-          onRefresh={handleGetPlayers}
         />
 
         <AnimatePresence>

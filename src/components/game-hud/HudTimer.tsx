@@ -21,7 +21,7 @@ export function HudTimer({ timer, visibility, className }: HudTimerProps) {
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-2xl border border-zinc-700 bg-zinc-950/70 px-3 py-2',
+        'flex items-center gap-3 border-l-2 border-yellow-400 bg-zinc-900 px-3 py-2',
         className,
       )}
       aria-label={`${label ?? 'Đang tính giờ'}: còn ${timer.secondsLeft} giây`}

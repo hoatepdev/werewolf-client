@@ -159,7 +159,7 @@ export const PlayerList = memo(function PlayerList({
                         onChange={(event) => setReason(event.target.value)}
                         maxLength={120}
                         placeholder="VD: GM loại bỏ do sự cố kỹ thuật"
-                        className="mt-2 w-full rounded border border-red-500/30 bg-zinc-950 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-red-400 focus:outline-none"
+                        className="mt-2 w-full rounded-sm border border-red-500/30 bg-zinc-950 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-red-400"
                         disabled={isBusy}
                       />
                     </label>

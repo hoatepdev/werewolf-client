@@ -130,8 +130,9 @@ export function RoleSelection({
                         handleRoleDecrement(role.id)
                       }}
                       disabled={!canDecrement}
+                      aria-label={`Giảm số vai ${role.name}`}
                       className={cn(
-                        'flex h-6 w-6 items-center justify-center rounded-full transition-colors',
+                        'flex h-7 w-7 items-center justify-center rounded-sm transition-colors',
                         canDecrement
                           ? 'bg-red-500 text-white hover:bg-red-600 active:bg-red-700'
                           : 'cursor-not-allowed bg-zinc-700 text-zinc-500',
@@ -149,8 +150,9 @@ export function RoleSelection({
                         handleRoleIncrement(role.id)
                       }}
                       disabled={!canIncrement}
+                      aria-label={`Tăng số vai ${role.name}`}
                       className={cn(
-                        'flex h-6 w-6 items-center justify-center rounded-full transition-colors',
+                        'flex h-7 w-7 items-center justify-center rounded-sm transition-colors',
                         canIncrement
                           ? 'bg-green-500 text-white hover:bg-green-600 active:bg-green-700'
                           : 'cursor-not-allowed bg-zinc-700 text-zinc-500',

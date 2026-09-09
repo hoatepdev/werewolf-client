@@ -1,4 +1,5 @@
 import React from 'react'
+import { cn } from '@/lib/utils'
 
 export default function MainLayout({
   children,
@@ -9,7 +10,10 @@ export default function MainLayout({
 }) {
   return (
     <main
-      className={`mx-auto flex min-h-screen ${maxWidth} flex-col bg-zinc-900 px-4 py-6 text-white`}
+      className={cn(
+        'mx-auto flex min-h-dvh w-full flex-col px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+2rem)] text-zinc-100 sm:px-6 sm:pt-6',
+        maxWidth,
+      )}
     >
       {children}
     </main>

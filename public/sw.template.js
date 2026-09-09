@@ -5,7 +5,7 @@ importScripts(
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js',
 )
 
-const CACHE_NAME = 'werewolf-v1'
+const CACHE_NAME = 'werewolf-v3'
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -45,16 +45,36 @@ if (hasFirebaseConfig) {
     )
   })
 } else {
-  console.warn('Firebase config is incomplete. Background messaging is disabled.')
+  console.warn(
+    'Firebase config is incomplete. Background messaging is disabled.',
+  )
 }
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting()
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache)),
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(urlsToCache))
+      .catch(() => {}),
   )
 })
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone()
+          caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(event.request, copy))
+          return response
+        })
+        .catch(() => caches.match(event.request)),
+    )
+    return
+  }
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) {
@@ -67,15 +87,18 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName)
-          }
-        }),
-      )
-    }),
+    Promise.all([
+      clients.claim(),
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              return caches.delete(cacheName)
+            }
+          }),
+        )
+      }),
+    ]),
   )
 })
 
